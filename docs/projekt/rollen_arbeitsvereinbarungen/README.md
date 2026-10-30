@@ -111,10 +111,13 @@ Mobile und verteilte Arbeit, Kommunikation über Discord.
 
 ## Abschließende Bemerkungen
 
-- Möglicher Übergang zu Sprint 1
-  - PO aus den User Teams, danach außerhalb der Entwicklungsteams. SM, Integration und Lead Developer aus dem Core Team.
-  - Je Feature Team zwei aus dem User Team und zwei aus dem Core Team.
-- Maßstab
-  - Neu zusammengesetzte Teams, nicht nur aufgefüllte bestehende.
-  - Welche Rolle jemand übernimmt, hängt daran, was die Person kann, will und an Verantwortung übernimmt.
+### Möglicher Übergang zu Sprint 1
+- PO aus den User Teams, danach außerhalb der Entwicklungsteams. SM, Integration und Lead Developer aus dem Core Team.
+- Je Feature Team zwei aus dem User Team und zwei aus dem Core Team.
+
+![](uebergang_sprint1.png)
+
+### Maßstab
+- Neu zusammengesetzte Teams, nicht nur aufgefüllte bestehende.
+- Welche Rolle jemand übernimmt, hängt daran, was die Person kann, will und an Verantwortung übernimmt.
 
