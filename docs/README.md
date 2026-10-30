@@ -9,6 +9,4 @@
 
 ## User Teams
 
-- [Studierende](anforderungen/fachlich/Artefakte_UserTeam_Sprint0.pdf)
-- [Sachbearbeitung](anforderungen/fachlich/Artefakte_UserTeam_Sprint0.pdf)
-- [Objektbetreuung](anforderungen/fachlich/Artefakte_UserTeam_Sprint0.pdf)
+- [Studierende, Sachbearbeitung, Objektbetreuung](anforderungen/fachlich/Artefakte_UserTeam_Sprint0.pdf)
