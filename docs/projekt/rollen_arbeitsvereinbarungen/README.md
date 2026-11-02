@@ -4,9 +4,9 @@
 
 ### Product Owner (3)
 
-Entwickeln nicht. Drei Sichten: Studierende, Objektbetreuer, Sachbearbeiter. Je Sicht eine Person.
-
 - Kontakt zu Seezeit für die eigene Sicht
+  - Drei Sichten: Studierende, Objektbetreuer, Sachbearbeiter. Je Sicht eine Person.
+- Entwickeln nicht.
 - Stories, Definition of Ready und fachliche Abnahme der eigenen Sicht
 - entscheidet den Inhalt der eigenen Sicht
 - ein gemeinsames Backlog
@@ -15,7 +15,8 @@ Entwickeln nicht. Drei Sichten: Studierende, Objektbetreuer, Sachbearbeiter. Je 
 ### Scrum Master / Coach (1)
 
 - moderiert, räumt Impediments aus
-- hält Termine, Deadlines und den organisatorischen Rahmen sichtbar und achtet auf die Einhaltung der vereinbarten Prozesse
+- achtet auf die Einhaltung der vereinbarten Prozesse
+- hält Termine, Deadlines und den organisatorischen Rahmen sichtbar
 - entscheidet nicht über Produkt, Architektur oder den Inhalt der Kontakte
 - stimmt bei Uneinigkeit nicht mit
 
@@ -30,10 +31,9 @@ Entwickeln nicht. Drei Sichten: Studierende, Objektbetreuer, Sachbearbeiter. Je 
 - Kontakt zu Seezeit-IT und zum Technologiepartner Sybit
   - Anbindung, Zugänge, technische Abstimmung
 - Laufzeitumgebungen (Test, Staging, Prod), CI/CD, Tech-Stack und teamübergreifende Architektur
-- Sprint 1: Repository, CI, Deploy auf Test
-- danach Zugänge, Umgebungen und die teamübergreifende Technik
 - führt die automatisierten Prüfungen der Definition of Done aus
 - kein Merge nach main, keine Architektur des Schnitts
+- Sprint 1: Lauffähige Basis - Repository, CI, Deploy auf Test
 
 
 
@@ -58,16 +58,26 @@ Die genaue Zuordnung der Aufgaben / Verantwortlichkeiten zu den Rollen steht in 
 
 ### Kommunikation
 
-Mobile und verteilte Arbeit, Kommunikation über Discord.
+Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den Weeklies.
+
+#### Channels
 
 
-| Kanal                | Wofür                                                                                                                                                       | Antwortzeit             |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| Entwicklungs-Channel | Laufende Abstimmung aller Feature Teams, des PO und des Scrum Masters zu Stories, Feature Branches, Reviews, Architektur und Terminen                       | höchstens zwei Werktage |
-| Feature-Channel      | Jeweils für die Feature Teams intern                                                                                                                        | höchstens zwei Werktage |
-| PO-Channel           | Abstimmung der POs, ergibt sich aus den Bedürfnissen der POs, an den drei Sichten orientiert                                                                | höchstens zwei Werktage |
-| Emergency-Channel    | Die VM steht, jemand ist nicht erreichbar (zum Beispiel ein wichtiger offener Merge) oder das Prod-Environment ist nicht erreichbar (zum Beispiel HTTP 500) | am selben Tag           |
+| Kanal                          | Wofür                                                                                                                                                       | Antwortzeit             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Entwicklungs-Channel (general) | Laufende Abstimmung aller Feature Teams, des PO und des Scrum Masters zu Stories, Feature Branches, Reviews, Architektur und Terminen                       | höchstens zwei Werktage |
+| Feature-Channel                | Jeweils für die Feature Teams intern                                                                                                                        | höchstens zwei Werktage |
+| Integrations-Channel           | Für das Integrationsteam intern                                                                                                                             | höchstens zwei Werktage |
+| PO-Channel                     | Abstimmung der POs, ergibt sich aus den Bedürfnissen der POs, an den drei Sichten orientiert                                                                | höchstens zwei Werktage |
+| Emergency-Channel              | Die VM steht, jemand ist nicht erreichbar (zum Beispiel ein wichtiger offener Merge) oder das Prod-Environment ist nicht erreichbar (zum Beispiel HTTP 500) | am selben Tag           |
 
+
+
+
+#### Weeklies
+
+- Je Feature Team, die Product Owner und das Integrationsteam halten ein Weekly intern.
+- Ein gemeinsames Weekly mit mindestens einem Vertreter aller Teams und Gruppen. Themen sind Priorität, Architektur und Blocker. Der Scrum Master ist dabei.
 
 
 
@@ -76,7 +86,6 @@ Mobile und verteilte Arbeit, Kommunikation über Discord.
 - Jede PO-Person ist die Schnittstelle zu Seezeit für ihre Sicht (Studierende, Objektbetreuer, Sachbearbeiter). Eine davon priorisiert das gemeinsame Backlog.
 - Das Integrationsteam ist die Schnittstelle zu Seezeit-IT und zu Sybit.
 - Der Scrum Master hält Termine, Deadlines und den organisatorischen Rahmen sichtbar und achtet auf die Einhaltung der vereinbarten Prozesse. Den Inhalt bestimmen die zuständige PO-Person beziehungsweise das Integrationsteam. Die Termine setzen Seezeit, Seezeit-IT, Sybit und die Veranstalter des Projekts an der Hochschule.
-- Einmal pro Woche kurze Abstimmung der Feature Teams mit den PO-Personen, dem Integrationsteam und dem Scrum Master (Priorität, Architektur, Blocker). Für das Feature Team sitzt der Lead Developer.
 
 
 
@@ -86,7 +95,6 @@ Mobile und verteilte Arbeit, Kommunikation über Discord.
 - Priorität und Konflikt zwischen den Sichten entscheidet die priorisierende PO-Person.
 - Architektur im Schnitt entscheidet der Lead Developer.
 - Teamübergreifende Architektur, Tech-Stack, Umgebungen und CI/CD entscheidet das Integrationsteam.
-- Bei Patt über Teamgrenzen entscheidet die gemeinsame Runde.
 - Der Scrum Master moderiert und stimmt nicht mit.
 
 
@@ -97,8 +105,8 @@ Mobile und verteilte Arbeit, Kommunikation über Discord.
 
 ### Möglicher Übergang zu Sprint 1
 
-- PO aus den User Teams, danach außerhalb der Entwicklungsteams. SM, Integration und Lead Developer aus dem Core Team.
-- Je Feature Team zwei aus dem User Team und zwei aus dem Core Team.
+- PO aus den User Teams. SM, Integration und Lead Developer aus dem Core Team. Bringen jeweils ihre Expertise mit.
+- Je Feature Team zwei aus dem User Team und zwei aus dem Core Team. Befähigt Teams zu vertikalen Schnitt.
 
 ![](uebergang_sprint1.png)
 
@@ -108,6 +116,8 @@ Mobile und verteilte Arbeit, Kommunikation über Discord.
 - Welche Rolle jemand übernimmt, hängt daran, was die Person kann, will und an Verantwortung übernimmt.
 
 ---
+
+
 
 ## RACI
 
