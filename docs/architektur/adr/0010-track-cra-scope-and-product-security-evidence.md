@@ -2,15 +2,15 @@
 
 - Status: Proposed
 - Created: 2026-10-29
-- Decision owner: Project architecture owner (unassigned)
-- Reviewers: Core Team; Seezeit product/operations representatives as applicable
+- Decision owner: Integrationsteam
+- Reviewers: Affected Lead Developers; responsible PO and Seezeit-IT as applicable
 - Accepted by / date: Pending
 - Supersedes: None
 - Superseded by: None
 
 ## Context
 
-The prior architecture recommendation identified possible EU Cyber Resilience Act obligations. Applicability depends on supply model and product boundary; Docker alone does not settle scope.
+The architecture proposal identifies product-security responsibilities requiring clarification. CRA applicability depends on supply model and product boundary; Docker alone does not settle scope.
 
 ## Decision
 
@@ -30,6 +30,6 @@ Approve a documented supply-model assessment and name the maintenance owner befo
 
 ## Basis and related records
 
-Basis: Sprint 0 artifact and architecture proposal in the current conversation. Technology choices are recommendations, not implemented or team-approved facts.
+Basis: [Sprint 0 artifact](../../anforderungen/fachlich/Artefakte_UserTeam_Sprint0.md), [quality scenarios](../../anforderungen/qualitaet/qualitaetszenarien-definition-of-ready-done.md) and [architecture overview](../Seezeit-Architektur.md). This record is a proposal, not evidence of implementation or approval.
 
 See the [decision index](README.md) for related decisions.

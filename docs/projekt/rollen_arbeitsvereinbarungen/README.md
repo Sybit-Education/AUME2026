@@ -50,7 +50,7 @@ Alle vier tragen die Feature-Entwicklung.
   - spricht für das Team mit dem Product Owner und dem Integrationsteam
   - sitzt für das Team in der wöchentlichen Abstimmung
 
-Die genaue Zuordnung der Aufgaben / Verantwortlichkeiten zu den Rollen steht in der [RACI-Matrix](#raci-ab-iteration-1) am Ende dieses Dokuments.
+Die genaue Zuordnung der Aufgaben / Verantwortlichkeiten zu den Rollen steht in der [RACI-Matrix](#raci) am Ende dieses Dokuments.
 
 ## Arbeitsvereinbarung
 

@@ -30,6 +30,6 @@ Pilot on actual staff tablets and resident smartphones. Measure connectivity at 
 
 ## Basis and related records
 
-Basis: Sprint 0 artifact and architecture proposal in the current conversation. Technology choices are recommendations, not implemented or team-approved facts.
+Basis: [Sprint 0 artifact](../../anforderungen/fachlich/Artefakte_UserTeam_Sprint0.md) and the architecture proposal recorded in this ADR. Status reflects the existing repository record; acceptance does not demonstrate implementation.
 
 See the [decision index](README.md) for related decisions.

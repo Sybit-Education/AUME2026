@@ -14,7 +14,7 @@ Architecture decisions need a durable history accessible to developers and revie
 
 ## Decision
 
-Store numbered Markdown ADRs in coreteam/architektur/adr beside the application source. Review changes through pull requests.
+Store numbered Markdown ADRs in docs/architektur/adr alongside the project documentation. Review changes through pull requests.
 
 ## Alternatives considered
 
@@ -30,6 +30,6 @@ A reviewer can follow every relative link; each accepted decision has a named ap
 
 ## Basis and related records
 
-Basis: Sprint 0 artifact and architecture proposal in the current conversation. Technology choices are recommendations, not implemented or team-approved facts.
+Basis: [Sprint 0 artifact](../../anforderungen/fachlich/Artefakte_UserTeam_Sprint0.md) and the architecture proposal recorded in this ADR. Status reflects the existing repository record; acceptance does not demonstrate implementation.
 
 See the [decision index](README.md) for related decisions.
