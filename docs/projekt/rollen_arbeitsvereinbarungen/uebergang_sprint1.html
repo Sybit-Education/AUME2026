@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Besetzung Sprint 1</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700&family=Barlow:wght@400;500;600;700;800&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: #e8e8e6;
+      color: #111820;
+      font: 22px/1.35 Barlow, "Segoe UI", sans-serif;
+    }
+    .slide {
+      width: min(1280px, 100vw);
+      aspect-ratio: 16 / 9;
+      margin: 0 auto 16px;
+      background: #fff;
+      padding: 28px 36px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: hidden;
+    }
+    header { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; }
+    h1 { margin: 0; font-size: 44px; font-weight: 800; letter-spacing: -0.02em; }
+    .boards {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: stretch;
+      min-height: 0;
+    }
+    .board {
+      border: 2px solid #009b91;
+      border-radius: 10px;
+      background: #fff;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+    h2 {
+      margin: 0;
+      font-family: "Barlow Semi Condensed", Barlow, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #009b91;
+    }
+    .cluster { display: flex; flex-direction: column; gap: 8px; }
+    .cluster-label {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #334152;
+    }
+    .row { display: flex; gap: 8px; }
+    .box {
+      flex: 1;
+      border: 1px solid #c5ced6;
+      border-radius: 8px;
+      background: #e4e9ee;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .box span { font-size: 18px; font-weight: 600; color: #009b91; }
+    .dots {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 56px;
+      gap: 10px;
+    }
+    .dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #334152;
+    }
+    .dot.user { background: #009b91; }
+    .dot.role { outline: 2px solid #111820; outline-offset: 2px; }
+    .legend {
+      margin-top: auto;
+      font-size: 15px;
+      font-weight: 600;
+      color: #334152;
+    }
+    .legend h3 {
+      margin: 0 0 8px;
+      font-family: "Barlow Semi Condensed", Barlow, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #009b91;
+    }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .loose {
+      display: flex;
+      justify-content: center;
+      gap: 22px;
+      align-items: center;
+    }
+    .person { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; color: #111820; }
+    .person small {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #009b91;
+    }
+    .dev {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: start;
+      align-content: start;
+    }
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+    }
+    @page {
+      size: 13.333in 7.5in;
+      margin: 0;
+    }
+    @media print {
+      html, body { margin: 0; background: #fff; }
+      .box, .dot, .board {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .slide {
+        width: 13.333in;
+        height: 7.5in;
+        aspect-ratio: auto;
+        margin: 0;
+        overflow: hidden;
+      }
+    }
+  </style>
+</head>
+<body>
+  <article class="slide" id="uebergang">
+    <header>
+      <h1>Übergang zu Sprint 1</h1>
+    </header>
+    <div class="boards">
+      <section class="board">
+        <h2>Sprint 0</h2>
+        <div class="cluster">
+          <p class="cluster-label">User Teams · 9</p>
+          <div class="row">
+            <div class="box"><span>User</span><div class="dots"><i class="dot user"></i><i class="dot user"></i><i class="dot user"></i></div></div>
+            <div class="box"><span>User</span><div class="dots"><i class="dot user"></i><i class="dot user"></i><i class="dot user"></i></div></div>
+            <div class="box"><span>User</span><div class="dots"><i class="dot user"></i><i class="dot user"></i><i class="dot user"></i></div></div>
+          </div>
+        </div>
+        <div class="cluster">
+          <p class="cluster-label">Core · 10 · 4 Untergruppen</p>
+          <div class="row">
+            <div class="box"><span>Core</span><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div>
+            <div class="box"><span>Core</span><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div>
+            <div class="box"><span>Core</span><div class="dots"><i class="dot"></i><i class="dot"></i></div></div>
+            <div class="box"><span>Core</span><div class="dots"><i class="dot"></i><i class="dot"></i></div></div>
+          </div>
+        </div>
+      </section>
+      <div class="flow-arrow" aria-hidden="true">
+        <svg viewBox="0 0 72 36" width="72" height="36">
+          <polygon points="0,11 46,11 46,2 72,18 46,34 46,25 0,25" fill="#009b91"/>
+        </svg>
+      </div>
+      <section class="board">
+        <h2>Sprint 1</h2>
+        <div class="cluster">
+          <p class="cluster-label">Sonderrollen</p>
+          <div class="loose">
+            <span class="person"><i class="dot user"></i><span>PO<small>Priorität</small></span></span>
+            <span class="person"><i class="dot user"></i> PO</span>
+            <span class="person"><i class="dot user"></i> PO</span>
+            <span class="person"><i class="dot user"></i> PO</span>
+            <span class="person"><i class="dot"></i> SM</span>
+          </div>
+        </div>
+        <div class="cluster">
+          <p class="cluster-label">Development Teams</p>
+          <div class="row dev">
+            <div class="box"><span>Integration</span><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div></div>
+            <div class="box"><span>Feature</span><div class="dots"><i class="dot role"></i><i class="dot"></i><i class="dot user"></i></div></div>
+            <div class="box"><span>Feature</span><div class="dots"><i class="dot role"></i><i class="dot"></i><i class="dot user"></i><i class="dot user"></i></div></div>
+            <div class="box"><span>Feature</span><div class="dots"><i class="dot role"></i><i class="dot"></i><i class="dot user"></i><i class="dot user"></i></div></div>
+          </div>
+        </div>
+        <div class="legend">
+          <h3>Legende</h3>
+          <span><i class="dot role"></i> Lead Developer</span>
+        </div>
+      </section>
+    </div>
+  </article>
+</body>
+</html>

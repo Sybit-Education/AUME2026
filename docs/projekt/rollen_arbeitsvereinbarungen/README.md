@@ -2,15 +2,24 @@
 
 ## Rollen und Verantwortungen
 
-### Product Owner (3)
+### Product Owner (4)
+
+- Entwickeln nicht.
+- ein gemeinsames Backlog
+
+#### PO der Sicht (3)
 
 - Kontakt zu Seezeit für die eigene Sicht
   - Drei Sichten: Studierende, Objektbetreuer, Sachbearbeiter. Je Sicht eine Person.
-- Entwickeln nicht.
 - Stories, Definition of Ready und fachliche Abnahme der eigenen Sicht
 - entscheidet den Inhalt der eigenen Sicht
-- ein gemeinsames Backlog
-- eine Person entscheidet die Priorität, Konflikte zwischen den Sichten und die gemeinsame Definition of Done
+- entscheidet die Definition of Done der eigenen Story. Die gemeinsame Checkliste gilt für jede Story. Die PO der Sicht kann Kriterien für die eigene Sicht ergänzen.
+
+#### PO Priorität (1)
+
+- keine eigene Sicht
+- entscheidet die Priorität des gemeinsamen Backlogs
+- entscheidet Konflikte zwischen den Sichten
 
 ### Scrum Master / Coach (1)
 
@@ -68,7 +77,7 @@ Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den W
 | Entwicklungs-Channel (general) | Laufende Abstimmung aller Feature Teams, des PO und des Scrum Masters zu Stories, Feature Branches, Reviews, Architektur und Terminen                       | höchstens zwei Werktage |
 | Feature-Channel                | Jeweils für die Feature Teams intern                                                                                                                        | höchstens zwei Werktage |
 | Integrations-Channel           | Für das Integrationsteam intern                                                                                                                             | höchstens zwei Werktage |
-| PO-Channel                     | Abstimmung der POs, ergibt sich aus den Bedürfnissen der POs, an den drei Sichten orientiert                                                                | höchstens zwei Werktage |
+| PO-Channel                     | Abstimmung der POs der Sicht und der PO Priorität, an den drei Sichten orientiert                                                                           | höchstens zwei Werktage |
 | Emergency-Channel              | Die VM steht, jemand ist nicht erreichbar (zum Beispiel ein wichtiger offener Merge) oder das Prod-Environment ist nicht erreichbar (zum Beispiel HTTP 500) | am selben Tag           |
 
 
@@ -83,7 +92,7 @@ Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den W
 
 ### Abstimmung
 
-- Jede PO-Person ist die Schnittstelle zu Seezeit für ihre Sicht (Studierende, Objektbetreuer, Sachbearbeiter). Eine davon priorisiert das gemeinsame Backlog.
+- Jede PO der Sicht ist die Schnittstelle zu Seezeit für ihre Sicht (Studierende, Objektbetreuer, Sachbearbeiter). Die PO Priorität priorisiert das gemeinsame Backlog und hat keine eigene Sicht.
 - Das Integrationsteam ist die Schnittstelle zu Seezeit-IT und zu Sybit.
 - Der Scrum Master hält Termine, Deadlines und den organisatorischen Rahmen sichtbar und achtet auf die Einhaltung der vereinbarten Prozesse. Den Inhalt bestimmen die zuständige PO-Person beziehungsweise das Integrationsteam. Die Termine setzen Seezeit, Seezeit-IT, Sybit und die Veranstalter des Projekts an der Hochschule.
 
@@ -92,7 +101,8 @@ Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den W
 ### Uneinigkeit
 
 - Inhalt einer Sicht entscheidet die PO-Person dieser Sicht.
-- Priorität und Konflikt zwischen den Sichten entscheidet die priorisierende PO-Person.
+- Priorität und Konflikt zwischen den Sichten entscheidet die PO Priorität.
+- Definition of Done einer Story entscheidet die PO der Sicht. Die gemeinsame Checkliste gilt für jede Story. Die PO der Sicht kann Kriterien für die eigene Sicht ergänzen.
 - Architektur im Schnitt entscheidet der Lead Developer.
 - Teamübergreifende Architektur, Tech-Stack, Umgebungen und CI/CD entscheidet das Integrationsteam.
 - Der Scrum Master moderiert und stimmt nicht mit.
@@ -105,8 +115,8 @@ Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den W
 
 ### Möglicher Übergang zu Sprint 1
 
-- PO aus den User Teams. SM, Integration und Lead Developer aus dem Core Team. Bringen jeweils ihre Expertise mit.
-- Je Feature Team zwei aus dem User Team und zwei aus dem Core Team. Befähigt Teams zu vertikalen Schnitt.
+- PO der Sicht aus den User Teams. Die PO Priorität in Sprint 1 aus dem User-Anteil eines Feature Teams. Sie entwickelt in Sprint 1 nicht. SM, Integration und Lead Developer aus dem Core Team. Bringen jeweils ihre Expertise mit.
+- Zwei Feature Teams mit je zwei Personen aus dem User Team und zwei aus dem Core Team. Ein Feature Team mit einer Person aus dem User Team und zwei aus dem Core Team, darunter der Lead Developer. Befähigt Teams zu vertikalen Schnitt.
 
 ![](uebergang_sprint1.png)
 
@@ -114,6 +124,7 @@ Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den W
 
 - Neu zusammengesetzte Teams, nicht nur aufgefüllte bestehende.
 - Welche Rolle jemand übernimmt, hängt daran, was die Person kann, will und an Verantwortung übernimmt.
+- Verantwortung ist nicht Arbeitslast. Die Arbeitslast bleibt gleichmäßig und fair verteilt.
 
 ---
 
@@ -137,7 +148,7 @@ Steht in einer Zeile kein R, führt die Rolle mit A die Aufgabe aus.
 | ------------------------------------------------------------ | ------------ | ------------ | --- | ---------------------- | -------------- | ---------------- |
 | Priorität des gemeinsamen Backlogs                           | A            | C            | I   | I                      | C              | C                |
 | Konflikt zwischen den Sichten                                | A            | C            | I   | I                      | I              | I                |
-| Definition of Done                                           | A            | C            | I   | C                      | C              | R                |
+| Definition of Done                                           | I            | A            | I   | C                      | C              | R                |
 | Stories einer Sicht                                          | C            | A            | I   | I                      | C              | I                |
 | Kontakt zu Seezeit für diese Sicht                           | I            | A            | I   | I                      | I              | I                |
 | Produktentscheidung innerhalb der Sicht                      | C            | A            | I   | I                      | C              | I                |
