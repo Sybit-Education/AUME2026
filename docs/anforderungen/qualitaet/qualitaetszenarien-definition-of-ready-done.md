@@ -1,4 +1,6 @@
-# Alle Qualitätsszenarien mit Priorisierung
+# Qualität
+
+## Alle Qualitätsszenarien mit Priorisierung
 <br>
 
 | **Prio** | **Qualität** | **Leitfrage** | **Auslöser** | **Reaktion** | **Messbares Maß** |
@@ -13,7 +15,7 @@
 | **5** | **Datenschutz** | Sind persönliche Daten sicher und geschützt? | Bewohner:in versucht, Ergebnisse oder Fotos einer fremden WG aufzurufen. | Zugriff wird verweigert und Bewohner:innen sehen nur die eigene WG. | Keine Zugriffe auf fremde WG-Daten, Fotos und Historie DSGVO-konform gelöscht und EU-Server wird genutzt. |
 <br>
 
-# Umfrageergebnisse zu den Qualitätsszenarien
+## Umfrageergebnisse zu den Qualitätsszenarien
 <br>
 
 ![Priorisierung der Qualitätskriterien](images/qualitaetskriterien-priorisierung.png)
@@ -26,9 +28,9 @@
 | **2** | **Benutzbarkeit** | Neue:r WG-Bewohner:in öffnet die Anwendung zum ersten Mal, um die Checkliste vor der Kontrolle anzusehen. | Termin, offene Aufgaben und Checkliste werden verständlich dargestellt. | 90 % der Nutzer:innen finden Termin und Checkliste ohne Hilfe in unter 2 Minuten. |
 | **3** | **Performance** | Objektbetreuer:in fotografiert einen Mangel und lädt das Foto hoch. | Das Foto wird komprimiert hochgeladen und anschließend angezeigt. | Der Upload erfolgt innerhalb einer festgelegten maximalen Zeit. |
 
-# Definition of Ready (DoR) & Definition of Done (DoD)
+## Definition of Ready (DoR) & Definition of Done (DoD)
 
-## DoR
+### DoR
 Eine User Story ist bereit für den Sprint, wenn:
 
 1. **Format:** Sie im Format „Als [Nutzerrolle] möchte ich [Funktion/Ziel], damit [Nutzen/Mehrwert]“ formuliert ist.
@@ -40,7 +42,7 @@ Eine User Story ist bereit für den Sprint, wenn:
 7. **Abhängigkeiten:** Abhängigkeiten zu anderen Stories bekannt und dokumentiert sind. Die Story ist möglichst unabhängig. Die Feature-Teams wirken bei der Prüfung der technischen Umsetzbarkeit beratend mit.
 8. **Fachliche Inhalte:** Alle benötigten fachlichen Inhalte (z. B. Checklisten, Regeln, Abläufe und Beispieldaten) vorliegen.
 
-## DoD
+### DoD
 
 Eine User Story ist fertig umgesetzt, wenn:
 
