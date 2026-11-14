@@ -46,9 +46,9 @@
 
 
 
-#### Feature Teams (4, 4, 4)
+#### Feature Teams (4, 3, 3)
 
-Alle vier tragen die Feature-Entwicklung.
+Alle tragen die Feature-Entwicklung.
 
 - Feature-Entwicklung auf Feature Branches
 - liefert den Schnitt selbst: Prüfung der Umsetzbarkeit und Umsetzung
@@ -116,7 +116,7 @@ Mobile und verteilte Arbeit. Asynchron über Discord-channels, synchron in den W
 ### Möglicher Übergang zu Sprint 1
 
 - PO der Sicht aus den User Teams. Die PO Priorität in Sprint 1 aus dem User-Anteil eines Feature Teams. Sie entwickelt in Sprint 1 nicht. SM, Integration und Lead Developer aus dem Core Team. Bringen jeweils ihre Expertise mit.
-- Zwei Feature Teams mit je zwei Personen aus dem User Team und zwei aus dem Core Team. Ein Feature Team mit einer Person aus dem User Team und zwei aus dem Core Team, darunter der Lead Developer. Befähigt Teams zu vertikalen Schnitt.
+- Ein Feature Team mit zwei Personen aus dem User Team und zwei aus dem Core Team. Zwei Feature Teams mit je einer Person aus dem User Team und zwei aus dem Core Team, darunter der Lead Developer. Befähigt Teams zu vertikalen Schnitt.
 
 ![](uebergang_sprint1.png)
 

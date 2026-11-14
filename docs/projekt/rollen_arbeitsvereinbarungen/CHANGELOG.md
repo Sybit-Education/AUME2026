@@ -1,5 +1,9 @@
 # Changelog
 
+## 14.11.26
+
+- Eine Person hat das Projekt verlassen. Insgesamt 18 Personen. Ein weiteres Feature Team hat drei Mitglieder.
+
 ## 04.11.26
 
 - Eine vierte Product-Owner-Rolle entscheidet nur die Priorität und Konflikte zwischen den Sichten und hat keine eigene Sicht.
