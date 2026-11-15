@@ -45,7 +45,7 @@
 
 ### Branch Strategie & Teams
 
-<img width="1522" height="435" alt="Git-Branch-Strategie für Teams" src="https://github.com/user-attachments/assets/d86df644-724b-4f36-8db0-c56940e2be83" />
+<img width='100%' alt="Git-Branch-Strategie für Teams" src="./Git_Workflow.png" />
 
 - **Feature Branches**
   - Kurzlebiger Branch pro Feature
