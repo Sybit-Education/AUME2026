@@ -32,6 +32,8 @@ Die [Qualitätsszenarien](../anforderungen/qualitaet/qualitaetszenarien-definiti
 
 Die technische Zeichnung zeigt auch vorgeschlagene Komponenten. Sie bedeutet keine Freigabe dieser Vorschläge. Hosting in der EU sowie Löschung von Fotos und Historie sind Anforderungen aus den Qualitätsszenarien; konkrete Fristen und Regeln sind noch abzustimmen.
 
+![Kundenansicht der Systemarchitektur](<SystemArchitektur-01 – Kundenansicht.drawio.png>)
+
 ## 3. Systemkontext und Anbindungen
 
 | Akteur / System | Aufgabe | Offene Abstimmung |
