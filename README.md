@@ -26,12 +26,18 @@ npm install
 npm run dev
 ```
 
-Backend (Windows):
+Backend:
 
 ```bash
 cd backend
-.\mvnw.cmd spring-boot:run
+./mvnw spring-boot:run
 ```
+
+Windows: `.\mvnw.cmd spring-boot:run`
+
+Beim Start legt das Backend eine H2-Datenbank im Speicher an, die Wohnanlage „Wohnanlage Sonne“ und drei Nutzer: `student`, `caretaker`, `clerk`. Spring Data REST stellt sie unter http://localhost:8080/api/residences und http://localhost:8080/api/users bereit. Listen sind paginiert (`?page=0&size=20`). Die Beschreibung steht unter http://localhost:8080/swagger-ui.html.
+
+Das Frontend unter http://localhost:5173 meldet einen dieser Testnutzer an. Studierende sehen den Text von `GET /api/greeting`, die anderen Rollen die Wohnanlagen. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
 
 ## Infrastruktur
 
