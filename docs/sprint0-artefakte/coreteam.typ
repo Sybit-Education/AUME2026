@@ -1,4 +1,4 @@
-// typst compile coreteam.typ Artefakte-Core-Teams.pdf
+// typst compile --root .. coreteam.typ Artefakte_CoreTeam_Sprint0.pdf
 #import "@preview/cmarker:0.1.10"
 
 #let navy = rgb("#18344f")
@@ -27,7 +27,7 @@
 #v(10pt)
 #heading(level: 1, outlined: false)[Artefakte der Core Teams]
 #v(2pt)
-#text(fill: subtitle, size: 15pt)[Sprint 0 (Iteration 0) · Digitalisierung der Sauberkeitskontrollen]
+#text(fill: subtitle, size: 15pt)[Sprint 0 · Digitalisierung der Sauberkeitskontrollen]
 #v(16pt)
 
 #table(
@@ -44,9 +44,9 @@
   table.cell(x: 0, y: 3)[#text(weight: "bold")[Team]],
   [Core Team, vier Teilgruppen: Architektur · Prozessmodell · Qualität · Rollen und Arbeitsvereinbarung],
   table.cell(x: 0, y: 4)[#text(weight: "bold")[Zeitraum]],
-  [Iteration 0: 20.10.2026 – 03.11.2026],
+  [20.10.2026 – 03.11.2026],
   table.cell(x: 0, y: 5)[#text(weight: "bold")[Stand]],
-  [Arbeitsfassung vom 14.11.2026],
+  [Abgabe zum 16.11.2026],
 )
 
 #v(14pt)
@@ -66,7 +66,7 @@
   [Rollen und Arbeitsvereinbarung], [Jonas Mayer · Benedict Benthien · Tim Lanzinger],
 )
 
-#v(18pt)
+#pagebreak()
 #outline(
   title: text(size: 17pt, weight: "bold", fill: navy)[Inhaltsverzeichnis],
   depth: 3,
@@ -78,12 +78,12 @@
   if parts.len() <= 1 { "" } else { parts.slice(0, -1).join("/") + "/" }
 }
 
-#let include-md(path) = {
+#let include-md(path, h1-level: 2) = {
   let dir = dir-of(path)
   pagebreak(weak: true)
   cmarker.render(
     read(path),
-    h1-level: 2,
+    h1-level: h1-level,
     label-prefix: path.replace(".md", "").replace("/", "-") + "-",
     scope: (
       image: (source, ..args) => if source.starts-with("http://") or source.starts-with("https://") {
@@ -105,11 +105,23 @@
 #show table.cell.where(y: 0): set text(fill: white, weight: "bold", size: 9pt)
 #show table.cell.where(x: 0): set text(weight: "bold")
 
-#for path in (
-  "architektur/Seezeit-Architektur.md",
-  "projekt/prozessmodell/Prozessmodell.md",
-  "anforderungen/qualitaet/qualitaetszenarien-definition-of-ready-done.md",
-  "projekt/rollen_arbeitsvereinbarungen/README.md",
+#for (path, level) in (
+  ("../architektur/Seezeit-Architektur.md", 2),
+  ("../architektur/adr/README.md", 3),
+  ("../architektur/adr/0001-record-decisions-as-markdown-in-git.md", 3),
+  ("../architektur/adr/0002-deploy-the-application-using-docker-compose.md", 3),
+  ("../architektur/adr/0003-structure-the-backend-as-a-modular-monolith.md", 3),
+  ("../architektur/adr/0004-provide-a-responsive-browser-frontend.md", 3),
+  ("../architektur/adr/0005-use-postgresql-and-private-attachment-storage.md", 3),
+  ("../architektur/adr/0006-centralize-authentication-and-enforce-scoped-authorization.md", 3),
+  ("../architektur/adr/0007-version-standards-and-preserve-published-inspection-history.md", 3),
+  ("../architektur/adr/0008-run-background-work-through-a-transactional-outbox.md", 3),
+  ("../architektur/adr/0009-harden-compose-operations-and-verify-recovery.md", 3),
+  ("../architektur/adr/0010-track-cra-scope-and-product-security-evidence.md", 3),
+  ("../architektur/adr/0011-preserve-inspection-drafts-during-network-loss.md", 3),
+  ("../projekt/prozessmodell/Prozessmodell.md", 2),
+  ("../anforderungen/qualitaet/qualitaetszenarien-definition-of-ready-done.md", 2),
+  ("../projekt/rollen_arbeitsvereinbarungen/README.md", 2),
 ) {
-  include-md(path)
+  include-md(path, h1-level: level)
 }
