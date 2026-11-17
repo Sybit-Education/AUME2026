@@ -1,0 +1,21 @@
+import { useTranslation } from 'react-i18next'
+import { Link, useLoaderData } from 'react-router'
+import { useAuth } from '../../auth/AuthContext'
+import LoadingPage from '../../pages/LoadingPage'
+import type { loadDashboard } from './api'
+
+export default function DashboardPage() {
+  const { t } = useTranslation()
+  const { user } = useAuth()
+  const data = useLoaderData<Awaited<ReturnType<typeof loadDashboard>> | null>()
+  if (!data) return <LoadingPage />
+
+  return (
+    <section>
+      <h2>{t('navigation.dashboard')}</h2>
+      <p>{t('pages.welcome', { name: user?.name })}</p>
+      {data.greeting && <p>{data.greeting}</p>}
+      {user?.privileges.includes('RESIDENCE_READ') && <Link to="/residences">{t('pages.openResidences')}</Link>}
+    </section>
+  )
+}

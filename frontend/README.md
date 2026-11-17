@@ -30,6 +30,12 @@ npm run build
 
 `npm run preview` zeigt nach `npm run build` das gebaute Frontend standardmäßig unter http://localhost:4173. Der API-Proxy wird aus der Vite-Konfiguration übernommen; das Backend muss weiterhin laufen. Für die lokale Entwicklung mit automatischem Neuladen `npm run dev` verwenden; im Docker-Setup übernimmt Nginx den API-Proxy.
 
+## Seiten und Routing
+
+Die Anwendung verwendet React Router im Data Mode. `/login` bietet die Anmeldung, `/` die geschützte Übersicht und `/residences` die zugewiesenen Wohnanlagen für Nutzer mit `RESIDENCE_READ`. Unbekannte Seiten und fehlende Rechte haben eigene Ansichten. Direkte Links bleiben nach dem Anmelden erhalten; Neuladen stellt die Sitzung wieder her.
+
+Neue Seiten als Feature-Routen unter `src/features/` ergänzen und in `src/app/router.ts` registrieren. Das gemeinsame Layout, `useAuth()`, geschützte Loader, Navigation und Tests sind in [ROUTING.md](ROUTING.md) mit Beispielen dokumentiert. Der Kontrollbereich ist eine künftige Erweiterung und noch nicht implementiert.
+
 ## Lokalisierung
 
 Deutsch und Englisch sind über die Sprachauswahl verfügbar. Die Auswahl bleibt nach dem Neuladen erhalten. Ohne gespeicherte Auswahl wird die erste unterstützte Browsersprache verwendet, andernfalls Deutsch. Regionale Sprachcodes werden auf `de` beziehungsweise `en` reduziert.

@@ -1,6 +1,7 @@
 import Keycloak from 'keycloak-js'
 import i18n from './i18n'
 import { UiError } from './errors'
+import { loginDestination } from './auth/returnTo'
 
 export interface LoggedInUser {
   userKey: string
@@ -34,7 +35,11 @@ export async function api(path: string, options: RequestInit = {}): Promise<Resp
   const headers = new Headers(options.headers)
   headers.set('Accept-Language', i18n.resolvedLanguage ?? 'de')
   if (config.mode === 'keycloak' && keycloak?.authenticated) {
-    await keycloak.updateToken(30)
+    try {
+      await keycloak.updateToken(30)
+    } catch {
+      throw new UiError('errors.sessionExpired')
+    }
     headers.set('Authorization', `Bearer ${keycloak.token}`)
   }
   if (config.mode === 'dev' && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method)) {
@@ -47,10 +52,10 @@ export async function api(path: string, options: RequestInit = {}): Promise<Resp
   return fetch(path, { ...options, headers, credentials: config.mode === 'dev' ? 'same-origin' : 'omit' })
 }
 
-export async function login(userKey?: string): Promise<void> {
+export async function login(userKey?: string, returnTo = '/'): Promise<void> {
   const config = await initializeAuth()
   if (config.mode === 'keycloak') {
-    await keycloak!.login({ redirectUri: window.location.origin, locale: i18n.resolvedLanguage })
+    await keycloak!.login({ redirectUri: new URL(loginDestination(returnTo), window.location.origin).href, locale: i18n.resolvedLanguage })
     return
   }
   const response = await api('/api/auth/dev-login', {

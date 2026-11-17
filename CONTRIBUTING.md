@@ -37,7 +37,8 @@ git switch -c gruppe_1/kontrollplanung
 | `backend/.../residence/` | Wohnanlagen, DTO-Endpunkt mit Zugriff auf die eigene Wohnanlage | Beispiel für eine fachlich begrenzte Abfrage |
 | `backend/.../api/config/OpenApiConfig.java` | Gemeinsame OpenAPI-Metadaten und Authentifizierungsschema | API-Vertrag prüfen; gemeinsame Metadaten nur bei Bedarf ändern |
 | `backend/src/test/java/de/seezeit/aume/` | Backend- und Sicherheitstests | Tests im zum Fachpaket passenden Testpaket |
-| `frontend/src/App.tsx` | Aktueller Einstieg, Anmeldung und einfache Inhaltsauswahl | Neue Oberfläche einbinden |
+| `frontend/src/App.tsx` und `frontend/src/app/` | Router, gemeinsames Layout und Seitenguards | Feature-Routen und Navigation registrieren |
+| `frontend/src/auth/` | Gemeinsame Sitzung, React-Kontext und Rückkehr nach Login | `useAuth()`, `protectedLoader()` und gemeinsame Antwortprüfung nutzen |
 | `frontend/src/auth.ts` | Gemeinsamer API-Zugriff und Anmeldeablauf | Für geschützte Requests `api()` verwenden |
 | `infrastructure/` | Compose-Konfiguration und Umgebungsvariablen-Vorlage | Neue Dienste oder Konfiguration bei Bedarf ergänzen |
 | `docs/` | Anforderungen, Architektur und Teamprozess | Feature und relevante Entscheidungen dokumentieren |
@@ -118,45 +119,17 @@ Für ein Feature keine eigene Anmeldung, Token-Verarbeitung oder globale Abschal
 
 ## 6. Frontend anbinden
 
-Die Oberfläche ist derzeit eine kleine React-Anwendung ohne eingerichteten Router; Frontend-Tests verwenden Vitest und bei Bedarf React Testing Library mit jsdom. Für größere Features Komponenten, Typen und API-Funktionen in eigenen Dateien bündeln, zum Beispiel unter `frontend/src/features/inspections/`. Dieser Ordner ist ein Strukturvorschlag. Neue Ansichten zunächst von `App.tsx` aus einbinden; eine spätere Navigation mit den anderen Teams abstimmen.
+Das Frontend verwendet React Router im Data Mode. Die vollständige Anleitung mit Routen-, Loader- und Navigationsbeispielen steht in [frontend/ROUTING.md](frontend/ROUTING.md). Als umgesetzte Referenz dient `frontend/src/features/residences/`.
 
-Geschützte Requests über den bestehenden Helfer `api()` aus [auth.ts](frontend/src/auth.ts) senden. Er übernimmt in `dev` Sitzung und CSRF-Token, außerhalb davon den Bearer-Token und dessen Erneuerung. Relative `/api/...`-URLs verwenden, damit derselbe Code mit dem Vite-Proxy und dem Nginx-Proxy funktioniert.
+Neue Features bündeln Seiten, Typen, API-Funktionen und ein eigenes Routen-Array unter `frontend/src/features/<feature>/`. Das Array in `app/router.ts` innerhalb der geschützten `RequireAuth`-Gruppe ergänzen. Einen optionalen Menüeintrag in `app/navigation.ts` registrieren; Labels und Seitentexte in beiden Sprachdateien anlegen. `App.tsx` verbindet nur Authentifizierungs- und Router-Provider.
 
-Beispiel für `frontend/src/features/inspections/api.ts`, sobald der entsprechende Backend-Endpunkt umgesetzt ist:
+Für geschützte Datenabfragen `protectedLoader()` aus `app/loaders.ts` verwenden. Die Seite zusätzlich mit `RequirePrivilege` schützen, falls sie ein Privileg benötigt. Parent- und Child-Loader können parallel laufen; ein Seitenguard allein verhindert deshalb keine unberechtigte Datenabfrage. Der Loader muss seine Sitzung und Berechtigung vor dem API-Aufruf prüfen. Die Navigation wird anhand von Privilegien gefiltert. Die verbindliche Autorisierung und Prüfung konkreter Datensätze bleibt im Backend.
 
-```typescript
-import { api } from '../../auth'
-import { UiError } from '../../errors'
+API-Funktionen verwenden den gemeinsamen Helfer `api()` aus `src/auth.ts` und prüfen Antworten mit `requireOk()` aus `src/auth/response.ts`. Dadurch werden `401`, `403` und übersetzbare Fehler einheitlich behandelt. Relative `/api/...`-URLs und das `request.signal` des Loaders verwenden. DTO-Typen müssen zum Backend-Vertrag passen; TypeScript-Casts validieren keine Antwortdaten. Neue schreibende Actions müssen ihre Rechte selbst prüfen; der Schutz des Leseloaders reicht dafür nicht aus.
 
-interface InspectionView {
-  id: number
-  status: string
-}
+Die aktuelle Sitzung kommt aus `useAuth()`; neue Seiten laden keinen eigenen Anmeldestatus. `RequireAuth` erhält den angeforderten Pfad für die Rückkehr nach der Anmeldung. `Link`, `NavLink` und Router-Navigation statt vollständiger Browser-Neuladungen für interne Seiten verwenden. Für Filter und Pagination `useSearchParams()` nutzen. Die Wohnanlagen-Seite zeigt die Verwendung von `useLoaderData()` und paginierten Daten.
 
-interface InspectionPage {
-  content: InspectionView[]
-  page: {
-    size: number
-    number: number
-    totalElements: number
-    totalPages: number
-  }
-}
-
-export async function listInspections(): Promise<InspectionPage> {
-  const response = await api('/api/inspections?page=0&size=20')
-  if (!response.ok) {
-    throw new UiError('errors.inspections')
-  }
-  return (await response.json()) as InspectionPage
-}
-```
-
-Für das Beispiel zuerst den Schlüssel `errors.inspections` in beiden Sprachdateien ergänzen. Die Typen müssen dem vereinbarten DTO-Vertrag entsprechen; ein TypeScript-Cast validiert keine Serverantwort. `api()` prüft HTTP-Fehler nicht selbst, deshalb `response.ok` beziehungsweise die relevanten Statuscodes auswerten. Bei schreibenden Requests Methode, JSON-Body und `Content-Type` explizit setzen.
-
-Das Nutzerprofil aus `/api/me` enthält `privileges`. Damit Bedienelemente und Ansichten sichtbar machen, zum Beispiel anhand von `user.privileges.includes('INSPECTION_READ')`. Die vorhandene Ladefunktion in `App.tsx` lädt nur Gruß und Wohnanlagen; das neue Feature muss dort oder in seiner eigenen Komponente ausdrücklich angebunden werden.
-
-Ladezustand, leere Ergebnisse, Fehler, abgelaufene Anmeldung und fehlende Rechte darstellen. Bei paginierten Listen auch weitere Seiten erreichbar machen. Das Ausblenden einer Schaltfläche ergänzt die Rechteprüfung im Backend, ersetzt sie aber nicht. Beschriftungen, Tastaturbedienung und verständliche Rückmeldungen bei der Umsetzung mitprüfen.
+Ladezustand, leere Ergebnisse, Fehler und fehlende Rechte darstellen. Das gemeinsame Layout bietet Navigation, Sprachwahl, Logout und Ladeanzeige. Nach dem Sprachwechsel werden aktuelle Loader revalidiert. Zusätzliche Abfragen außerhalb der Loader müssen diesen Wechsel selbst behandeln. Beschriftungen, Tastaturbedienung und verständliche Rückmeldungen bei der Umsetzung mitprüfen.
 
 ### Texte und Lokalisierung
 
@@ -170,7 +143,7 @@ Die gemeinsame Initialisierung in `src/i18n.ts` verwenden. Sie behandelt gespeic
 
 Das Backend bekommt die Sprache über `Accept-Language` vom gemeinsamen `api()`-Helfer. Für vom Server formulierte Texte die vorhandene `MessageSource` und die auf Deutsch/Englisch begrenzte `LocaleConfig` nutzen. Deutsche Standardtexte stehen in `messages.properties`, englische in `messages_en.properties`. Beispiel ist der `GreetingController`; Parameter werden dort über `{0}`, `{1}` eingesetzt, unabhängig von der `{{name}}`-Syntax des Frontends. Sprachabhängige Antworten mit `Content-Language` kennzeichnen. Maschinenlesbare IDs, Statuswerte, Authorities und gespeicherte Nutzerdaten bleiben sprachunabhängig. Neue Fachfehler möglichst über stabile Fehlercodes an die Oberfläche übergeben, die sie in ihre eigenen Texte übersetzt.
 
-Der aktuelle Sprachwechsel lädt das Dashboard und damit den lokalisierten Gruß neu. Neue serverseitig lokalisierte Ansichten müssen ihre Inhalte ebenfalls bei Sprachwechsel neu laden und gegebenenfalls Caches nach Sprache trennen. Neue Sprachen erfordern zusätzlich die Ressourcen, unterstützten Sprachen und Auswahl im Frontend sowie bei Backend-Texten die Locale-Konfiguration und Message-Bundles.
+Der aktuelle Sprachwechsel revalidiert die aktiven Routen und lädt damit auch den lokalisierten Gruß neu. Neue serverseitig lokalisierte Ansichten sollen ihre Daten über Routen-Loader beziehen; zusätzliche Abfragen und Caches außerhalb der Loader müssen die Sprache selbst berücksichtigen. Neue Sprachen erfordern zusätzlich die Ressourcen, unterstützten Sprachen und Auswahl im Frontend sowie bei Backend-Texten die Locale-Konfiguration und Message-Bundles.
 
 Bei neuen Texten die Schlüssel in beiden Sprachen sowie Platzhalter und Pluralformen prüfen. Mindestens einen relevanten Sprachwechsel in den Feature-Tests und im Browser berücksichtigen. Nutzer- und Wohnanlagennamen sind Fachdaten und werden nicht durch Übersetzungen ersetzt.
 
@@ -227,6 +200,7 @@ Vor der Integration die aktuelle Definition of Done abgleichen: Code Review, erf
 - [ ] Backend-Code liegt im zuständigen Fachpaket; API verwendet DTOs.
 - [ ] Privileg und Zugriff auf konkrete Datensätze werden serverseitig geprüft.
 - [ ] Startdaten und Tests berücksichtigen die neuen Berechtigungen.
+- [ ] Frontend-Routen und Navigation sind registriert; geschützte Loader und Actions prüfen Sitzung und Privileg.
 - [ ] Frontend verwendet `api()` und behandelt Laden, Fehler und leere Ergebnisse.
 - [ ] Erlaubte und verbotene Aktionen sind mit den betroffenen Rollen geprüft.
 - [ ] Neue UI-Texte sind in Deutsch und Englisch vorhanden; Sprachwechsel und Fehleranzeigen funktionieren.

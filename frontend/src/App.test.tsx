@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { createMemoryRouter } from 'react-router'
 import App from './App'
+import { createAppRoutes } from './app/router'
+import { invalidateSession } from './auth/session'
 import i18n from './i18n'
 import { UiError } from './errors'
-import { api, login } from './auth'
+import { api, login, logout, type LoggedInUser } from './auth'
 
 vi.mock('./auth', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
@@ -13,40 +16,142 @@ vi.mock('./auth', () => ({
   logout: vi.fn(),
 }))
 
+const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
+const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
+let signedIn: LoggedInUser | null
+let routers: ReturnType<typeof createMemoryRouter>[] = []
+
+function mount(path = '/') {
+  const router = createMemoryRouter(createAppRoutes(), { initialEntries: [path] })
+  routers.push(router)
+  render(<App router={router} />)
+  return router
+}
+
 beforeEach(async () => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
+  invalidateSession()
+  signedIn = null
   await i18n.changeLanguage('de')
+  vi.mocked(login).mockImplementation(async (key) => { signedIn = key === 'student' ? student : clerk })
+  vi.mocked(logout).mockImplementation(async () => { signedIn = null })
+  vi.mocked(api).mockImplementation(async (path) => {
+    if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
+    if (path === '/api/greeting') return new Response(i18n.resolvedLanguage === 'en' ? 'Hello Alex, welcome to Sonne.' : 'Hallo Alex, willkommen in Sonne.')
+    if (path.startsWith('/api/residences?')) {
+      const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
+      return Response.json({
+        content: [{ id: page + 1, name: page === 0 ? 'Sonne' : 'Mond' }],
+        page: { number: page, size: 20, totalPages: 2, totalElements: 21 },
+      })
+    }
+    throw new Error(`Unexpected API call: ${path}`)
+  })
 })
-afterEach(() => { cleanup() })
+afterEach(() => {
+  cleanup()
+  routers.forEach((router) => router.dispose())
+  routers = []
+})
+
+it('restores the requested path, query and fragment after mock login', async () => {
+  const router = mount('/residences?page=1#assigned')
+  fireEvent.click(await screen.findByRole('button', { name: 'Sachbearbeitung' }))
+  await screen.findByText('Mond')
+  expect(router.state.location.pathname).toBe('/residences')
+  expect(router.state.location.search).toBe('?page=1')
+  expect(router.state.location.hash).toBe('#assigned')
+  expect(login).toHaveBeenCalledWith('clerk', '/residences?page=1#assigned')
+})
+
+it('restores an existing session when opening a protected page directly', async () => {
+  signedIn = clerk
+  mount('/residences')
+  await screen.findByText('Sonne')
+  expect(login).not.toHaveBeenCalled()
+})
+
+it('does not call protected APIs before login or with a missing privilege', async () => {
+  const router = mount('/residences')
+  await screen.findByRole('button', { name: 'Studierende' })
+  expect(vi.mocked(api).mock.calls.every(([path]) => path === '/api/me')).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'Studierende' }))
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
+  expect(vi.mocked(api).mock.calls.some(([path]) => path.startsWith('/api/residences'))).toBe(false)
+  expect(screen.queryByRole('link', { name: 'Wohnanlagen' })).toBeNull()
+})
+
+it('uses the query string for pagination and supports browser back navigation', async () => {
+  signedIn = clerk
+  const router = mount('/residences')
+  await screen.findByText('Sonne')
+  fireEvent.click(screen.getByRole('button', { name: 'Weiter' }))
+  await screen.findByText('Mond')
+  expect(router.state.location.search).toBe('?page=1')
+  await act(async () => { await router.navigate(-1) })
+  await screen.findByText('Sonne')
+})
 
 it('switches UI language and reloads the greeting without signing in again', async () => {
-  let signedIn = false
-  vi.mocked(login).mockImplementation(async () => { signedIn = true })
-  vi.mocked(api).mockImplementation(async (path) => {
-    if (path === '/api/me') {
-      return signedIn
-        ? Response.json({ userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ'] })
-        : new Response(null, { status: 401 })
-    }
-    return new Response(i18n.resolvedLanguage === 'en' ? 'Hello Alex, welcome to Sonne.' : 'Hallo Alex, willkommen in Sonne.')
-  })
-  render(<App />)
-  const student = await screen.findByRole('button', { name: 'Studierende' })
-  fireEvent.click(student)
+  mount()
+  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
   await screen.findByText('Hallo Alex, willkommen in Sonne.')
   fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'en' } })
   await screen.findByText('Hello Alex, welcome to Sonne.')
   expect(screen.getByRole('button', { name: 'Sign out' })).toBeDefined()
   expect(document.documentElement.lang).toBe('en')
-  expect(localStorage.getItem('aume.language')).toBe('en')
   expect(login).toHaveBeenCalledTimes(1)
 })
 
-it('translates API error keys and keeps the language picker usable after a failure', async () => {
+it('logs out on a protected page and requires login before showing its data again', async () => {
+  signedIn = clerk
+  const router = mount('/residences')
+  await screen.findByText('Sonne')
+  fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
+  await screen.findByRole('button', { name: 'Studierende' })
+  expect(screen.queryByText('Sonne')).toBeNull()
+  expect(router.state.location.pathname).toBe('/login')
+  expect(logout).toHaveBeenCalledTimes(1)
+})
+
+it('returns an expired session to login while retaining the requested destination', async () => {
+  signedIn = clerk
+  vi.mocked(api).mockImplementation(async (path) => path === '/api/me'
+    ? Response.json(clerk) : new Response(null, { status: 401 }))
+  const router = mount('/residences?page=1')
+  await screen.findByRole('button', { name: 'Studierende' })
+  expect(router.state.location.pathname).toBe('/login')
+  expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/residences?page=1')
+})
+
+it('keeps the pending destination when a session expires during navigation', async () => {
+  signedIn = clerk
+  const router = mount('/')
+  await screen.findByRole('heading', { name: 'Übersicht' })
+  vi.mocked(api).mockImplementation(async () => new Response(null, { status: 401 }))
+  await act(async () => { await router.navigate('/residences?page=1#assigned') })
+  await screen.findByRole('button', { name: 'Studierende' })
+  expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/residences?page=1#assigned')
+})
+
+it('shows the forbidden page when the backend rejects an otherwise permitted action', async () => {
+  signedIn = clerk
+  vi.mocked(api).mockImplementation(async (path) => path === '/api/me'
+    ? Response.json(clerk) : new Response(null, { status: 403 }))
+  mount('/residences')
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+})
+
+it('renders a translated not-found page for unknown URLs', async () => {
+  mount('/does-not-exist')
+  await screen.findByRole('heading', { name: 'Seite nicht gefunden' })
+})
+
+it('renders translated loader errors and keeps the language picker usable', async () => {
   vi.mocked(api).mockRejectedValue(new UiError('errors.profile'))
-  render(<App />)
+  mount()
   await screen.findByText('Das Nutzerprofil konnte nicht geladen werden.')
-  await waitFor(() => { expect((screen.getByRole('combobox') as HTMLSelectElement).disabled).toBe(false) })
   fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } })
   await screen.findByText('The user profile could not be loaded.')
   await waitFor(() => { expect((screen.getByRole('combobox') as HTMLSelectElement).disabled).toBe(false) })

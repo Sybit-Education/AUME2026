@@ -156,7 +156,13 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, die W
 
 Das Frontend unter http://localhost:5173 bietet drei Schaltflächen zur Anmeldung an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak wird in diesem Profil nicht benötigt. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
 
-Studierende sehen den Gruß von `GET /api/greeting`; Objektbetreuung und Sachbearbeitung sehen ihre zugewiesene Wohnanlage unter `GET /api/residences`. Listen sind paginiert (`?page=0&size=20`) und enthalten `content` und `page`. Die API-Beschreibung steht unter http://localhost:8080/swagger-ui.html.
+Nach der Anmeldung öffnet sich die Übersicht unter `/`. Studierende sehen dort den Gruß von `GET /api/greeting`. Objektbetreuung und Sachbearbeitung öffnen über die Navigation `/residences`; diese Seite lädt die zugewiesenen Wohnanlagen von `GET /api/residences`. Listen sind paginiert (`?page=0&size=20`) und enthalten `content` und `page`. Die API-Beschreibung steht unter http://localhost:8080/swagger-ui.html.
+
+## Frontend-Seiten und Feature-Integration
+
+React Router verwaltet `/login`, die geschützte Übersicht `/`, die Wohnanlagen-Seite `/residences`, `/forbidden` und eine Ansicht für unbekannte URLs. Anmeldung und Navigation berücksichtigen die aktuellen Privilegien. Beim direkten Aufruf einer geschützten Seite wird das Ziel einschließlich Query und Fragment über die Anmeldung hinweg erhalten. Der vorhandene Nginx-SPA-Fallback unterstützt direkte Links und Neuladen im Docker-Frontend.
+
+Feature-Teams ergänzen eigene Routen unter `frontend/src/features/` und registrieren sie in `frontend/src/app/router.ts`. Das gemeinsame Layout enthält Navigation, Sprachwahl und Logout. Die [Routing-Anleitung](frontend/ROUTING.md) erklärt Anmeldung, geschützte Loader, Navigation, Tests und die Erweiterung um neue Fachseiten. Kontrollseiten sind noch nicht implementiert.
 
 ## Sprachen und Lokalisierung
 
@@ -186,7 +192,7 @@ Ohne `dev`-Profil sind Mock-Anmeldung und Mock-Daten deaktiviert. Das Backend ak
 | `KEYCLOAK_ISSUER_URI` | `https://identity.example.org/realms/seezeit` |
 | `KEYCLOAK_AUDIENCE` | `seezeit-api` |
 
-Der Keycloak-Client muss öffentlich sein (ohne Client-Secret), Standard Flow und PKCE unterstützen sowie genaue Redirect-, Logout- und Web-Origin-Adressen für das Frontend erlauben. Ein Audience-Mapper muss `seezeit-api` in die Access-Token aufnehmen. Der Issuer samt Discovery- und JWKS-Endpunkten muss vom Backend erreichbar sein. Signatur, Issuer, Audience und Gültigkeitszeit werden geprüft.
+Der Keycloak-Client muss öffentlich sein (ohne Client-Secret), Standard Flow und PKCE unterstützen sowie passende Redirect-, Logout- und Web-Origin-Adressen für das Frontend erlauben. Der Login-Callback verwendet `/login?returnTo=...`; beispielsweise kann eine auf den konkreten Origin begrenzte Redirect-URI `https://app.example.org/login*` freigegeben werden. Weitere Details stehen in der [Routing-Anleitung](frontend/ROUTING.md#anmeldung-und-rückkehr-zur-angeforderten-seite). Ein Audience-Mapper muss `seezeit-api` in die Access-Token aufnehmen. Der Issuer samt Discovery- und JWKS-Endpunkten muss vom Backend erreichbar sein. Signatur, Issuer, Audience und Gültigkeitszeit werden geprüft.
 
 Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem bereits angelegten Anwendungsnutzer zugeordnet. Diese Zuordnung und die Rollen müssen durch einen vertrauenswürdigen Provisionierungsprozess gesetzt werden; unbekannte Identitäten erhalten keinen Zugriff. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Ein Provisionierungswerkzeug und ein betriebener Keycloak sind nicht Teil dieses Templates. Die bestehende H2-/`create-drop`-Konfiguration bleibt für das Template erhalten; dauerhafte Speicherung und Migrationen müssen vor einem echten Betrieb eingerichtet werden. ADR-0006 bleibt ein Vorschlag.
 

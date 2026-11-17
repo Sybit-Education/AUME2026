@@ -27,5 +27,23 @@
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
     "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
+  },
+  "navigation": {
+    "main": "Hauptnavigation",
+    "dashboard": "Übersicht",
+    "residences": "Wohnanlagen"
+  },
+  "pages": {
+    "welcome": "Willkommen, {{name}}.",
+    "openResidences": "Zugewiesene Wohnanlagen öffnen",
+    "noResidences": "Keine Wohnanlagen vorhanden.",
+    "pagination": "Seitenauswahl",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "forbidden": "Zugriff nicht erlaubt",
+    "forbiddenDescription": "Für diese Seite fehlt dir die Berechtigung.",
+    "notFound": "Seite nicht gefunden",
+    "notFoundDescription": "Unter dieser Adresse gibt es keine Seite.",
+    "error": "Die Seite konnte nicht geladen werden."
   }
 }

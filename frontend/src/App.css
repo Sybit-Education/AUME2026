@@ -44,3 +44,15 @@
   font: inherit;
   padding: 0.4rem;
 }
+
+.page-navigation, .pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.page-navigation a[aria-current="page"] {
+  font-weight: bold;
+  text-decoration: underline;
+}

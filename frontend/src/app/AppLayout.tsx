@@ -1,0 +1,64 @@
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
+import { useTranslation } from 'react-i18next'
+import { NavLink, Outlet, useNavigation, useRevalidator } from 'react-router'
+import { useAuth } from '../auth/AuthContext'
+import { errorKey, type ErrorKey } from '../errors'
+import { supportedLanguage } from '../i18n'
+import { navigation } from './navigation'
+
+export default function AppLayout({ children }: PropsWithChildren) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'de'
+  const previousLanguage = useRef(language)
+  const auth = useAuth()
+  const transition = useNavigation()
+  const revalidator = useRevalidator()
+  const busy = auth.busy || transition.state !== 'idle' || revalidator.state !== 'idle'
+  const [error, setError] = useState<ErrorKey | null>(null)
+
+  useEffect(() => {
+    if (previousLanguage.current !== language) {
+      previousLanguage.current = language
+      void revalidator.revalidate()
+    }
+  }, [language, revalidator])
+
+  async function changeLanguage(value: string) {
+    const next = supportedLanguage(value)
+    if (!next || next === language) return
+    try { await i18n.changeLanguage(next) } catch { setError('errors.language') }
+  }
+
+  async function signOut() {
+    setError(null)
+    try { await auth.signOut() } catch (cause) { setError(errorKey(cause, 'errors.logout')) }
+  }
+
+  return (
+    <div className="sample" aria-busy={busy}>
+      <header className="sample-header">
+        <h1>{t('app.name')}</h1>
+        <label className="language-picker">
+          {t('app.language')}
+          <select value={language} disabled={busy} onChange={(event) => void changeLanguage(event.target.value)}>
+            <option value="de" lang="de">Deutsch</option>
+            <option value="en" lang="en">English</option>
+          </select>
+        </label>
+      </header>
+      {auth.user && (
+        <>
+          <p>{auth.user.name}{' '}<button disabled={busy} onClick={() => void signOut()}>{t('auth.logout')}</button></p>
+          <nav className="page-navigation" aria-label={t('navigation.main')}>
+            {navigation.filter((item) => !item.privilege || auth.user!.privileges.includes(item.privilege)).map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.to === '/'}>{t(item.label)}</NavLink>
+            ))}
+          </nav>
+        </>
+      )}
+      {busy && <p role="status">{t('app.loading')}</p>}
+      {error && <p role="alert">{t(error)}</p>}
+      <main>{children ?? <Outlet />}</main>
+    </div>
+  )
+}
