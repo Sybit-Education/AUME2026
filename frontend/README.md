@@ -1,75 +1,30 @@
-# React + TypeScript + Vite
+# Seezeit-Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React-/TypeScript-Frontend für das AUME2026-Backend. Die vollständige Einrichtung von Java, Node.js, Anmeldung und Docker steht im [Projekt-README](../README.md).
 
-Currently, two official plugins are available:
+Aus dem Repository-Root in einem eigenen Terminal starten. Unter macOS/Linux:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+cd frontend
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Unter Windows (PowerShell):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```powershell
+cd frontend
+npm.cmd ci
+npm.cmd run dev
 ```
+
+Das Backend muss parallel auf Port 8080 mit dem Profil `dev` laufen. Das Frontend ist unter http://localhost:5173 erreichbar und leitet `/api` an das Backend weiter. Für die Entwicklung stehen drei Mock-Nutzer zur Verfügung: Studierende, Objektbetreuung und Sachbearbeitung. Keycloak ist im `dev`-Profil nicht erforderlich.
+
+Prüfungen im Verzeichnis `frontend` (unter PowerShell entsprechend `npm.cmd` verwenden):
+
+```bash
+npm run lint
+npm run build
+```
+
+`npm run preview` zeigt nach `npm run build` das gebaute Frontend standardmäßig unter http://localhost:4173. Der API-Proxy wird aus der Vite-Konfiguration übernommen; das Backend muss weiterhin laufen. Für die lokale Entwicklung mit automatischem Neuladen `npm run dev` verwenden; im Docker-Setup übernimmt Nginx den API-Proxy.
