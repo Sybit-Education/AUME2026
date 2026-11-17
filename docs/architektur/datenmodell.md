@@ -1,0 +1,399 @@
+# Datenmodell
+
+Die JPA-Entities im Backend sind das Schema. Hibernate legt die Tabellen im Profil `dev` per `ddl-auto: create-drop` in einer H2-Datenbank an. Es gibt noch keine Migrationen und keine PostgreSQL-Instanz.
+
+Jedes Modul schreibt nur in die eigenen Tabellen ([ADR-0003](adr/0003-structure-the-backend-as-a-modular-monolith.md)). Fremdschlüssel über Modulgrenzen sind die gemeinsamen Verträge. Dateien selbst liegen im privaten Dateispeicher, in der Datenbank steht nur `attachments` ([ADR-0005](adr/0005-use-postgresql-and-private-attachment-storage.md)).
+
+`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal.
+
+## Überblick
+
+```mermaid
+erDiagram
+    residences ||--o{ flats : enthaelt
+    residences ||--o{ users : template
+    residences ||--o{ staff_assignments : zustaendigkeit
+    users ||--o{ staff_assignments : personal
+    flats ||--o{ memberships : bewohnt
+    users ||--o{ memberships : mitglied
+    users ||--o{ attachments : laedt_hoch
+
+    checklist_versions ||--o{ checklist_criteria : enthaelt
+    checklist_criteria ||--o{ criterion_images : bebildert
+    attachments ||--o| criterion_images : datei
+
+    residences ||--o{ inspection_periods : plant
+    flats ||--o{ inspections : wird_kontrolliert
+    inspection_periods ||--o{ inspections : im_zeitraum
+    inspections ||--o{ inspections : nachkontrolle
+    checklist_versions ||--o{ inspections : fassung
+    inspections ||--o{ inspection_findings : bewertet
+    checklist_criteria ||--o{ inspection_findings : kriterium
+    inspection_findings ||--o{ finding_photos : belegt
+    attachments ||--o| finding_photos : datei
+
+    inspections ||--o{ inspection_revisions : korrigiert
+    inspections ||--o{ escalations : eskaliert
+    inspections ||--o{ inspection_comments : rueckfrage
+    memberships ||--o{ handover_photos : einzug
+    attachments ||--o| handover_photos : datei
+
+    flats ||--o{ wg_tasks : organisiert
+    wg_tasks ||--o{ wg_task_assignments : zuteilt
+
+    users ||--o| notification_preferences : einstellung
+    users ||--o{ notifications : hinweis
+```
+
+## Identität und Wohnen
+
+Paket `de.seezeit.aume.residence` und `de.seezeit.aume.user`.
+
+```mermaid
+erDiagram
+    residences ||--o{ flats : enthaelt
+    residences ||--o{ users : template
+    users }o--o{ roles : hat
+    roles }o--o{ privileges : buendelt
+    residences ||--o{ staff_assignments : anlage
+    users ||--o{ staff_assignments : personal
+    flats ||--o{ memberships : wg
+    users ||--o{ memberships : bewohnende
+    flats ||--o{ invitations : ziel
+    users ||--o{ invitations : erstellt
+    users |o--o{ invitations : loest_ein
+
+    residences {
+        bigint id PK
+        varchar name
+    }
+    flats {
+        bigint id PK
+        bigint residence_id FK
+        varchar label
+        int capacity
+    }
+    users {
+        bigint id PK
+        varchar user_key UK
+        varchar name
+        varchar identity_issuer
+        varchar identity_subject
+        bigint residence_id FK
+    }
+    roles {
+        bigint id PK
+        varchar name UK
+    }
+    privileges {
+        bigint id PK
+        varchar name UK
+    }
+    staff_assignments {
+        bigint id PK
+        bigint user_id FK
+        bigint residence_id FK
+    }
+    memberships {
+        bigint id PK
+        bigint flat_id FK
+        bigint user_id FK
+        date valid_from
+        date valid_to
+    }
+    invitations {
+        bigint id PK
+        bigint flat_id FK
+        varchar token_hash UK
+        timestamptz expires_at
+        bigint created_by FK
+        timestamptz created_at
+        bigint used_by FK
+        timestamptz used_at
+        timestamptz revoked_at
+    }
+```
+
+`memberships.valid_to` leer heißt aktuell eingezogen. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
+
+## Anhänge
+
+Paket `de.seezeit.aume.attachment`. `storage_key` verweist auf die Datei im privaten Speicher.
+
+```mermaid
+erDiagram
+    users ||--o{ attachments : laedt_hoch
+    attachments {
+        bigint id PK
+        varchar storage_key UK
+        varchar content_type
+        bigint size_bytes
+        bigint uploaded_by FK
+        timestamptz uploaded_at
+    }
+```
+
+## Standards
+
+Paket `de.seezeit.aume.standard`. Eine veröffentlichte `checklist_versions`-Zeile bleibt unverändert; geänderte Kriterien ergeben eine neue Fassung ([ADR-0007](adr/0007-version-standards-and-preserve-published-inspection-history.md)).
+
+```mermaid
+erDiagram
+    users ||--o{ checklist_versions : legt_an
+    checklist_versions ||--o{ checklist_criteria : enthaelt
+    checklist_criteria ||--o{ criterion_images : bebildert
+    attachments ||--o| criterion_images : datei
+    users ||--o{ info_pages : pflegt
+
+    checklist_versions {
+        bigint id PK
+        int version_no UK
+        varchar status
+        bigint created_by FK
+        timestamptz created_at
+        timestamptz published_at
+    }
+    checklist_criteria {
+        bigint id PK
+        bigint checklist_version_id FK
+        varchar area
+        varchar title
+        varchar description
+        int position
+    }
+    criterion_images {
+        bigint id PK
+        bigint criterion_id FK
+        bigint attachment_id FK
+        varchar kind
+    }
+    info_pages {
+        bigint id PK
+        varchar slug UK
+        varchar title
+        varchar body
+        bigint updated_by FK
+        timestamptz updated_at
+    }
+```
+
+`checklist_versions.status`: `DRAFT`, `PUBLISHED`, `RETIRED`. `criterion_images.kind`: `GOOD`, `BAD`.
+
+## Kontrollplanung
+
+Paket `de.seezeit.aume.planning`. Ein Zeitraum gilt für eine Wohnanlage; die Kontrolle je WG liegt bei `inspections`.
+
+```mermaid
+erDiagram
+    residences ||--o{ inspection_periods : plant
+    users ||--o{ inspection_periods : legt_an
+    users |o--o{ inspection_periods : kuendigt_an
+
+    inspection_periods {
+        bigint id PK
+        bigint residence_id FK
+        date starts_on
+        date ends_on
+        varchar note
+        bigint created_by FK
+        timestamptz created_at
+        bigint announced_by FK
+        timestamptz announced_at
+    }
+```
+
+## Kontrollen
+
+Paket `de.seezeit.aume.inspection`. Eine Nachkontrolle ist selbst eine `inspections`-Zeile mit `round` 1 oder 2 und `parent_inspection_id`. Das Gesamtergebnis setzt die prüfende Person.
+
+```mermaid
+erDiagram
+    flats ||--o{ inspections : wird_kontrolliert
+    inspection_periods |o--o{ inspections : im_zeitraum
+    inspections |o--o{ inspections : nachkontrolle
+    checklist_versions |o--o{ inspections : fassung
+    users |o--o{ inspections : prueft
+    users |o--o{ inspections : vier_augen
+    users |o--o{ inspections : veroeffentlicht
+    inspections ||--o{ inspection_findings : bewertet
+    checklist_criteria ||--o{ inspection_findings : kriterium
+    inspection_findings |o--o{ inspection_findings : erneut_geprueft
+    inspection_findings ||--o{ finding_photos : belegt
+    attachments ||--o| finding_photos : datei
+
+    inspections {
+        bigint id PK
+        bigint flat_id FK
+        bigint period_id FK
+        bigint parent_inspection_id FK
+        int round
+        bigint checklist_version_id FK
+        bigint inspector_id FK
+        bigint co_inspector_id FK
+        varchar status
+        varchar overall_result
+        date due_on
+        timestamptz inspected_at
+        bigint published_by FK
+        timestamptz published_at
+        boolean handover
+        bigint version
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    inspection_findings {
+        bigint id PK
+        bigint inspection_id FK
+        bigint criterion_id FK
+        varchar rating
+        varchar severity
+        varchar note
+        boolean building_cause_suspected
+        bigint previous_finding_id FK
+    }
+    finding_photos {
+        bigint id PK
+        bigint finding_id FK
+        bigint attachment_id FK
+    }
+```
+
+`inspections.status`: `PLANNED`, `DRAFT`, `FINALIZED`, `PUBLISHED`. `overall_result`: `PASSED`, `FAILED`. `inspection_findings` ist je Kontrolle und Kriterium eindeutig. `rating`: `OK`, `DEFICIENT`, `RESOLVED_ON_SITE`. `severity` nur bei `DEFICIENT`: `LIGHT`, `SEVERE`. `version` ist das Optimistic-Lock-Feld.
+
+## Ergebnisse und Nachkontrollen
+
+Paket `de.seezeit.aume.result`. Nachkontrollen stehen in `inspections`. Hier liegen Korrekturen, Eskalationen, Rückfragen und Einzugsfotos.
+
+```mermaid
+erDiagram
+    inspections ||--o{ inspection_revisions : korrigiert
+    users ||--o{ inspection_revisions : autor
+    inspections ||--o{ escalations : eskaliert
+    users ||--o{ escalations : autor
+    inspections ||--o{ inspection_comments : rueckfrage
+    users ||--o{ inspection_comments : autor
+    memberships ||--o{ handover_photos : einzug
+    attachments ||--o| handover_photos : datei
+
+    inspection_revisions {
+        bigint id PK
+        bigint inspection_id FK
+        int revision_no
+        varchar reason
+        varchar snapshot
+        bigint created_by FK
+        timestamptz created_at
+    }
+    escalations {
+        bigint id PK
+        bigint inspection_id FK
+        varchar kind
+        varchar note
+        bigint created_by FK
+        timestamptz created_at
+    }
+    inspection_comments {
+        bigint id PK
+        bigint inspection_id FK
+        bigint author_id FK
+        varchar body
+        timestamptz created_at
+    }
+    handover_photos {
+        bigint id PK
+        bigint membership_id FK
+        bigint attachment_id FK
+        varchar area
+    }
+```
+
+`inspection_revisions` ist je Kontrolle und `revision_no` eindeutig; `snapshot` ist das veröffentlichte Ergebnis als JSON. `escalations.kind`: `CLEANING_COMPANY`, `WARNING`. Der Übergabezustand aus der Kontrolle vor dem Auszug ist `inspections.handover`.
+
+## WG-Organisation
+
+Paket `de.seezeit.aume.wg`. Nur für Mitglieder der WG sichtbar, nicht für Personal und nicht in Auswertungen.
+
+```mermaid
+erDiagram
+    flats ||--o{ wg_tasks : organisiert
+    checklist_criteria |o--o{ wg_tasks : leitet_ab
+    wg_tasks ||--o{ wg_task_assignments : zuteilt
+    users ||--o{ wg_task_assignments : uebernimmt
+
+    wg_tasks {
+        bigint id PK
+        bigint flat_id FK
+        varchar title
+        bigint criterion_id FK
+        int position
+        timestamptz archived_at
+    }
+    wg_task_assignments {
+        bigint id PK
+        bigint task_id FK
+        bigint user_id FK
+        date week_start
+        timestamptz completed_at
+    }
+```
+
+`wg_task_assignments` ist je Aufgabe und Woche eindeutig.
+
+## Benachrichtigungen
+
+Paket `de.seezeit.aume.notification`. `outbox_jobs` wird in derselben Transaktion wie das Fachereignis geschrieben und vom Worker abgearbeitet ([ADR-0008](adr/0008-run-background-work-through-a-transactional-outbox.md)).
+
+```mermaid
+erDiagram
+    users ||--o| notification_preferences : einstellung
+    users ||--o{ notifications : hinweis
+
+    notification_preferences {
+        bigint user_id PK
+        boolean email_enabled
+        boolean push_enabled
+        boolean task_reminders
+    }
+    notifications {
+        bigint id PK
+        bigint user_id FK
+        varchar type
+        varchar title
+        varchar link
+        timestamptz created_at
+        timestamptz read_at
+    }
+    outbox_jobs {
+        bigint id PK
+        varchar type
+        varchar payload
+        varchar idempotency_key UK
+        varchar status
+        int attempts
+        timestamptz next_attempt_at
+        timestamptz locked_until
+        varchar last_error
+        timestamptz created_at
+    }
+```
+
+`outbox_jobs.status`: `PENDING`, `DONE`, `FAILED`.
+
+## Audit
+
+Paket `de.seezeit.aume.audit`. Auswertungen (Quoten, Mängelmuster) haben keine eigenen Tabellen; sie werden aus `inspections` und `inspection_findings` gelesen.
+
+```mermaid
+erDiagram
+    users |o--o{ audit_events : handelt
+
+    audit_events {
+        bigint id PK
+        timestamptz occurred_at
+        bigint actor_id FK
+        varchar entity_type
+        bigint entity_id
+        varchar action
+        varchar details
+    }
+```

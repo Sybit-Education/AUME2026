@@ -2,7 +2,7 @@
 
 AUME2026 ist die Anwendung für Seezeit. Studierende, Objektbetreuung und Sachbearbeitung bereiten damit WG-Kontrollen vor, führen sie durch und veröffentlichen die Ergebnisse. Im Repository liegen das React-Frontend, das Spring-Boot-Backend und alles zum Starten.
 
-Fachliches, Architektur und Absprachen im Team stehen in der [Dokumentation](docs/README.md). Wie neue Features in das Grundgerüst integriert werden, erklärt die [Contributing-Anleitung](CONTRIBUTING.md).
+Fachliches, Architektur und Absprachen im Team stehen in der [Dokumentation](docs/README.md). Das Datenmodell der Backend-Entities steht als ER-Diagramm im [Datenmodell](docs/architektur/datenmodell.md). Wie neue Features in das Grundgerüst integriert werden, erklärt die [Contributing-Anleitung](CONTRIBUTING.md).
 
 ## Voraussetzungen
 
