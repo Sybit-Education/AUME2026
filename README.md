@@ -10,7 +10,7 @@ Fachliches, Architektur und Absprachen im Team stehen in der [Dokumentation](doc
 | --- | --- |
 | Git | Repository klonen und Änderungen verwalten |
 | JDK | 21, inklusive `javac` |
-| Node.js mit npm | Für die Entwicklung im Team: Node.js 24 LTS |
+| Node.js mit npm | Für die Entwicklung im Team: Node.js 24 LTS mit aktuellem Patchstand (mindestens 24.15.0) |
 | Maven | Wird in Version 3.10.0 vom eingecheckten Wrapper geladen; keine separate Installation erforderlich |
 | Browser | Aktueller Browser für das Frontend |
 | Docker mit Compose v2 | Optional für den Containerstart |
@@ -158,6 +158,16 @@ Das Frontend unter http://localhost:5173 bietet drei Schaltflächen zur Anmeldun
 
 Studierende sehen den Gruß von `GET /api/greeting`; Objektbetreuung und Sachbearbeitung sehen ihre zugewiesene Wohnanlage unter `GET /api/residences`. Listen sind paginiert (`?page=0&size=20`) und enthalten `content` und `page`. Die API-Beschreibung steht unter http://localhost:8080/swagger-ui.html.
 
+## Sprachen und Lokalisierung
+
+Die Oberfläche unterstützt Deutsch und Englisch. Über die Sprachauswahl im Kopfbereich lässt sich die Sprache ohne erneute Anmeldung wechseln. Gespeicherte Auswahl (`localStorage`, Schlüssel `aume.language`) hat Vorrang vor der ersten unterstützten Browsersprache; ohne passende Sprache wird Deutsch verwendet. Regionale Angaben wie `en-US` werden auf `en` abgebildet. Bei gesperrtem Browserspeicher funktioniert die Auswahl für die aktuelle Sitzung weiter.
+
+Das Frontend verwendet `i18next` und `react-i18next`. Texte liegen in `frontend/src/locales/de.json` und `frontend/src/locales/en.json`; `frontend/src/i18n.ts` initialisiert die Übersetzungen, speichert die Auswahl und setzt das HTML-Attribut `lang`. Fehlende englische Texte fallen auf Deutsch zurück. Die Übersetzungen werden mit der Anwendung gebündelt und benötigen keinen externen Übersetzungsdienst.
+
+Der gemeinsame API-Helfer sendet die gewählte Sprache als `Accept-Language`. Der Gruß unter `/api/greeting` verwendet Spring-Message-Bundles (`backend/src/main/resources/messages.properties` für Deutsch, `messages_en.properties` für Englisch) und liefert `Content-Language` zurück. Ohne unterstützte Anforderung ist die Antwort deutsch, unabhängig von der Sprache des Servers. Beim Sprachwechsel wird der aktuelle Inhalt erneut geladen. Namen, Wohnanlagen und andere Fachdaten werden nicht automatisch übersetzt. Technische API-Fehlerantworten sind kein Übersetzungsvertrag; die Oberfläche zeigt eigene übersetzte Meldungen an.
+
+Für Keycloak wird die gewählte Sprache beim Anmelden mitgegeben; die verfügbaren Sprachen und Anmeldetexte müssen im Keycloak-Realm ebenfalls eingerichtet werden. Hinweise für neue Features stehen in der [Contributing-Anleitung](CONTRIBUTING.md#texte-und-lokalisierung).
+
 ## Rollen, Berechtigungen und Anmeldung
 
 Nutzer haben mehrere Rollen; Rollen bündeln Berechtigungen. Beide werden als Spring-Security-Authorities geladen (`ROLE_STUDENT` für Rollen, zum Beispiel `GREETING_READ` für Berechtigungen). Die Startdaten sind wiederholbar, vorhandene Rollenzuweisungen werden nicht überschrieben. Rollen und Berechtigungen werden ausschließlich serverseitig zugewiesen. Es gibt keine öffentliche Nutzerregistrierung oder Rollenverwaltung.
@@ -182,7 +192,7 @@ Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem b
 
 ## Prüfungen
 
-Die Prüfungen benötigen keine laufenden Entwicklungsserver. Die Backend-Tests wählen ihre Profile selbst und benötigen keinen Keycloak. Im Repository-Root beginnen.
+Die Prüfungen benötigen keine laufenden Entwicklungsserver. Frontend-Tests laufen mit Vitest; sie prüfen unter anderem Sprachauswahl, Speicherung, Fallbacks und das Umschalten der Oberfläche. Die Backend-Tests wählen ihre Profile selbst und benötigen keinen Keycloak. Im Repository-Root beginnen.
 
 Windows (PowerShell):
 
@@ -192,6 +202,7 @@ cd backend
 cd ../frontend
 npm.cmd ci
 npm.cmd run lint
+npm.cmd test
 npm.cmd run build
 cd ..
 ```
@@ -204,6 +215,7 @@ cd backend
 cd ../frontend
 npm ci
 npm run lint
+npm test
 npm run build
 cd ..
 ```

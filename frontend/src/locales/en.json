@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Seezeit",
+    "language": "Language",
+    "loading": "Loading …"
+  },
+  "auth": {
+    "mockLogin": "Sign in as a test user",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "retry": "Try again"
+  },
+  "roles": {
+    "student": "Student",
+    "caretaker": "Caretaker",
+    "clerk": "Administrative staff"
+  },
+  "errors": {
+    "authLoad": "Sign-in could not be loaded. Please try again.",
+    "authConfig": "Sign-in is not configured.",
+    "sessionConfirm": "The session could not be verified.",
+    "login": "Sign-in failed.",
+    "logout": "Sign-out failed. Please try again.",
+    "profile": "The user profile could not be loaded.",
+    "greeting": "The greeting could not be loaded.",
+    "residences": "The residences could not be loaded.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "network": "The backend is unreachable.",
+    "language": "The language could not be changed. Please try again."
+  }
+}

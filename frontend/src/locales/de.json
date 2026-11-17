@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Seezeit",
+    "language": "Sprache",
+    "loading": "Wird geladen …"
+  },
+  "auth": {
+    "mockLogin": "Testnutzer anmelden",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "retry": "Erneut versuchen"
+  },
+  "roles": {
+    "student": "Studierende",
+    "caretaker": "Objektbetreuung",
+    "clerk": "Sachbearbeitung"
+  },
+  "errors": {
+    "authLoad": "Die Anmeldung konnte nicht geladen werden. Bitte erneut versuchen.",
+    "authConfig": "Die Anmeldung ist nicht konfiguriert.",
+    "sessionConfirm": "Die Sitzung konnte nicht bestätigt werden.",
+    "login": "Die Anmeldung ist fehlgeschlagen.",
+    "logout": "Die Abmeldung ist fehlgeschlagen. Bitte erneut versuchen.",
+    "profile": "Das Nutzerprofil konnte nicht geladen werden.",
+    "greeting": "Der Gruß konnte nicht geladen werden.",
+    "residences": "Die Wohnanlagen konnten nicht geladen werden.",
+    "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
+    "network": "Das Backend ist nicht erreichbar.",
+    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
+  }
+}

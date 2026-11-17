@@ -63,6 +63,20 @@ class ApplicationTests {
     }
 
     @ParameterizedTest
+    @CsvSource({
+        "en,en,'Hello Studierende, welcome to Wohnanlage Sonne.'",
+        "en-US,en,'Hello Studierende, welcome to Wohnanlage Sonne.'",
+        "de-CH,de,'Hallo Studierende, willkommen in Wohnanlage Sonne.'",
+        "fr,de,'Hallo Studierende, willkommen in Wohnanlage Sonne.'"
+    })
+    void greetingUsesTheRequestedSupportedLanguage(String requested, String resolved, String greeting) throws Exception {
+        mvc.perform(get("/api/greeting").session(login("student")).header("Accept-Language", requested))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Language", resolved))
+            .andExpect(content().string(greeting));
+    }
+
+    @ParameterizedTest
     @CsvSource({"caretaker", "clerk"})
     void staffCanOnlyReadTheirAssignedResidence(String key) throws Exception {
         residences.save(new ResidenceEntity("Andere Wohnanlage"));

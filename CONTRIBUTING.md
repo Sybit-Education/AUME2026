@@ -118,7 +118,7 @@ Für ein Feature keine eigene Anmeldung, Token-Verarbeitung oder globale Abschal
 
 ## 6. Frontend anbinden
 
-Die Oberfläche ist derzeit eine kleine React-Anwendung ohne eingerichteten Router oder Test-Runner. Für größere Features Komponenten, Typen und API-Funktionen in eigenen Dateien bündeln, zum Beispiel unter `frontend/src/features/inspections/`. Dieser Ordner ist ein Strukturvorschlag. Neue Ansichten zunächst von `App.tsx` aus einbinden; eine spätere Navigation mit den anderen Teams abstimmen.
+Die Oberfläche ist derzeit eine kleine React-Anwendung ohne eingerichteten Router; Frontend-Tests verwenden Vitest und bei Bedarf React Testing Library mit jsdom. Für größere Features Komponenten, Typen und API-Funktionen in eigenen Dateien bündeln, zum Beispiel unter `frontend/src/features/inspections/`. Dieser Ordner ist ein Strukturvorschlag. Neue Ansichten zunächst von `App.tsx` aus einbinden; eine spätere Navigation mit den anderen Teams abstimmen.
 
 Geschützte Requests über den bestehenden Helfer `api()` aus [auth.ts](frontend/src/auth.ts) senden. Er übernimmt in `dev` Sitzung und CSRF-Token, außerhalb davon den Bearer-Token und dessen Erneuerung. Relative `/api/...`-URLs verwenden, damit derselbe Code mit dem Vite-Proxy und dem Nginx-Proxy funktioniert.
 
@@ -126,6 +126,7 @@ Beispiel für `frontend/src/features/inspections/api.ts`, sobald der entsprechen
 
 ```typescript
 import { api } from '../../auth'
+import { UiError } from '../../errors'
 
 interface InspectionView {
   id: number
@@ -145,17 +146,33 @@ interface InspectionPage {
 export async function listInspections(): Promise<InspectionPage> {
   const response = await api('/api/inspections?page=0&size=20')
   if (!response.ok) {
-    throw new Error('Die Kontrollen konnten nicht geladen werden.')
+    throw new UiError('errors.inspections')
   }
   return (await response.json()) as InspectionPage
 }
 ```
 
-Die Typen müssen dem vereinbarten DTO-Vertrag entsprechen; ein TypeScript-Cast validiert keine Serverantwort. `api()` prüft HTTP-Fehler nicht selbst, deshalb `response.ok` beziehungsweise die relevanten Statuscodes auswerten. Bei schreibenden Requests Methode, JSON-Body und `Content-Type` explizit setzen.
+Für das Beispiel zuerst den Schlüssel `errors.inspections` in beiden Sprachdateien ergänzen. Die Typen müssen dem vereinbarten DTO-Vertrag entsprechen; ein TypeScript-Cast validiert keine Serverantwort. `api()` prüft HTTP-Fehler nicht selbst, deshalb `response.ok` beziehungsweise die relevanten Statuscodes auswerten. Bei schreibenden Requests Methode, JSON-Body und `Content-Type` explizit setzen.
 
 Das Nutzerprofil aus `/api/me` enthält `privileges`. Damit Bedienelemente und Ansichten sichtbar machen, zum Beispiel anhand von `user.privileges.includes('INSPECTION_READ')`. Die vorhandene Ladefunktion in `App.tsx` lädt nur Gruß und Wohnanlagen; das neue Feature muss dort oder in seiner eigenen Komponente ausdrücklich angebunden werden.
 
 Ladezustand, leere Ergebnisse, Fehler, abgelaufene Anmeldung und fehlende Rechte darstellen. Bei paginierten Listen auch weitere Seiten erreichbar machen. Das Ausblenden einer Schaltfläche ergänzt die Rechteprüfung im Backend, ersetzt sie aber nicht. Beschriftungen, Tastaturbedienung und verständliche Rückmeldungen bei der Umsetzung mitprüfen.
+
+### Texte und Lokalisierung
+
+Alle neuen Bedientexte, Beschriftungen, Ladezustände und Meldungen in `frontend/src/locales/de.json` und `frontend/src/locales/en.json` ergänzen. Fachliche Schlüssel nach Funktion gruppieren. In Komponenten `useTranslation()` aus `react-i18next` verwenden und beispielsweise `t('auth.login')` aufrufen. Die deutschen Schlüssel werden über `src/i18next.d.ts` für TypeScript typisiert; keine Schlüssel mit Typ-Casts an der Prüfung vorbeiführen.
+
+Dynamische Werte über benannte Platzhalter einsetzen, beispielsweise einen neuen Text `"created": "Kontrolle {{id}} wurde angelegt."` mit `t('inspections.created', { id })`. Den Schlüssel vorher in beiden Sprachen ergänzen. Sätze nicht aus übersetzten Fragmenten zusammensetzen. Für Mengen die i18next-Pluralformen (`_one`, `_other`) mit `count` verwenden; Datums- und Zahlenwerte mit `Intl.DateTimeFormat` beziehungsweise `Intl.NumberFormat` und der aktuellen Sprache formatieren. Die fachlich maßgebliche Zeitzone gesondert festlegen.
+
+Fehlerzustände als Schlüssel halten, damit bereits sichtbare Meldungen beim Sprachwechsel mitwechseln. Für API-Funktionen und andere Helfer `UiError` aus `src/errors.ts` verwenden; `errorKey(...)` ordnet unbekannte Fehler einem kontrollierten Fallback zu. Technische Fehlermeldungen oder Stacktraces nicht direkt als UI-Text anzeigen. Bei zusätzlichen Fehlern einen Eintrag unter `errors` in beiden JSON-Dateien anlegen.
+
+Die gemeinsame Initialisierung in `src/i18n.ts` verwenden. Sie behandelt gespeicherte Auswahl, Browsersprachen, deutschen Fallback, HTML-`lang` und blockierten Browserspeicher. Komponenten sollen keine eigene Spracherkennung oder Speicherung einführen. Die Namen der Sprachen werden in der Auswahl als Eigenbezeichnungen (`Deutsch`, `English`) angezeigt.
+
+Das Backend bekommt die Sprache über `Accept-Language` vom gemeinsamen `api()`-Helfer. Für vom Server formulierte Texte die vorhandene `MessageSource` und die auf Deutsch/Englisch begrenzte `LocaleConfig` nutzen. Deutsche Standardtexte stehen in `messages.properties`, englische in `messages_en.properties`. Beispiel ist der `GreetingController`; Parameter werden dort über `{0}`, `{1}` eingesetzt, unabhängig von der `{{name}}`-Syntax des Frontends. Sprachabhängige Antworten mit `Content-Language` kennzeichnen. Maschinenlesbare IDs, Statuswerte, Authorities und gespeicherte Nutzerdaten bleiben sprachunabhängig. Neue Fachfehler möglichst über stabile Fehlercodes an die Oberfläche übergeben, die sie in ihre eigenen Texte übersetzt.
+
+Der aktuelle Sprachwechsel lädt das Dashboard und damit den lokalisierten Gruß neu. Neue serverseitig lokalisierte Ansichten müssen ihre Inhalte ebenfalls bei Sprachwechsel neu laden und gegebenenfalls Caches nach Sprache trennen. Neue Sprachen erfordern zusätzlich die Ressourcen, unterstützten Sprachen und Auswahl im Frontend sowie bei Backend-Texten die Locale-Konfiguration und Message-Bundles.
+
+Bei neuen Texten die Schlüssel in beiden Sprachen sowie Platzhalter und Pluralformen prüfen. Mindestens einen relevanten Sprachwechsel in den Feature-Tests und im Browser berücksichtigen. Nutzer- und Wohnanlagennamen sind Fachdaten und werden nicht durch Übersetzungen ersetzt.
 
 ## 7. Datenbank und Konfiguration
 
@@ -183,9 +200,9 @@ Mindestens die für das Feature relevanten Fälle absichern:
 
 Für sitzungsbasierte MockMvc-Tests das Profil `dev` aktivieren und die echte Mock-Anmeldung mit Sitzung verwenden, wenn der Anmeldeweg Teil des Tests ist. Ein mit `csrf()` erzeugtes Testtoken ersetzt keinen gesonderten Test des tatsächlichen CSRF-Ablaufs. Fachtests benötigen eigene, reproduzierbare Testdaten; sich nicht auf feste Datenbank-IDs oder die Ausführungsreihenfolge anderer Tests verlassen.
 
-Im Frontend existiert derzeit kein `npm test`. Lint und Build prüfen; Interaktionen zusätzlich im Browser mit den betroffenen Mock-Rollen kontrollieren. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten. Wenn automatisierte Frontend-Tests eingeführt werden, Testwerkzeug und CI-Anbindung gemeinsam ergänzen.
+Frontend-Tests mit `npm test` ausführen. Vitest ist eingerichtet; `src/i18n.test.ts` zeigt Tests für Sprachwahl und Ressourcen, `src/App.test.tsx` prüft Interaktionen mit React Testing Library und jsdom. Feature-Tests für relevante Zustände ergänzen. Zusätzlich Lint, Build und die betroffenen Abläufe im Browser mit den Mock-Rollen prüfen. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten.
 
-Die plattformabhängigen Prüfkommandos stehen in der [README](README.md#prüfungen). Die aktuelle [CI](.github/workflows/ci.yml) führt Backend-Verifikation, Frontend-Lint und -Build sowie Compose-Konfigurationsprüfung und Docker-Builds aus. Sie verwendet JDK 21 und derzeit Node.js 22; die lokale Empfehlung ist Node.js 24. Bei neuen Node-Anforderungen diese Abweichung berücksichtigen und eine nötige CI-Anpassung abstimmen. Dokumentationsänderungen allein lösen diese Build-Pipeline wegen ihrer Pfadfilter nicht aus.
+Die plattformabhängigen Prüfkommandos stehen in der [README](README.md#prüfungen). Die aktuelle [CI](.github/workflows/ci.yml) führt Backend-Verifikation, Frontend-Lint, -Tests und -Build sowie Compose-Konfigurationsprüfung und Docker-Builds aus. Sie verwendet JDK 21 und derzeit Node.js 22; die lokale Empfehlung ist Node.js 24. Bei neuen Node-Anforderungen diese Abweichung berücksichtigen und eine nötige CI-Anpassung abstimmen. Dokumentationsänderungen allein lösen diese Build-Pipeline wegen ihrer Pfadfilter nicht aus.
 
 ## 9. Dokumentation und Pull Request
 
@@ -212,6 +229,7 @@ Vor der Integration die aktuelle Definition of Done abgleichen: Code Review, erf
 - [ ] Startdaten und Tests berücksichtigen die neuen Berechtigungen.
 - [ ] Frontend verwendet `api()` und behandelt Laden, Fehler und leere Ergebnisse.
 - [ ] Erlaubte und verbotene Aktionen sind mit den betroffenen Rollen geprüft.
-- [ ] Backend-Verifikation sowie Frontend-Lint und -Build sind erfolgreich.
+- [ ] Neue UI-Texte sind in Deutsch und Englisch vorhanden; Sprachwechsel und Fehleranzeigen funktionieren.
+- [ ] Backend-Verifikation sowie Frontend-Lint, -Tests und -Build sind erfolgreich.
 - [ ] Betroffene Konfiguration, Feature-Dokumentation und README sind aktuell.
 - [ ] Pull Request ist nachvollziehbar beschrieben und zur Prüfung bereit.
