@@ -3,6 +3,7 @@
 Die Unterlagen beschreiben das Architekturziel für die Seezeit-Anwendung. Die fachlichen und organisatorischen Grundlagen stehen im [Dokumentationsindex](../README.md).
 
 - [Architekturübersicht](Seezeit-Architektur.md): Qualitätsziele, Bausteine, Anbindungen, Betrieb und offene Entscheidungen.
+- [Datenmodell](datenmodell.md): ER-Diagramme der Backend-Entities, ein Diagramm je Modul.
 - [Systemarchitektur](SystemArchitektur.drawio): Systemarchitekturdiagramm
 - [Entscheidungsindex](adr/README.md): akzeptierte Entscheidungen und offene Vorschläge.
 - [ADR-Workflow](ADR-Workflow.md): Entscheidungen vorschlagen, prüfen und ablösen.
