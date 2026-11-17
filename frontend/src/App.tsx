@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { api, initializeAuth, login, logout, type LoggedInUser } from './auth'
 import './App.css'
 
 const USERS = [
@@ -7,97 +8,122 @@ const USERS = [
   { key: 'clerk', label: 'Sachbearbeitung' },
 ] as const
 
-type Role = 'STUDENT' | 'CARETAKER' | 'CLERK'
-
-interface LoggedInUser {
-  userKey: string
-  name: string
-  role: Role
+interface Dashboard {
+  user: LoggedInUser
+  greeting: string | null
+  residences: { id: number; name: string }[] | null
 }
 
-interface Residence {
-  name: string
+async function loadDashboard(): Promise<Dashboard | null> {
+  const response = await api('/api/me')
+  if (response.status === 401) return null
+  if (!response.ok) throw new Error('Das Nutzerprofil konnte nicht geladen werden.')
+  const user = (await response.json()) as LoggedInUser
+  let greeting: string | null = null
+  let residences: Dashboard['residences'] = null
+  if (user.privileges.includes('GREETING_READ')) {
+    const result = await api('/api/greeting')
+    if (!result.ok) throw new Error('Der Gruß konnte nicht geladen werden.')
+    greeting = await result.text()
+  }
+  if (user.privileges.includes('RESIDENCE_READ')) {
+    const result = await api('/api/residences?size=100')
+    if (!result.ok) throw new Error('Die Wohnanlagen konnten nicht geladen werden.')
+    residences = ((await result.json()) as { content: NonNullable<Dashboard['residences']> }).content
+  }
+  return { user, greeting, residences }
 }
 
 function App() {
-  const [user, setUser] = useState<LoggedInUser | null>(null)
-  const [greeting, setGreeting] = useState<string | null>(null)
-  const [residences, setResidences] = useState<string[] | null>(null)
+  const [dashboard, setDashboard] = useState<Dashboard | null>(null)
+  const [mode, setMode] = useState<'dev' | 'keycloak' | null>(null)
+  const [busy, setBusy] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  async function login(userKey: string) {
-    setError(null)
-    setGreeting(null)
-    setResidences(null)
-    try {
-      const found = await fetch(`/api/users/search/findByUserKey?userKey=${userKey}`)
-      if (!found.ok) {
-        setError('Testnutzer wurde nicht gefunden.')
-        return
-      }
-      const body = (await found.json()) as LoggedInUser
-      setUser(body)
-      if (body.role === 'STUDENT') {
-        const response = await fetch('/api/greeting', { headers: { 'X-Dev-User': userKey } })
-        if (!response.ok) {
-          setError('Der Gruß konnte nicht geladen werden.')
-          return
+  useEffect(() => {
+    let cancelled = false
+    async function restoreSession() {
+      try {
+        const config = await initializeAuth()
+        const restored = await loadDashboard()
+        if (!cancelled) {
+          setMode(config.mode)
+          setDashboard(restored)
         }
-        setGreeting(await response.text())
-        return
+      } catch {
+        if (!cancelled) setError('Die Anmeldung konnte nicht geladen werden. Bitte erneut versuchen.')
+      } finally {
+        if (!cancelled) setBusy(false)
       }
-      const response = await fetch('/api/residences?size=100')
-      if (!response.ok) {
-        setError('Die Wohnanlagen konnten nicht geladen werden.')
-        return
-      }
-      const page = (await response.json()) as { _embedded?: { residences?: Residence[] } }
-      setResidences((page._embedded?.residences ?? []).map((residence) => residence.name))
+    }
+    void restoreSession()
+    return () => { cancelled = true }
+  }, [])
+
+  async function signIn(userKey?: string) {
+    setBusy(true)
+    setError(null)
+    setDashboard(null)
+    try {
+      await login(userKey)
+      const loaded = await loadDashboard()
+      if (!loaded) throw new Error('Die Sitzung ist abgelaufen. Bitte erneut anmelden.')
+      setDashboard(loaded)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Das Backend ist nicht erreichbar.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function signOut() {
+    setBusy(true)
+    setError(null)
+    try {
+      await logout()
+      setDashboard(null)
     } catch {
-      setError('Das Backend ist nicht erreichbar.')
+      setError('Die Abmeldung ist fehlgeschlagen. Bitte erneut versuchen.')
+    } finally {
+      setBusy(false)
     }
   }
 
   return (
-    <main className="sample">
+    <main className="sample" aria-busy={busy}>
       <h1>Seezeit</h1>
-      {user === null ? (
-        <>
-          <p>Testnutzer anmelden</p>
-          <div className="choices">
-            {USERS.map((entry) => (
-              <button key={entry.key} type="button" onClick={() => login(entry.key)}>
-                {entry.label}
-              </button>
-            ))}
-          </div>
-        </>
+      {dashboard === null ? (
+        mode === 'dev' ? (
+          <>
+            <p>Testnutzer anmelden</p>
+            <div className="choices">
+              {USERS.map((entry) => (
+                <button key={entry.key} type="button" disabled={busy} onClick={() => void signIn(entry.key)}>
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : mode === 'keycloak' ? (
+          <button type="button" disabled={busy} onClick={() => void signIn()}>Anmelden</button>
+        ) : !busy && (
+          <button type="button" onClick={() => window.location.reload()}>Erneut versuchen</button>
+        )
       ) : (
         <>
           <p>
-            {user.name}{' '}
-            <button
-              type="button"
-              onClick={() => {
-                setUser(null)
-                setGreeting(null)
-                setResidences(null)
-                setError(null)
-              }}
-            >
-              Abmelden
-            </button>
+            {dashboard.user.name}{' '}
+            <button type="button" disabled={busy} onClick={() => void signOut()}>Abmelden</button>
           </p>
-          {greeting && <p>{greeting}</p>}
-          {residences && (
+          {dashboard.greeting && <p>{dashboard.greeting}</p>}
+          {dashboard.residences && (
             <ul>
-              {residences.map((name) => (
-                <li key={name}>{name}</li>
-              ))}
+              {dashboard.residences.map((residence) => <li key={residence.id}>{residence.name}</li>)}
             </ul>
           )}
         </>
       )}
+      {busy && <p role="status">Wird geladen …</p>}
       {error && <p role="alert">{error}</p>}
     </main>
   )

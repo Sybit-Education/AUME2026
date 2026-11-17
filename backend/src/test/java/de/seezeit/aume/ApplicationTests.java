@@ -1,43 +1,164 @@
 package de.seezeit.aume;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.jayway.jsonpath.JsonPath;
+import de.seezeit.aume.residence.ResidenceEntity;
+import de.seezeit.aume.residence.ResidenceRepository;
+import de.seezeit.aume.user.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-dev-tests;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
+@ActiveProfiles("dev")
+@Transactional
 class ApplicationTests {
+    @Autowired private MockMvc mvc;
+    @Autowired private UserRepository users;
+    @Autowired private ResidenceRepository residences;
+    @Autowired private RoleRepository roles;
+    @Autowired private PrivilegeRepository privileges;
+    @Autowired private SecurityData securityData;
+    @Autowired private SampleData sampleData;
 
-	@Autowired
-	private MockMvc mockMvc;
+    @ParameterizedTest
+    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,RESIDENCE_READ", "clerk,CLERK,RESIDENCE_READ"})
+    void mockUsersReceiveTheirOwnRolesAndPrivileges(String key, String role, String privilege) throws Exception {
+        var session = login(key);
+        mvc.perform(get("/api/me").session(session))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.userKey").value(key))
+            .andExpect(jsonPath("$.roles[0]").value(role))
+            .andExpect(jsonPath("$.privileges[0]").value(privilege))
+            .andExpect(jsonPath("$.identitySubject").doesNotExist());
+    }
 
-	@Test
-	void listsUsersAsAPage() throws Exception {
-		mockMvc.perform(get("/api/users").param("page", "0").param("size", "2"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.page.size").value(2))
-				.andExpect(jsonPath("$.page.totalElements").value(3))
-				.andExpect(jsonPath("$._embedded.users.length()").value(2));
-	}
+    @Test
+    void anonymousRequestsAndSpoofedHeadersDoNotAuthenticate() throws Exception {
+        for (String path : new String[]{"/api/me", "/api/greeting", "/api/residences", "/api/users"}) {
+            mvc.perform(get(path).header("X-Dev-User", "student")).andExpect(status().isUnauthorized());
+        }
+    }
 
-	@Test
-	void studentReceivesAGreeting() throws Exception {
-		mockMvc.perform(get("/api/greeting").header("X-Dev-User", "student"))
-				.andExpect(status().isOk())
-				.andExpect(content().string("Hallo Studierende, willkommen in Wohnanlage Sonne."));
-	}
+    @Test
+    void studentCanReadGreetingButCannotReadResidences() throws Exception {
+        var session = login("student");
+        mvc.perform(get("/api/greeting").session(session).header("X-Dev-User", "clerk"))
+            .andExpect(status().isOk())
+            .andExpect(content().string("Hallo Studierende, willkommen in Wohnanlage Sonne."));
+        mvc.perform(get("/api/residences").session(session)).andExpect(status().isForbidden());
+    }
 
-	@Test
-	void otherRolesHaveNoGreeting() throws Exception {
-		mockMvc.perform(get("/api/greeting").header("X-Dev-User", "caretaker"))
-				.andExpect(status().isForbidden());
-	}
+    @ParameterizedTest
+    @CsvSource({"caretaker", "clerk"})
+    void staffCanOnlyReadTheirAssignedResidence(String key) throws Exception {
+        residences.save(new ResidenceEntity("Andere Wohnanlage"));
+        var session = login(key);
+        mvc.perform(get("/api/residences").session(session).param("size", "2"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.size").value(2))
+            .andExpect(jsonPath("$.page.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"));
+        mvc.perform(get("/api/greeting").session(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/residences").session(session).param("page", "1").param("size", "1"))
+            .andExpect(jsonPath("$.content").isEmpty());
+    }
 
+    @Test
+    void loginAndLogoutRequireCsrfAndInvalidateTheSession() throws Exception {
+        mvc.perform(post("/api/auth/dev-login").contentType(MediaType.APPLICATION_JSON)
+            .content("{\"userKey\":\"student\"}")).andExpect(status().isForbidden());
+        var csrfResult = mvc.perform(get("/api/auth/csrf")).andExpect(status().isOk()).andReturn();
+        var session = (MockHttpSession) csrfResult.getRequest().getSession(false);
+        String previousId = session.getId();
+        String header = JsonPath.read(csrfResult.getResponse().getContentAsString(), "$.headerName");
+        String token = JsonPath.read(csrfResult.getResponse().getContentAsString(), "$.token");
+        mvc.perform(post("/api/auth/dev-login").session(session).with(request -> {
+                request.setRequestedSessionId(previousId);
+                request.setRequestedSessionIdValid(true);
+                return request;
+            }).header(header, token)
+            .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"student\"}"))
+            .andExpect(status().isOk());
+        assertThat(session.getId()).isNotEqualTo(previousId);
+        mvc.perform(post("/api/auth/logout").session(session)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/auth/logout").session(session).header(header, token)).andExpect(status().isForbidden());
+        var freshCsrf = mvc.perform(get("/api/auth/csrf").session(session)).andReturn();
+        String freshToken = JsonPath.read(freshCsrf.getResponse().getContentAsString(), "$.token");
+        mvc.perform(post("/api/auth/logout").session(session).header(header, freshToken))
+            .andExpect(status().isNoContent());
+        assertThat(session.isInvalid()).isTrue();
+        mvc.perform(get("/api/me")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void clientsCannotChooseRolesOrLogInAsAnArbitraryDatabaseUser() throws Exception {
+        var session = (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"userKey\":\"student\",\"roles\":[\"CLERK\"],\"privileges\":[\"RESIDENCE_READ\"]}"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.roles[0]").value("STUDENT"))
+            .andReturn().getRequest().getSession(false);
+        mvc.perform(get("/api/residences").session(session)).andExpect(status().isForbidden());
+        var student = users.findByUserKey("student").orElseThrow();
+        users.save(new UserEntity("another-user", "Other", student.getRoles(), student.getResidence()));
+        mvc.perform(post("/api/auth/dev-login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"userKey\":\"another-user\"}")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/auth/dev-login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{}")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void multipleRolesCombineAuthoritiesWithoutDuplicates() throws Exception {
+        var student = users.findByUserKey("student").orElseThrow();
+        student.getRoles().add(roles.findByName("CLERK").orElseThrow());
+        student.getRoles().add(roles.findByName("CARETAKER").orElseThrow());
+        var session = login("student");
+        mvc.perform(get("/api/me").session(session))
+            .andExpect(jsonPath("$.roles.length()").value(3))
+            .andExpect(jsonPath("$.privileges.length()").value(2));
+        mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
+        mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
+    }
+
+    @Test
+    void repositoriesAndWritesAreNotExposed() throws Exception {
+        var session = login("clerk");
+        for (String path : new String[]{"/api/users", "/api/users/search/findByUserKey?userKey=student",
+                "/api/users/1/roles", "/api/roles", "/api/privileges", "/api/residences/1"}) {
+            mvc.perform(get(path).session(session)).andExpect(status().isNotFound());
+        }
+        mvc.perform(post("/api/users").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{}")).andExpect(status().isNotFound());
+        mvc.perform(post("/api/residences").session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{}")).andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    void seedersAreIdempotent() {
+        securityData.run();
+        sampleData.run();
+        assertThat(users.count()).isEqualTo(3);
+        assertThat(residences.count()).isEqualTo(1);
+        assertThat(roles.count()).isEqualTo(3);
+        assertThat(privileges.count()).isEqualTo(2);
+    }
+
+    private MockHttpSession login(String key) throws Exception {
+        return (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
+            .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"" + key + "\"}"))
+            .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+    }
 }
