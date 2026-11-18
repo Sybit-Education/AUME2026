@@ -21,19 +21,19 @@ export default function LoginPage() {
   }
 
   return (
-    <section aria-labelledby="login-heading">
+    <section className="card" aria-labelledby="login-heading">
       <h2 id="login-heading">{t('auth.login')}</h2>
       {auth.mode === 'dev' ? (
         <>
-          <p>{t('auth.mockLogin')}</p>
-          <div className="choices">
+          <p className="mut">{t('auth.mockLogin')}</p>
+          <div className="acts">
             {mockUsers.map((key) => (
-              <button key={key} disabled={auth.busy} onClick={() => void signIn(key)}>{t(`roles.${key}`)}</button>
+              <button className="btn" key={key} disabled={auth.busy} onClick={() => void signIn(key)}>{t(`roles.${key}`)}</button>
             ))}
           </div>
         </>
-      ) : <button disabled={auth.busy} onClick={() => void signIn()}>{t('auth.login')}</button>}
-      {error && <p role="alert">{t(error)}</p>}
+      ) : <button className="btn" disabled={auth.busy} onClick={() => void signIn()}>{t('auth.login')}</button>}
+      {error && <p className="err" role="alert">{t(error)}</p>}
     </section>
   )
 }

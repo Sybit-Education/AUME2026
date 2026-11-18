@@ -1,6 +1,6 @@
 # Seezeit-Frontend
 
-React-/TypeScript-Frontend für das AUME2026-Backend. Für die Entwicklung Node.js 24 LTS mit aktuellem Patchstand (mindestens 24.15.0) verwenden; weitere unterstützte Versionen stehen unter `engines` in `package.json`. Die vollständige Einrichtung von Java, Node.js, Anmeldung und Docker steht im [Projekt-README](../README.md).
+React-/TypeScript-Frontend für das AUME2026-Backend. Für die Entwicklung Node.js 24 LTS mit aktuellem Patchstand (mindestens 24.15.0) verwenden; weitere unterstützte Versionen stehen unter `engines` in `package.json`. Die Einrichtung von Java, Node.js und der Docker-Start stehen im [Projekt-README](../README.md). Anmeldung, Rollen und Prüfungen stehen in der [Contributing-Anleitung](../CONTRIBUTING.md).
 
 Aus dem Repository-Root in einem eigenen Terminal starten. Unter macOS/Linux:
 
@@ -34,7 +34,7 @@ npm run build
 
 Die Anwendung verwendet React Router im Data Mode. `/login` bietet die Anmeldung, `/` die geschützte Übersicht und `/residences` die zugewiesenen Wohnanlagen für Nutzer mit `RESIDENCE_READ`. Unbekannte Seiten und fehlende Rechte haben eigene Ansichten. Direkte Links bleiben nach dem Anmelden erhalten; Neuladen stellt die Sitzung wieder her.
 
-Neue Seiten als Feature-Routen unter `src/features/` ergänzen und in `src/app/router.ts` registrieren. Das gemeinsame Layout, `useAuth()`, geschützte Loader, Navigation und Tests sind in [ROUTING.md](ROUTING.md) mit Beispielen dokumentiert. Aufbau und Importregeln von `src/` erklärt die [Frontend-Ordnerstruktur](../docs/architektur/frontend-ordnerstruktur.md). Der Kontrollbereich ist eine künftige Erweiterung und noch nicht implementiert.
+Neue Seiten als Feature-Routen unter `src/features/` ergänzen und in `src/app/router.ts` registrieren. Das gemeinsame Layout, `useAuth()`, geschützte Loader, Navigation und Tests sind in [ROUTING.md](ROUTING.md) mit Beispielen dokumentiert. Aufbau und Importregeln von `src/` stehen in der [Contributing-Anleitung](../CONTRIBUTING.md#ordner-unter-frontendsrc). Der Kontrollbereich ist eine künftige Erweiterung und noch nicht implementiert.
 
 ## Lokalisierung
 

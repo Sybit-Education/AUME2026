@@ -3,5 +3,5 @@ import { Link } from 'react-router'
 
 export default function NotFoundPage() {
   const { t } = useTranslation()
-  return <section><h2>{t('pages.notFound')}</h2><p>{t('pages.notFoundDescription')}</p><Link to="/">{t('navigation.dashboard')}</Link></section>
+  return <section className="card"><h2>{t('pages.notFound')}</h2><p className="mut">{t('pages.notFoundDescription')}</p><Link className="btn sec" to="/">{t('navigation.dashboard')}</Link></section>
 }

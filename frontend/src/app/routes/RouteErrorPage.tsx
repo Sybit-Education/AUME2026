@@ -7,10 +7,10 @@ export default function RouteErrorPage() {
   const cause = useRouteError()
   const revalidator = useRevalidator()
   return (
-    <section>
+    <section className="card">
       <h2>{t('pages.error')}</h2>
-      <p role="alert">{t(errorKey(cause, 'errors.network'))}</p>
-      <button disabled={revalidator.state !== 'idle'} onClick={() => window.location.reload()}>{t('auth.retry')}</button>
+      <p className="err" role="alert">{t(errorKey(cause, 'errors.network'))}</p>
+      <button className="btn" disabled={revalidator.state !== 'idle'} onClick={() => window.location.reload()}>{t('auth.retry')}</button>
     </section>
   )
 }

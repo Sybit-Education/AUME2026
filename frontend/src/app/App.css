@@ -1,58 +1,43 @@
-.sample {
-  text-align: left;
-  padding: 2rem 1.5rem 3rem;
-}
-
-.sample h1 {
-  font-size: 2rem;
-  margin: 0 0 1rem;
-}
-
-.choices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.sample button {
-  font: inherit;
-  padding: 0.4rem 0.75rem;
-  cursor: pointer;
-}
-
-.sample ul {
-  margin: 1rem 0 0;
-  padding-left: 1.2rem;
-}
-
-.sample-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.language-picker {
+.hd .language-picker {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--mut);
 }
 
-.language-picker select {
-  font: inherit;
-  padding: 0.4rem;
+.hd select {
+  width: auto;
+  min-width: 9rem;
 }
 
-.page-navigation, .pagination {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin: 1rem 0;
+.seg a {
+  border: 0;
+  background: transparent;
+  padding: 8px 13px;
+  border-radius: 9px;
+  color: #4d6268;
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
-.page-navigation a[aria-current="page"] {
-  font-weight: bold;
-  text-decoration: underline;
+.seg a.on,
+.seg a[aria-current="page"] {
+  background: var(--t);
+  color: #fff;
+}
+
+a.btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+@media (max-width: 600px) {
+  .seg a {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
 }

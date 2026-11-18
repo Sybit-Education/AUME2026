@@ -17,14 +17,14 @@ export default function ResidencesPage() {
   if (!data) return <LoadingPage />
 
   return (
-    <section>
+    <section className="card">
       <h2>{t('navigation.residences')}</h2>
-      {data.content.length === 0 ? <p>{t('pages.noResidences')}</p> : (
-        <ul>{data.content.map((residence) => <li key={residence.id}>{residence.name}</li>)}</ul>
+      {data.content.length === 0 ? <p className="mut">{t('pages.noResidences')}</p> : (
+        <div>{data.content.map((residence) => <div className="row" key={residence.id}><div>{residence.name}</div></div>)}</div>
       )}
-      <nav className="pagination" aria-label={t('pages.pagination')}>
-        <button disabled={data.page.number === 0} onClick={() => goToPage(data.page.number - 1)}>{t('pages.previous')}</button>
-        <button disabled={data.page.number + 1 >= data.page.totalPages} onClick={() => goToPage(data.page.number + 1)}>{t('pages.next')}</button>
+      <nav className="acts" aria-label={t('pages.pagination')}>
+        <button className="btn sec" disabled={data.page.number === 0} onClick={() => goToPage(data.page.number - 1)}>{t('pages.previous')}</button>
+        <button className="btn sec" disabled={data.page.number + 1 >= data.page.totalPages} onClick={() => goToPage(data.page.number + 1)}>{t('pages.next')}</button>
       </nav>
     </section>
   )

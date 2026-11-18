@@ -11,11 +11,11 @@ export default function DashboardPage() {
   if (!data) return <LoadingPage />
 
   return (
-    <section>
+    <section className="card">
       <h2>{t('navigation.dashboard')}</h2>
       <p>{t('pages.welcome', { name: user?.name })}</p>
       {data.greeting && <p>{data.greeting}</p>}
-      {user?.privileges.includes('RESIDENCE_READ') && <Link to="/residences">{t('pages.openResidences')}</Link>}
+      {user?.privileges.includes('RESIDENCE_READ') && <p className="acts"><Link className="btn sec" to="/residences">{t('pages.openResidences')}</Link></p>}
     </section>
   )
 }

@@ -17,15 +17,16 @@ Die [Definition of Ready und Definition of Done](docs/anforderungen/qualitaet/qu
 
 ## 2. Feature-Branch und Zusammenarbeit
 
-Auf dem mit dem Team abgestimmten Integrationsstand einen kurzlebigen Feature-Branch anlegen. Das [Prozessmodell](docs/projekt/prozessmodell/Prozessmodell.md) sieht das Muster `<Gruppenkürzel>/<Feature-Bezeichnung>` vor, zum Beispiel:
+Im Sprint 1 zweigen Feature-Branches zunächst vom Branch `develop` ab und werden per Merge Request wieder nach `develop` gemergt. `staging` und `main` werden vorerst nicht genutzt. Das [Prozessmodell](docs/projekt/prozessmodell/Prozessmodell.md) beschreibt darüber hinaus Release-Branches und einen Weg nach `main`; dieser Weg gilt im Sprint 1 nicht.
+
+Auf `develop` einen kurzlebigen Feature-Branch anlegen. Das Prozessmodell sieht das Muster `<Gruppenkürzel>/<Feature-Bezeichnung>` vor, zum Beispiel:
 
 ```bash
+git switch develop
 git switch -c gruppe_1/kontrollplanung
 ```
 
-Änderungen in fachlich zusammenhängenden Commits halten und früh einen Pull Request für Feedback öffnen. Gemeinsame Dateien wie `App.tsx`, `SecurityData.java`, `SecurityConfig.java`, Abhängigkeiten und Infrastruktur mit betroffenen Teams abstimmen. Neue Funktionen möglichst in eigenen Dateien und Fachpaketen ergänzen.
-
-**Offene Prozessfrage:** Das Prozessmodell beschreibt den Weg über `develop` und Release-Branches nach `main`; die Rollenvereinbarung nennt einen Merge nach `main` durch das Feature-Team mit technischer Verantwortung des Lead Developers. Zielbranch und Merge-Verantwortung deshalb mit Lead Developer und Integrationsteam anhand der aktuellen Teamabsprache festlegen. Diese Anleitung löst den Widerspruch nicht durch eine neue Regel. Änderungen über einen geprüften Pull Request integrieren.
+Änderungen in fachlich zusammenhängenden Commits halten und früh einen Merge Request nach `develop` für Feedback öffnen. Gemeinsame Dateien wie `App.tsx`, `SecurityData.java`, `SecurityConfig.java`, Abhängigkeiten und Infrastruktur mit betroffenen Teams abstimmen. Neue Funktionen möglichst in eigenen Dateien und Fachpaketen ergänzen. Änderungen über einen geprüften Merge Request integrieren.
 
 ## 3. Orientierung im Grundgerüst
 
@@ -43,6 +44,7 @@ git switch -c gruppe_1/kontrollplanung
 | `frontend/src/components/`, `frontend/src/lib/` | Von mehreren Features genutzte Komponenten und Helfer | Erst hierher verschieben, wenn ein zweites Feature es braucht |
 | `infrastructure/` | Compose-Konfiguration und Umgebungsvariablen-Vorlage | Neue Dienste oder Konfiguration bei Bedarf ergänzen |
 | `docs/` | Anforderungen, Architektur und Teamprozess | Feature und relevante Entscheidungen dokumentieren |
+| `docs/architektur/` | Vollständige Dokumentation der Anwendung | Bei Änderungen am Anwendungscode die betroffenen Dateien anpassen |
 
 `backend/.../` steht in der Tabelle für `backend/src/main/java/de/seezeit/aume/`.
 
@@ -101,7 +103,11 @@ Repositories bleiben interne Persistenzschnittstellen. Spring Data REST ist im G
 
 ## 5. Rollen, Privilegien und Entwicklungsdaten erweitern
 
-Die Rollen `STUDENT`, `CARETAKER` und `CLERK` bündeln Aktionsberechtigungen. `AppUserService` bildet sie gemeinsam mit ihren Privilegien auf Spring Authorities ab. Die drei Mock-Nutzer verwenden dieselbe Abbildung wie die Keycloak-Anmeldung.
+Nutzer haben mehrere Rollen. Die Rollen `STUDENT`, `CARETAKER` und `CLERK` bündeln Berechtigungen. `AppUserService` bildet Rollen und Privilegien auf Spring-Security-Authorities ab (`ROLE_STUDENT` für Rollen, zum Beispiel `GREETING_READ` für Berechtigungen). Die drei Mock-Nutzer verwenden dieselbe Abbildung wie die Keycloak-Anmeldung. Die Startdaten sind wiederholbar, vorhandene Rollenzuweisungen werden nicht überschrieben. Rollen und Berechtigungen werden ausschließlich serverseitig zugewiesen. Es gibt keine öffentliche Nutzerregistrierung oder Rollenverwaltung. Die Mock-Nutzer und ihre Startberechtigungen stehen in der [README](README.md#mock-anmeldung-und-testdaten).
+
+`GET /api/me` liefert das angemeldete Nutzerprofil mit `roles` und `privileges`. Die bisherigen Nutzer- und Repository-Suchendpunkte sind entfernt. Wohnanlagen werden auf die Zuordnung des angemeldeten Nutzers begrenzt. WG-Mitgliedschaft und zeitliche Zugriffsregeln folgen mit den betreffenden Domänenmodulen; die aktuelle Zuordnung umfasst eine Wohnanlage pro Nutzer.
+
+Im `dev`-Profil ist `POST /api/auth/dev-login` mit `{"userKey":"student"}` (alternativ `caretaker` oder `clerk`) verfügbar. Vor jedem schreibenden Aufruf wird über `GET /api/auth/csrf` ein Token geladen und unter dem zurückgegebenen `headerName` mitgesendet. Cookies müssen erhalten bleiben. `POST /api/auth/logout` beendet die Sitzung. Der Header `X-Dev-User` authentifiziert nicht mehr. Änderungen an Berechtigungen werden für bestehende Entwicklungssitzungen nach erneuter Anmeldung wirksam.
 
 Für die beispielhafte Kontrollübersicht:
 
@@ -118,11 +124,152 @@ Die drei Mock-Nutzer `student`, `caretaker` und `clerk` für die gemeinsame Entw
 
 Für ein Feature keine eigene Anmeldung, Token-Verarbeitung oder globale Abschaltung von CSRF einführen. Außerhalb von `dev` wird die Identität über Keycloak verifiziert; Anwendungsrollen bleiben in der Datenbank. Änderungen an diesem Zusammenspiel betreffen die gemeinsame Architektur.
 
+### Keycloak außerhalb von `dev`
+
+Ohne `dev`-Profil sind Mock-Anmeldung und Mock-Daten deaktiviert. Das Backend akzeptiert dann ausschließlich Keycloak-Bearer-Token; das Frontend verwendet den Keycloak-Adapter mit Authorization Code und PKCE. `GET /api/auth/config` liefert die öffentlichen Anmeldeeinstellungen. Folgende Umgebungsvariablen sind erforderlich:
+
+| Variable | Beispiel |
+| --- | --- |
+| `KEYCLOAK_URL` | `https://identity.example.org` |
+| `KEYCLOAK_REALM` | `seezeit` |
+| `KEYCLOAK_CLIENT_ID` | `seezeit-frontend` |
+| `KEYCLOAK_ISSUER_URI` | `https://identity.example.org/realms/seezeit` |
+| `KEYCLOAK_AUDIENCE` | `seezeit-api` |
+
+Der Keycloak-Client muss öffentlich sein (ohne Client-Secret), Standard Flow und PKCE unterstützen sowie passende Redirect-, Logout- und Web-Origin-Adressen für das Frontend erlauben. Der Login-Callback verwendet `/login?returnTo=...`; beispielsweise kann eine auf den konkreten Origin begrenzte Redirect-URI `https://app.example.org/login*` freigegeben werden. Weitere Details stehen in der [Routing-Anleitung](frontend/ROUTING.md#anmeldung-und-rückkehr-zur-angeforderten-seite). Ein Audience-Mapper muss `seezeit-api` in die Access-Token aufnehmen. Der Issuer samt Discovery- und JWKS-Endpunkten muss vom Backend erreichbar sein. Signatur, Issuer, Audience und Gültigkeitszeit werden geprüft.
+
+Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem bereits angelegten Anwendungsnutzer zugeordnet. Diese Zuordnung und die Rollen müssen durch einen vertrauenswürdigen Provisionierungsprozess gesetzt werden; unbekannte Identitäten erhalten keinen Zugriff. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Ein Provisionierungswerkzeug und ein betriebener Keycloak sind nicht Teil dieses Templates. Die bestehende H2-/`create-drop`-Konfiguration bleibt für das Template erhalten; dauerhafte Speicherung und Migrationen müssen vor einem echten Betrieb eingerichtet werden. ADR-0006 bleibt ein Vorschlag.
+
+Für diesen Start nur `infrastructure/compose.yaml` verwenden und die Variablen mit `--env-file infrastructure/.env` laden:
+
+```bash
+docker compose -f infrastructure/compose.yaml --env-file infrastructure/.env up --build
+```
+
+Der Docker-Start mit Mock-Nutzern steht in der [README](README.md#start-mit-docker).
+
 ## 6. Frontend anbinden
 
 Das Frontend verwendet React Router im Data Mode. Die vollständige Anleitung mit Routen-, Loader- und Navigationsbeispielen steht in [frontend/ROUTING.md](frontend/ROUTING.md). Als umgesetzte Referenz dient `frontend/src/features/residences/`.
 
-Neue Features bündeln Seiten, Typen, API-Funktionen und ein eigenes Routen-Array unter `frontend/src/features/<feature>/`. Das Array in `app/router.ts` innerhalb der geschützten `RequireAuth`-Gruppe ergänzen. Einen optionalen Menüeintrag in `app/navigation.ts` registrieren; Labels und Seitentexte in beiden Sprachdateien anlegen. `app/App.tsx` verbindet nur Authentifizierungs- und Router-Provider. Aufbau und Importregeln stehen in der [Frontend-Ordnerstruktur](docs/architektur/frontend-ordnerstruktur.md).
+React Router verwaltet `/login`, die geschützte Übersicht `/`, die Wohnanlagen-Seite `/residences`, `/forbidden` und eine Ansicht für unbekannte URLs. Anmeldung und Navigation berücksichtigen die aktuellen Privilegien. Beim direkten Aufruf einer geschützten Seite wird das Ziel einschließlich Query und Fragment über die Anmeldung hinweg erhalten. Der vorhandene Nginx-SPA-Fallback unterstützt direkte Links und Neuladen im Docker-Frontend. Kontrollseiten sind noch nicht implementiert.
+
+Nach der Anmeldung öffnet sich die Übersicht unter `/`. Studierende sehen dort den Gruß von `GET /api/greeting`. Objektbetreuung und Sachbearbeitung öffnen über die Navigation `/residences`; diese Seite lädt die zugewiesenen Wohnanlagen von `GET /api/residences`. Listen sind paginiert (`?page=0&size=20`) und enthalten `content` und `page`. Die API-Beschreibung steht unter http://localhost:8080/swagger-ui.html.
+
+Neue Features bündeln Seiten, Typen, API-Funktionen und ein eigenes Routen-Array unter `frontend/src/features/<feature>/`. Das Array in `app/router.ts` innerhalb der geschützten `RequireAuth`-Gruppe ergänzen. Einen optionalen Menüeintrag in `app/navigation.ts` registrieren; Labels und Seitentexte in beiden Sprachdateien anlegen. `app/App.tsx` verbindet nur Authentifizierungs- und Router-Provider.
+
+### Ordner unter `frontend/src/`
+
+Die Struktur folgt verbreiteten Empfehlungen für React mit Vite und React Router und ist nur so weit eingeführt, wie es der heutige Umfang braucht. Für React gibt es keine verbindliche Ordnerstruktur. Die frühere [React-Dokumentation](https://legacy.reactjs.org/docs/faq-structure.html) empfiehlt, einfach zu beginnen und erst bei Bedarf auszubauen.
+
+| Quelle | Übernommene Aussage |
+| --- | --- |
+| [Robin Wieruch: React Folder Structure](https://www.robinwieruch.de/react-folder-structure/) | Struktur mit dem Projekt wachsen lassen. Feature-Ordner für fachlichen Code, technische Ordner nur für wirklich gemeinsamen Code. Code fließt in eine Richtung. Etwas wandert in die gemeinsame Ebene, wenn ein zweites Feature es braucht. Ordnerübergreifende Imports über einen Alias. |
+| [Bulletproof React: Project Structure](https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md) | `app/`, `features/`, `components/` und `lib/`. Gerichtete Abhängigkeiten, durch ESLint erzwungen. Keine Barrel-Dateien (`index.ts` mit Re-Exports), weil sie das Tree-Shaking in Vite verschlechtern. Unterordner in einem Feature nur anlegen, wenn sie gebraucht werden. |
+| [React Router: Data Mode](https://reactrouter.com/start/data/route-object) | Routen als Objekte mit `loader`, `Component` und `ErrorBoundary`. Jedes Feature exportiert seine Routen; `app/router.ts` setzt sie zusammen. |
+| [Feature-Sliced Design](https://feature-sliced.design/) | Geprüft und nicht übernommen. Die sieben Schichten wären für dieses Frontend zu schwer. Die gerichteten Schichten stecken bereits in der gewählten Struktur. |
+
+Ordner wie `hooks/`, `stores/`, `types/`, `utils/` oder `config/` werden erst angelegt, wenn tatsächlich Code dafür existiert.
+
+```text
+frontend/src/
+  main.tsx                    Einstiegspunkt: Sprache und Keycloak initialisieren, Router erstellen
+  index.css                   Globale Basisstile
+  app/                        Anwendungsebene: setzt Features und gemeinsamen Code zusammen
+    App.tsx                   AuthProvider und RouterProvider verbinden
+    App.css                   Stile des Anwendungsrahmens
+    App.test.tsx              Routing-Integrationstests über alle Routen
+    router.ts                 Routen aller Features registrieren
+    navigation.ts             Navigationspunkte zusammenführen
+    AppLayout.tsx             Kopfbereich, Navigation, Sprachwahl, Abmelden, Outlet
+    RouteErrorLayout.tsx      Layout für Ladefehler
+    RequireAuth.tsx           Anmeldung für die geschützte Routengruppe verlangen
+    routes/                   Seiten ohne eigenes Feature: Forbidden, NotFound, RouteError
+  features/                   Fachliche Features, je ein Ordner
+    auth/                     Anmeldeseite und Login-Route
+    dashboard/                Übersicht: Seite, API-Funktion, Routen
+    residences/               Wohnanlagen: Seite, API-Funktion, Routen, Navigationspunkt
+  components/                 Von mehreren Features genutzte React-Komponenten
+    LoadingPage.tsx
+  lib/                        Gemeinsame, vorkonfigurierte Infrastruktur
+    auth/                     Keycloak/Dev-Login, api(), Sitzung, useAuth(), Loader- und Seitenguards
+    errors.ts                 UiError und errorKey()
+    i18n.ts                   i18next-Instanz und Sprachauswahl
+    i18next.d.ts              Typisierung der Übersetzungsschlüssel
+  locales/                    de.json und en.json
+  assets/                     Statische Dateien (Bilder, Icons)
+```
+
+`app/` kennt alle Features und verbindet sie. Hier liegt nur Code, der die Anwendung zusammensetzt. Fachliche Logik gehört in ein Feature. `app/routes/` enthält die Seiten der Anwendung selbst: keine Berechtigung, Seite nicht gefunden und die Fehlerseite für fehlgeschlagene Loader. `RequireAuth.tsx` bleibt in `app/`, weil nur der Router es verwendet. `RequirePrivilege.tsx` liegt in `lib/auth/`, weil Features es in ihren Routen benötigen. `App.test.tsx` liegt neben `App.tsx`, weil es die zusammengesetzte Anwendung mit allen Routen testet.
+
+Ein Feature ist ein fachlich zusammenhängender Ausschnitt, typischerweise eine oder mehrere Seiten unter einem gemeinsamen URL-Pfad. Es heißt wie sein fachlicher Bereich und sein URL-Pfad, also `residences` für `/residences`. Es beginnt flach:
+
+```text
+features/residences/
+  ResidencesPage.tsx    Seite (liest Loader-Daten)
+  api.ts                API-Funktionen und Antworttypen
+  routes.tsx            exportiertes RouteObject-Array und optional ein Navigationspunkt
+```
+
+Unterordner kommen erst hinzu, wenn das Feature wächst, zum Beispiel `components/` oder `hooks/` für Code, den nur dieses Feature nutzt. `features/auth/` enthält nur die Anmeldeoberfläche. Keycloak, Sitzung und `useAuth()` liegen in `lib/auth/`, weil alle Features sie nutzen. Läge diese Logik im Feature `auth`, müsste jedes andere Feature verboten daraus importieren.
+
+`components/` enthält React-Komponenten, die mindestens zwei Features oder ein Feature und `app/` verwenden. Sie sind fachlich neutral, kennen keine Wohnanlagen oder Kontrollen und rufen keine Fach-APIs auf. Aktuell liegt dort `LoadingPage`.
+
+`lib/` enthält vorkonfigurierte Bibliotheken und anwendungsweite Infrastruktur: Anmeldung und `api()` in `lib/auth/client.ts`, Sitzung und `useAuth()`, `protectedLoader()`, `RequirePrivilege`, `requireOk()` und `returnTo`, außerdem `UiError` und die i18next-Instanz. Ein separates `utils/` entsteht erst für allgemeine, bibliotheksunabhängige Hilfsfunktionen.
+
+`locales/` bleibt auf oberster Ebene, weil jedes Feature dort Texte ergänzt. `assets/` enthält statische Dateien, die über Imports gebündelt werden.
+
+| Neuer Code | Ablage |
+| --- | --- |
+| Neue Fachseite oder neuer fachlicher Bereich | `features/<bereich>/` mit `routes.ts(x)`; in `app/router.ts` registrieren |
+| Komponente, Hook, Typ oder Helfer nur für ein Feature | In diesem Feature, bei Bedarf in `components/` oder `hooks/` |
+| Komponente, die ein zweites Feature ebenfalls braucht | Nach `components/` verschieben |
+| Hook, Helfer oder Bibliothekskonfiguration für mehrere Features | Nach `lib/` verschieben; bei reinen Hilfsfunktionen `utils/` anlegen |
+| Gemeinsamer Hook ohne Bibliotheksbezug | `hooks/` anlegen |
+| Seite ohne fachlichen Bereich | `app/routes/` |
+| Layout, Provider, Routenregistrierung | `app/` |
+| Texte | `locales/de.json` und `locales/en.json` |
+
+Wird gemeinsamer Code nur noch von einem Feature benutzt, wandert er zurück in dieses Feature.
+
+### Abhängigkeiten und Imports
+
+```mermaid
+flowchart LR
+  shared["components/ · lib/ · locales/"] --> features["features/*"]
+  features --> app["app/"]
+  shared --> app
+  app --> main["main.tsx"]
+```
+
+Ein Pfeil bedeutet „darf importiert werden von“.
+
+1. Gemeinsamer Code (`components/`, `lib/`) importiert weder aus `features/` noch aus `app/`.
+2. Features importieren aus `components/`, `lib/` und `locales/`, nicht aus `app/` und nicht aus anderen Features. Was zwei Features brauchen, liegt in `components/` oder `lib/`. Wenn zwei Features auf einer Seite zusammenspielen, geschieht das in `app/`.
+3. `app/` darf alles importieren und setzt die Features zusammen.
+
+`npm run lint` prüft die ersten beiden Regeln über `no-restricted-imports` in [frontend/eslint.config.js](frontend/eslint.config.js). Ein Import wie `@/app/navigation` aus einem Feature bricht den Lint-Lauf ab. Wenn ein Feature-Ordner gelöscht wird, dürfen nur `app/router.ts` und gegebenenfalls `app/navigation.ts` Fehler melden.
+
+Ordnerübergreifende Imports nutzen den Alias `@/`, der auf `src/` zeigt, zum Beispiel `import { api } from '@/lib/auth/client'`. Der Alias steht in `tsconfig.app.json`; Vite und Vitest übernehmen ihn. Innerhalb eines Features oder Ordners bleibt der Import relativ, zum Beispiel `import { listResidences } from './api'`. Es gibt keine `index.ts`, die einen Ordner re-exportiert. Imports zeigen auf die Datei. Barrel-Dateien erschweren das Tree-Shaking in Vite; die Feature-Grenze prüft ESLint.
+
+Komponenten-Dateien heißen in PascalCase wie die Komponente (`ResidencesPage.tsx`), andere Module in camelCase (`returnTo.ts`, `api.ts`, `routes.tsx`). Feature-Ordner sind kleingeschrieben. Tests liegen als `*.test.ts(x)` neben dem getesteten Code. Kebab-case und Feature-Namen im Singular sind in den Quellen üblich, hier aber nicht eingeführt; das Projekt bleibt bei der bestehenden Schreibweise.
+
+Bewusst nicht eingeführt sind leere technische Ordner, `index.ts` als öffentliche API je Feature, `domains/`, `packages/` und ein Monorepo. Diese Stufen wären für die aktuelle Größe Mehraufwand.
+
+Die Struktur ersetzt eine frühere Mischung: Features importierten aus `app/` und `pages/`, gemeinsamer Code lag lose unter `src/`, und neben `auth.ts` existierte ein Ordner `auth/`. Das Laufzeitverhalten blieb unverändert. Verschoben wurden Dateien und Imports, und die Login-Route wird als `authRoutes` aus dem Feature exportiert.
+
+| Vorher | Nachher | Grund |
+| --- | --- | --- |
+| `src/App.tsx`, `App.css`, `App.test.tsx` | `src/app/` | Anwendungsebene |
+| `src/auth.ts` | `src/lib/auth/client.ts` | Gemeinsame Infrastruktur; Namenskonflikt mit dem Ordner `auth/` aufgelöst |
+| `src/auth/*` | `src/lib/auth/*` | Wird von allen Features genutzt |
+| `src/app/loaders.ts`, `src/app/RequirePrivilege.tsx` | `src/lib/auth/` | Features importierten aus `app/` |
+| `src/errors.ts`, `src/i18n.ts`, `src/i18n.test.ts`, `src/i18next.d.ts` | `src/lib/` | Gemeinsame Infrastruktur |
+| `src/pages/LoadingPage.tsx` | `src/components/` | Von Features und App genutzt |
+| `src/pages/LoginPage.tsx` | `src/features/auth/` mit `routes.ts` | Fachliche Seite |
+| `src/pages/ForbiddenPage.tsx`, `NotFoundPage.tsx`, `RouteErrorPage.tsx` | `src/app/routes/` | Seiten der Anwendung ohne eigenes Feature |
+| Relative Imports über Ordnergrenzen | Alias `@/` | Lesbare, verschiebungsstabile Imports |
+| – | ESLint `no-restricted-imports` | Abhängigkeitsrichtung wird geprüft |
 
 Für geschützte Datenabfragen `protectedLoader()` aus `lib/auth/loaders.ts` verwenden. Die Seite zusätzlich mit `RequirePrivilege` schützen, falls sie ein Privileg benötigt. Parent- und Child-Loader können parallel laufen; ein Seitenguard allein verhindert deshalb keine unberechtigte Datenabfrage. Der Loader muss seine Sitzung und Berechtigung vor dem API-Aufruf prüfen. Die Navigation wird anhand von Privilegien gefiltert. Die verbindliche Autorisierung und Prüfung konkreter Datensätze bleibt im Backend.
 
@@ -140,19 +287,27 @@ Dynamische Werte über benannte Platzhalter einsetzen, beispielsweise einen neue
 
 Fehlerzustände als Schlüssel halten, damit bereits sichtbare Meldungen beim Sprachwechsel mitwechseln. Für API-Funktionen und andere Helfer `UiError` aus `src/lib/errors.ts` verwenden; `errorKey(...)` ordnet unbekannte Fehler einem kontrollierten Fallback zu. Technische Fehlermeldungen oder Stacktraces nicht direkt als UI-Text anzeigen. Bei zusätzlichen Fehlern einen Eintrag unter `errors` in beiden JSON-Dateien anlegen.
 
-Die gemeinsame Initialisierung in `src/lib/i18n.ts` verwenden. Sie behandelt gespeicherte Auswahl, Browsersprachen, deutschen Fallback, HTML-`lang` und blockierten Browserspeicher. Komponenten sollen keine eigene Spracherkennung oder Speicherung einführen. Die Namen der Sprachen werden in der Auswahl als Eigenbezeichnungen (`Deutsch`, `English`) angezeigt.
+Die Oberfläche unterstützt Deutsch und Englisch. Über die Sprachauswahl im Kopfbereich lässt sich die Sprache ohne erneute Anmeldung wechseln. Die gemeinsame Initialisierung in `src/lib/i18n.ts` verwenden. Gespeicherte Auswahl (`localStorage`, Schlüssel `aume.language`) hat Vorrang vor der ersten unterstützten Browsersprache; ohne passende Sprache wird Deutsch verwendet. Regionale Angaben wie `en-US` werden auf `en` abgebildet. Bei gesperrtem Browserspeicher funktioniert die Auswahl für die aktuelle Sitzung weiter. Die Initialisierung setzt das HTML-Attribut `lang`. Fehlende englische Texte fallen auf Deutsch zurück. Die Übersetzungen werden mit der Anwendung gebündelt und benötigen keinen externen Übersetzungsdienst. Komponenten sollen keine eigene Spracherkennung oder Speicherung einführen. Die Namen der Sprachen werden in der Auswahl als Eigenbezeichnungen (`Deutsch`, `English`) angezeigt.
 
-Das Backend bekommt die Sprache über `Accept-Language` vom gemeinsamen `api()`-Helfer. Für vom Server formulierte Texte die vorhandene `MessageSource` und die auf Deutsch/Englisch begrenzte `LocaleConfig` nutzen. Deutsche Standardtexte stehen in `messages.properties`, englische in `messages_en.properties`. Beispiel ist der `GreetingController`; Parameter werden dort über `{0}`, `{1}` eingesetzt, unabhängig von der `{{name}}`-Syntax des Frontends. Sprachabhängige Antworten mit `Content-Language` kennzeichnen. Maschinenlesbare IDs, Statuswerte, Authorities und gespeicherte Nutzerdaten bleiben sprachunabhängig. Neue Fachfehler möglichst über stabile Fehlercodes an die Oberfläche übergeben, die sie in ihre eigenen Texte übersetzt.
+Das Backend bekommt die Sprache über `Accept-Language` vom gemeinsamen `api()`-Helfer. Für vom Server formulierte Texte die vorhandene `MessageSource` und die auf Deutsch/Englisch begrenzte `LocaleConfig` nutzen. Deutsche Standardtexte stehen in `messages.properties`, englische in `messages_en.properties`. Beispiel ist der Gruß unter `/api/greeting`; Parameter werden dort über `{0}`, `{1}` eingesetzt, unabhängig von der `{{name}}`-Syntax des Frontends. Sprachabhängige Antworten mit `Content-Language` kennzeichnen. Ohne unterstützte Anforderung ist die Antwort deutsch, unabhängig von der Sprache des Servers. Technische API-Fehlerantworten sind kein Übersetzungsvertrag; die Oberfläche zeigt eigene übersetzte Meldungen an. Maschinenlesbare IDs, Statuswerte, Authorities und gespeicherte Nutzerdaten bleiben sprachunabhängig. Neue Fachfehler möglichst über stabile Fehlercodes an die Oberfläche übergeben, die sie in ihre eigenen Texte übersetzt.
 
 Der aktuelle Sprachwechsel revalidiert die aktiven Routen und lädt damit auch den lokalisierten Gruß neu. Neue serverseitig lokalisierte Ansichten sollen ihre Daten über Routen-Loader beziehen; zusätzliche Abfragen und Caches außerhalb der Loader müssen die Sprache selbst berücksichtigen. Neue Sprachen erfordern zusätzlich die Ressourcen, unterstützten Sprachen und Auswahl im Frontend sowie bei Backend-Texten die Locale-Konfiguration und Message-Bundles.
 
-Bei neuen Texten die Schlüssel in beiden Sprachen sowie Platzhalter und Pluralformen prüfen. Mindestens einen relevanten Sprachwechsel in den Feature-Tests und im Browser berücksichtigen. Nutzer- und Wohnanlagennamen sind Fachdaten und werden nicht durch Übersetzungen ersetzt.
+Bei neuen Texten die Schlüssel in beiden Sprachen sowie Platzhalter und Pluralformen prüfen. Mindestens einen relevanten Sprachwechsel in den Feature-Tests und im Browser berücksichtigen. Namen, Wohnanlagen und andere Fachdaten werden nicht automatisch übersetzt. Für Keycloak wird die gewählte Sprache beim Anmelden mitgegeben; die verfügbaren Sprachen und Anmeldetexte müssen im Keycloak-Realm ebenfalls eingerichtet werden.
 
 ## 7. Datenbank und Konfiguration
 
+Der Ordner `infrastructure/` bündelt den späteren Betrieb des Gesamtsystems. Dort liegt kein Quellcode von Frontend oder Backend.
+
+- `compose.yaml` startet Frontend und Backend über die Dockerfiles in `frontend/` und `backend/`. Weitere Dienste kommen später dazu.
+- `.env.example` ist die Vorlage für lokale Umgebungsvariablen. Echte Werte kommen in eine `.env`, die nicht eingecheckt wird.
+- Die Dockerfiles liegen in `frontend/` und `backend/`. Jedes Image wird aus seinem eigenen Projekt gebaut. Compose verweist darauf.
+
+Der lokale Docker-Start mit dem `dev`-Profil steht in der [README](README.md#start-mit-docker).
+
 Aktuell verwendet das Backend eine H2-Datenbank im Speicher. `ddl-auto: create-drop` baut das Schema beim Start auf; Entwicklungsdaten gehen beim Neustart verloren. Das ist keine Migrationsstrategie für einen dauerhaften Betrieb. PostgreSQL und weitere Architekturbausteine sind in den ADRs beschrieben; deren Status und tatsächlichen Implementierungsstand vor einer Erweiterung prüfen.
 
-Neue Konfiguration mit nachvollziehbaren Namen dokumentieren. Falls Umgebungsvariablen oder Dienste hinzukommen, auch `infrastructure/.env.example`, die betroffene Compose-Konfiguration und die README ergänzen. Eine `.env` wird beim direkten Maven-Start nicht automatisch als Spring-Konfiguration geladen; erforderliche Werte müssen im Prozess beziehungsweise in der IDE gesetzt werden. Zugangsdaten und lokale Pfade gehören nicht in versionierte Konfigurationen.
+Neue Konfiguration mit nachvollziehbaren Namen dokumentieren. Falls Umgebungsvariablen oder Dienste hinzukommen, auch `infrastructure/.env.example`, die betroffene Compose-Konfiguration und diese Anleitung ergänzen. Variablen, die den Start der Entwicklungsumgebung ändern, zusätzlich in der README nennen. Eine `.env` wird beim direkten Maven-Start nicht automatisch als Spring-Konfiguration geladen; erforderliche Werte müssen im Prozess beziehungsweise in der IDE gesetzt werden. Zugangsdaten und lokale Pfade gehören nicht in versionierte Konfigurationen.
 
 Neue Abhängigkeiten im jeweiligen Projekt ergänzen: Backend in `pom.xml`, Frontend mit npm inklusive aktualisiertem `package-lock.json`. Die gemeinsame Build- und Deployment-Konfiguration bei Änderungen mitprüfen.
 
@@ -176,20 +331,51 @@ Für sitzungsbasierte MockMvc-Tests das Profil `dev` aktivieren und die echte Mo
 
 Frontend-Tests mit `npm test` ausführen. Vitest ist eingerichtet; `src/lib/i18n.test.ts` zeigt Tests für Sprachwahl und Ressourcen, `src/app/App.test.tsx` prüft Interaktionen mit React Testing Library und jsdom. Feature-Tests für relevante Zustände ergänzen. Zusätzlich Lint, Build und die betroffenen Abläufe im Browser mit den Mock-Rollen prüfen. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten.
 
-Die plattformabhängigen Prüfkommandos stehen in der [README](README.md#prüfungen). Die aktuelle [CI](.github/workflows/ci.yml) führt Backend-Verifikation, Frontend-Lint, -Tests und -Build sowie Compose-Konfigurationsprüfung und Docker-Builds aus. Sie verwendet JDK 21 und derzeit Node.js 22; die lokale Empfehlung ist Node.js 24. Bei neuen Node-Anforderungen diese Abweichung berücksichtigen und eine nötige CI-Anpassung abstimmen. Dokumentationsänderungen allein lösen diese Build-Pipeline wegen ihrer Pfadfilter nicht aus.
+### Prüfkommandos
 
-## 9. Dokumentation und Pull Request
+Die Prüfungen benötigen keine laufenden Entwicklungsserver. Frontend-Tests laufen mit Vitest; sie prüfen unter anderem Sprachauswahl, Speicherung, Fallbacks und das Umschalten der Oberfläche. Die Backend-Tests wählen ihre Profile selbst und benötigen keinen Keycloak. Im Repository-Root beginnen.
 
-Die Feature-Dokumentation gehört nach dem Prozessmodell unter `docs/features/<feature-name>/`, beispielsweise `docs/features/kontrollplanung/README.md`. Den Ordner bei Bedarf anlegen. Dort fachliches Verhalten, Rollen und Datenzuständigkeit, API-Vertrag, relevante Konfiguration und Prüfung beschreiben. Dokumentation im selben Pull Request wie das Feature aktualisieren.
+Windows (PowerShell):
 
-Wesentliche Architekturentscheidungen gemäß [ADR-Workflow](docs/architektur/ADR-Workflow.md) dokumentieren. Neue ADRs beginnen als `Proposed`. Die Beschreibung einer geplanten Architektur ist kein Nachweis ihrer Umsetzung oder Freigabe.
+```powershell
+cd backend
+.\mvnw.cmd verify
+cd ../frontend
+npm.cmd ci
+npm.cmd run lint
+npm.cmd test
+npm.cmd run build
+cd ..
+```
 
-Ein Pull Request enthält:
+macOS / Linux:
+
+```bash
+cd backend
+./mvnw verify
+cd ../frontend
+npm ci
+npm run lint
+npm test
+npm run build
+cd ..
+```
+
+Die aktuelle [CI](.github/workflows/ci.yml) führt Backend-Verifikation, Frontend-Lint, -Tests und -Build sowie Compose-Konfigurationsprüfung und Docker-Builds aus. Sie verwendet JDK 21 und derzeit Node.js 22; die lokale Empfehlung ist Node.js 24. Bei neuen Node-Anforderungen diese Abweichung berücksichtigen und eine nötige CI-Anpassung abstimmen. Dokumentationsänderungen allein lösen diese Build-Pipeline wegen ihrer Pfadfilter nicht aus.
+
+## 9. Dokumentation und Merge Request
+
+Die Feature-Dokumentation gehört nach dem Prozessmodell unter `docs/features/<feature-name>/`, beispielsweise `docs/features/kontrollplanung/README.md`. Den Ordner bei Bedarf anlegen. Dort fachliches Verhalten, Rollen und Datenzuständigkeit, API-Vertrag, relevante Konfiguration und Prüfung beschreiben. Dokumentation im selben Merge Request nach `develop` wie das Feature aktualisieren.
+
+`docs/architektur/` enthält die vollständige Dokumentation der Anwendung, also den umgesetzten Stand und die Architekturentscheidungen. Wird Anwendungscode geändert, werden die betroffenen Dateien dort im selben Merge Request angepasst. Das gilt für Verhalten, Schnittstellen, Daten, Modulgrenzen und Betrieb. Wesentliche Architekturentscheidungen gemäß [ADR-Workflow](docs/architektur/ADR-Workflow.md) dokumentieren. Neue ADRs beginnen als `Proposed`. Die Beschreibung einer geplanten Architektur ist kein Nachweis ihrer Umsetzung oder Freigabe.
+
+Ein Merge Request nach `develop` enthält:
 
 - Verweis auf Story und Akzeptanzkriterien sowie eine kurze Beschreibung des Problems und des neuen Verhaltens.
 - Betroffene Fachmodule und Schnittstellen, insbesondere Änderungen für andere Teams.
 - Berechtigungen und Datenzuständigkeit sowie relevante Konfigurations- oder Datenänderungen.
 - Ausgeführte Prüfungen mit Ergebnissen und gegebenenfalls Screenshots der Oberfläche.
+- Angepasste Dateien unter `docs/architektur/`, wenn sich Anwendungscode geändert hat.
 - Verweise auf Feature-Dokumentation und gegebenenfalls ADRs; offene Punkte ausdrücklich benennen.
 
 Vor der Integration die aktuelle Definition of Done abgleichen: Code Review, erfolgreiche Tests und Builds, Prüfung der relevanten Endgeräte und Datenschutzvorgaben, aktuelle Dokumentation sowie die vorgesehenen Integrations-, Testumgebungs- und Abnahmeschritte. Technische Verantwortung des Lead Developers und fachliche Abnahme durch den zuständigen PO gemäß Teamvereinbarung einbeziehen.
@@ -197,14 +383,16 @@ Vor der Integration die aktuelle Definition of Done abgleichen: Code Review, erf
 ## Checkliste für den ersten Schnitt
 
 - [ ] Story, Akzeptanzkriterien, Abhängigkeiten und Zugriffsmatrix sind geklärt.
-- [ ] Branch und Ziel der Integration sind mit dem Team abgestimmt.
+- [ ] Der Feature-Branch zweigt von `develop` ab; der Merge Request zielt auf `develop`.
 - [ ] Backend-Code liegt im zuständigen Fachpaket; API verwendet DTOs.
 - [ ] Privileg und Zugriff auf konkrete Datensätze werden serverseitig geprüft.
 - [ ] Startdaten und Tests berücksichtigen die neuen Berechtigungen.
+- [ ] Frontend-Code liegt im zuständigen Feature. Imports laufen von gemeinsamem Code über Features nach `app/`; ein Feature importiert weder `app/` noch ein anderes Feature.
 - [ ] Frontend-Routen und Navigation sind registriert; geschützte Loader und Actions prüfen Sitzung und Privileg.
 - [ ] Frontend verwendet `api()` und behandelt Laden, Fehler und leere Ergebnisse.
 - [ ] Erlaubte und verbotene Aktionen sind mit den betroffenen Rollen geprüft.
 - [ ] Neue UI-Texte sind in Deutsch und Englisch vorhanden; Sprachwechsel und Fehleranzeigen funktionieren.
 - [ ] Backend-Verifikation sowie Frontend-Lint, -Tests und -Build sind erfolgreich.
 - [ ] Betroffene Konfiguration, Feature-Dokumentation und README sind aktuell.
-- [ ] Pull Request ist nachvollziehbar beschrieben und zur Prüfung bereit.
+- [ ] Betroffene Dateien unter `docs/architektur/` sind an den geänderten Anwendungscode angepasst.
+- [ ] Der Merge Request nach `develop` ist nachvollziehbar beschrieben und zur Prüfung bereit.

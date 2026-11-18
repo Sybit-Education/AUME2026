@@ -48,7 +48,7 @@ src/
   locales/                      Sprachdateien
 ```
 
-Jedes Feature besitzt seine Seiten, API-Funktionen und Routen. Gemeinsames Layout und Anmeldung werden zentral weiterentwickelt. Die konkrete Referenz ist [residences/routes.tsx](src/features/residences/routes.tsx). Begründung und Importregeln der Ordnerstruktur stehen in der [Frontend-Ordnerstruktur](../docs/architektur/frontend-ordnerstruktur.md).
+Jedes Feature besitzt seine Seiten, API-Funktionen und Routen. Gemeinsames Layout und Anmeldung werden zentral weiterentwickelt. Die konkrete Referenz ist [residences/routes.tsx](src/features/residences/routes.tsx). Begründung und Importregeln der Ordnerstruktur stehen in der [Contributing-Anleitung](../CONTRIBUTING.md#ordner-unter-frontendsrc).
 
 ## Ein neues Feature registrieren
 

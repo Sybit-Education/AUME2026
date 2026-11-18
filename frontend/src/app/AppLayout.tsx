@@ -35,9 +35,16 @@ export default function AppLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div className="sample" aria-busy={busy}>
-      <header className="sample-header">
-        <h1>{t('app.name')}</h1>
+    <div aria-busy={busy}>
+      <header className="hd">
+        <h1 className="brand">{t('app.name')}</h1>
+        {auth.user && (
+          <nav className="seg" aria-label={t('navigation.main')}>
+            {navigation.filter((item) => !item.privilege || auth.user!.privileges.includes(item.privilege)).map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'on' : undefined}>{t(item.label)}</NavLink>
+            ))}
+          </nav>
+        )}
         <label className="language-picker">
           {t('app.language')}
           <select value={language} disabled={busy} onChange={(event) => void changeLanguage(event.target.value)}>
@@ -45,20 +52,18 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <option value="en" lang="en">English</option>
           </select>
         </label>
+        {auth.user && (
+          <>
+            <span className="who">{auth.user.name}</span>
+            <button className="btn gh" disabled={busy} onClick={() => void signOut()}>{t('auth.logout')}</button>
+          </>
+        )}
       </header>
-      {auth.user && (
-        <>
-          <p>{auth.user.name}{' '}<button disabled={busy} onClick={() => void signOut()}>{t('auth.logout')}</button></p>
-          <nav className="page-navigation" aria-label={t('navigation.main')}>
-            {navigation.filter((item) => !item.privilege || auth.user!.privileges.includes(item.privilege)).map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.to === '/'}>{t(item.label)}</NavLink>
-            ))}
-          </nav>
-        </>
-      )}
-      {busy && <p role="status">{t('app.loading')}</p>}
-      {error && <p role="alert">{t(error)}</p>}
-      <main>{children ?? <Outlet />}</main>
+      <div className="mn">
+        {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
+        {error && <p className="err" role="alert">{t(error)}</p>}
+        <main>{children ?? <Outlet />}</main>
+      </div>
     </div>
   )
 }
