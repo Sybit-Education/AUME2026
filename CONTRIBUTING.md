@@ -108,7 +108,7 @@ Für die beispielhafte Kontrollübersicht:
 2. In [SecurityData.java](backend/src/main/java/de/seezeit/aume/user/SecurityData.java) das Privileg `INSPECTION_READ` über den vorhandenen Helfer `privilege(...)` anlegen.
 3. Die bereits vorhandenen `role(...)`-Aufrufe der berechtigten Rollen um dieses Privileg ergänzen. Bestehende Berechtigungen beibehalten. Keinen zweiten Aufruf für dieselbe Rolle hinter den ersten setzen.
 4. Controller beziehungsweise Service mit `hasAuthority('INSPECTION_READ')` schützen und die Datenzuständigkeit prüfen.
-5. In [SampleData.java](backend/src/main/java/de/seezeit/aume/user/SampleData.java) oder einem eigenen, ebenfalls auf `dev` begrenzten Seeder synthetische Fachdaten ergänzen. Benötigte Rollen und Nutzer müssen zuvor angelegt sein; die Reihenfolge der vorhandenen Seeder berücksichtigen.
+5. In [SampleData.java](backend/src/main/java/de/seezeit/aume/SampleData.java) oder einem eigenen, ebenfalls auf `dev` begrenzten Seeder synthetische Fachdaten ergänzen. Benötigte Rollen und Nutzer müssen zuvor angelegt sein; die Reihenfolge der vorhandenen Seeder berücksichtigen.
 6. Backend neu starten und Mock-Nutzer erneut anmelden. Erlaubte und verbotene Fälle prüfen.
 
 **Besonderheit der Seeder:** `SecurityData.role(...)` erstellt nur fehlende Rollen. Bei bereits vorhandenen Rollen werden geänderte Privilegien-Sets nicht übernommen. In der derzeitigen H2-Datenbank mit `ddl-auto: create-drop` wirkt die geänderte Startzuordnung nach einem Backend-Neustart, weil die Datenbank neu aufgebaut wird. Für eine dauerhaft gespeicherte Datenbank braucht eine solche Änderung einen gezielten Datenänderungs- oder Migrationsschritt. Die Zuordnungen nicht bei jedem Start pauschal überschreiben.

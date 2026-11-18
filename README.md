@@ -122,7 +122,7 @@ cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Das Backend läuft unter http://localhost:8080. Bei einem Start direkt aus der IDE die Hauptklasse `de.seezeit.aume.Application`, JDK 21 und das Spring-Profil `dev` verwenden, zum Beispiel mit dem Programmargument `--spring.profiles.active=dev`. Ohne dieses Profil werden die Keycloak-Einstellungen benötigt.
+Das Backend läuft unter http://localhost:8080. Spring Boot DevTools startet die Anwendung neu, sobald die IDE die Klassen neu baut. Maven selbst beobachtet die Quellen nicht. Bei einem Start direkt aus der IDE die Hauptklasse `de.seezeit.aume.Application`, JDK 21 und das Spring-Profil `dev` verwenden, zum Beispiel mit dem Programmargument `--spring.profiles.active=dev`. Ohne dieses Profil werden die Keycloak-Einstellungen benötigt.
 
 ### Terminal 2: Frontend
 

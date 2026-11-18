@@ -53,7 +53,7 @@ class ProductionSecurityTests {
     @Test
     void verifiedIdentityReceivesDatabaseAuthoritiesRatherThanTokenRoles() throws Exception {
         var residence = residences.save(new ResidenceEntity("Assigned residence"));
-        var user = new UserEntity("real-student", "Real student",
+        var user = new StudentEntity("real-student", "Real student",
             Set.of(roles.findByName("STUDENT").orElseThrow()), residence);
         user.linkIdentity("https://identity.example.org/realms/seezeit", "subject-123");
         users.save(user);

@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users", uniqueConstraints = @UniqueConstraint(columnNames = {"identity_issuer", "identity_subject"}))
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.STRING)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserEntity {
+public abstract class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,7 +42,7 @@ public class UserEntity {
     @JoinColumn(name = "residence_id", nullable = false)
     private ResidenceEntity residence;
 
-    public UserEntity(String userKey, String name, Set<RoleEntity> roles, ResidenceEntity residence) {
+    protected UserEntity(String userKey, String name, Set<RoleEntity> roles, ResidenceEntity residence) {
         this.userKey = userKey;
         this.name = name;
         this.roles.addAll(roles);

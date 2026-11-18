@@ -127,7 +127,7 @@ class ApplicationTests {
             .andReturn().getRequest().getSession(false);
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isForbidden());
         var student = users.findByUserKey("student").orElseThrow();
-        users.save(new UserEntity("another-user", "Other", student.getRoles(), student.getResidence()));
+        users.save(new StudentEntity("another-user", "Other", student.getRoles(), student.getResidence()));
         mvc.perform(post("/api/auth/dev-login").with(csrf()).contentType(MediaType.APPLICATION_JSON)
             .content("{\"userKey\":\"another-user\"}")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/auth/dev-login").with(csrf()).contentType(MediaType.APPLICATION_JSON)

@@ -8,11 +8,6 @@ on:
       - "infrastructure/**"
       - ".github/workflows/ci.yml"
   pull_request:
-    paths:
-      - "backend/**"
-      - "frontend/**"
-      - "infrastructure/**"
-      - ".github/workflows/ci.yml"
 
 jobs:
   backend:
