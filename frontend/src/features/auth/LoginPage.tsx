@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useSearchParams } from 'react-router'
-import { useAuth } from '../auth/AuthContext'
-import { safeReturnTo } from '../auth/returnTo'
-import { errorKey, type ErrorKey } from '../errors'
+import { useAuth } from '@/lib/auth/AuthContext'
+import { safeReturnTo } from '@/lib/auth/returnTo'
+import { errorKey, type ErrorKey } from '@/lib/errors'
 
 const mockUsers = ['student', 'caretaker', 'clerk'] as const
 

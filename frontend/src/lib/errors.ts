@@ -1,4 +1,4 @@
-import type de from './locales/de.json'
+import type de from '@/locales/de.json'
 
 export type ErrorKey = `errors.${keyof typeof de.errors}`
 

@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router'
-import { useAuth } from '../auth/AuthContext'
-import { loginDestination } from '../auth/returnTo'
-import LoadingPage from '../pages/LoadingPage'
+import { useAuth } from '@/lib/auth/AuthContext'
+import { loginDestination } from '@/lib/auth/returnTo'
+import LoadingPage from '@/components/LoadingPage'
 
 export default function RequireAuth() {
   const { ready, user, getRequestedPath } = useAuth()

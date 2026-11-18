@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useRouteError, useRevalidator } from 'react-router'
-import { errorKey } from '../errors'
+import { errorKey } from '@/lib/errors'
 
 export default function RouteErrorPage() {
   const { t } = useTranslation()

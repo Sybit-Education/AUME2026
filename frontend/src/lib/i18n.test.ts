@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import de from './locales/de.json'
-import en from './locales/en.json'
+import de from '@/locales/de.json'
+import en from '@/locales/en.json'
 
 function storage(initial: string | null = null) {
   let saved = initial

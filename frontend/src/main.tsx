@@ -1,13 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter } from 'react-router'
-import './i18n'
+import '@/lib/i18n'
 import './index.css'
-import App from './App'
-import { createAppRoutes } from './app/router'
-import { initializeAuth } from './auth'
-import { invalidateSession } from './auth/session'
-import LoadingPage from './pages/LoadingPage'
+import App from '@/app/App'
+import { createAppRoutes } from '@/app/router'
+import { initializeAuth } from '@/lib/auth/client'
+import { invalidateSession } from '@/lib/auth/session'
+import LoadingPage from '@/components/LoadingPage'
 
 const root = createRoot(document.getElementById('root')!)
 root.render(<LoadingPage />)

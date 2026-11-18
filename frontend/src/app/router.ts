@@ -2,13 +2,13 @@ import type { RouteObject } from 'react-router'
 import AppLayout from './AppLayout'
 import RequireAuth from './RequireAuth'
 import RouteErrorLayout from './RouteErrorLayout'
-import LoginPage from '../pages/LoginPage'
-import ForbiddenPage from '../pages/ForbiddenPage'
-import NotFoundPage from '../pages/NotFoundPage'
-import LoadingPage from '../pages/LoadingPage'
-import { ensureSession } from '../auth/session'
-import { dashboardRoutes } from '../features/dashboard/routes'
-import { residenceRoutes } from '../features/residences/routes'
+import ForbiddenPage from './routes/ForbiddenPage'
+import NotFoundPage from './routes/NotFoundPage'
+import LoadingPage from '@/components/LoadingPage'
+import { ensureSession } from '@/lib/auth/session'
+import { authRoutes } from '@/features/auth/routes'
+import { dashboardRoutes } from '@/features/dashboard/routes'
+import { residenceRoutes } from '@/features/residences/routes'
 
 export function createAppRoutes(): RouteObject[] {
   return [{
@@ -19,7 +19,7 @@ export function createAppRoutes(): RouteObject[] {
     HydrateFallback: LoadingPage,
     loader: ensureSession,
     children: [
-      { path: 'login', Component: LoginPage },
+      ...authRoutes,
       {
         Component: RequireAuth,
         children: [...dashboardRoutes, ...residenceRoutes, { path: 'forbidden', Component: ForbiddenPage }],

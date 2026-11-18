@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router'
-import { protectedLoader } from '../../app/loaders'
+import { protectedLoader } from '@/lib/auth/loaders'
 import { loadDashboard } from './api'
 import DashboardPage from './DashboardPage'
 

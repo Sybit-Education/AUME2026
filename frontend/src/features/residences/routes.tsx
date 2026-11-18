@@ -1,6 +1,6 @@
 import { redirect, type RouteObject } from 'react-router'
-import { protectedLoader } from '../../app/loaders'
-import RequirePrivilege from '../../app/RequirePrivilege'
+import { protectedLoader } from '@/lib/auth/loaders'
+import RequirePrivilege from '@/lib/auth/RequirePrivilege'
 import ResidencesPage from './ResidencesPage'
 import { listResidences } from './api'
 

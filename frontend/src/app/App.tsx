@@ -1,6 +1,6 @@
 import type { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import AuthProvider from './auth/AuthProvider'
+import AuthProvider from '@/lib/auth/AuthProvider'
 import './App.css'
 
 export default function App({ router }: { router: ReturnType<typeof createBrowserRouter> }) {

@@ -1,5 +1,5 @@
-import { api } from '../../auth'
-import { requireOk } from '../../auth/response'
+import { api } from '@/lib/auth/client'
+import { requireOk } from '@/lib/auth/response'
 
 export interface ResidencePage {
   content: { id: number; name: string }[]

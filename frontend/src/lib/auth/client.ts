@@ -1,7 +1,7 @@
 import Keycloak from 'keycloak-js'
-import i18n from './i18n'
-import { UiError } from './errors'
-import { loginDestination } from './auth/returnTo'
+import i18n from '@/lib/i18n'
+import { UiError } from '@/lib/errors'
+import { loginDestination } from './returnTo'
 
 export interface LoggedInUser {
   userKey: string

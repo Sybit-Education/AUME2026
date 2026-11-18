@@ -3,13 +3,13 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import App from './App'
-import { createAppRoutes } from './app/router'
-import { invalidateSession } from './auth/session'
-import i18n from './i18n'
-import { UiError } from './errors'
-import { api, login, logout, type LoggedInUser } from './auth'
+import { createAppRoutes } from './router'
+import { invalidateSession } from '@/lib/auth/session'
+import i18n from '@/lib/i18n'
+import { UiError } from '@/lib/errors'
+import { api, login, logout, type LoggedInUser } from '@/lib/auth/client'
 
-vi.mock('./auth', () => ({
+vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
   api: vi.fn(),
   login: vi.fn(),

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useLoaderData, useSearchParams } from 'react-router'
-import LoadingPage from '../../pages/LoadingPage'
+import LoadingPage from '@/components/LoadingPage'
 import type { ResidencePage } from './api'
 
 export default function ResidencesPage() {

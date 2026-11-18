@@ -1,5 +1,5 @@
-import type de from '../locales/de.json'
-import { residenceNavigation } from '../features/residences/routes'
+import type de from '@/locales/de.json'
+import { residenceNavigation } from '@/features/residences/routes'
 
 type NavigationItem = {
   to: string

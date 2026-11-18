@@ -1,8 +1,8 @@
 import type { LoaderFunctionArgs } from 'react-router'
-import type { LoggedInUser } from '../auth'
-import { ensureSession, forgetUser } from '../auth/session'
-import { UiError } from '../errors'
-import { SessionExpired } from '../auth/response'
+import type { LoggedInUser } from './client'
+import { ensureSession, forgetUser } from './session'
+import { UiError } from '@/lib/errors'
+import { SessionExpired } from './response'
 
 // Layout guards run after loaders. Every protected loader must guard its own API calls.
 export function protectedLoader<T>(

@@ -19,29 +19,36 @@ Kontrollseiten sind z.B. noch nicht implementiert. Die Beispiele für `inspectio
 ```text
 src/
   main.tsx                      Keycloak initialisieren, Browser-Router erstellen
-  App.tsx                       AuthProvider und RouterProvider verbinden
   app/
+    App.tsx                     AuthProvider und RouterProvider verbinden
     router.ts                   Seiten und Feature-Routen zusammenführen
     navigation.ts               Navigationspunkte zusammenführen
     AppLayout.tsx               Navigation, Sprache, Abmelden, Ladeanzeige und Outlet
-    loaders.ts                  protectedLoader für geschützte Datenabfragen
     RequireAuth.tsx             Anmeldung für Kindseiten verlangen
-    RequirePrivilege.tsx        Seitenberechtigung prüfen
     RouteErrorLayout.tsx        Gemeinsames Layout auch bei Ladefehlern
-  auth/
-    AuthProvider.tsx             Gemeinsamen Sitzungszustand für React bereitstellen
-    AuthContext.ts              useAuth() für Komponenten
-    session.ts                  Sitzungszustand und Laden von /api/me
-    response.ts                 requireOk() für API-Antworten
-    returnTo.ts                 Sichere Rückkehr nach der Anmeldung
-  auth.ts                       Vorhandener API-/CSRF-/Keycloak-Helfer
+    routes/                     Fehler- und Hinweisseiten der Anwendung
+  components/
+    LoadingPage.tsx             Gemeinsame Ladeanzeige
   features/
+    auth/                       Anmeldeseite und Login-Route
     dashboard/                  Übersichtsseite, Loader und API-Funktion
     residences/                 Fachseite, Routen, Navigationspunkt und API-Funktion
-  pages/                        Anmeldung, Fehler-, Lade- und Hinweisseiten
+  lib/
+    auth/
+      client.ts                 API-/CSRF-/Keycloak-Helfer api(), login(), logout()
+      AuthProvider.tsx          Gemeinsamen Sitzungszustand für React bereitstellen
+      AuthContext.ts            useAuth() für Komponenten
+      session.ts                Sitzungszustand und Laden von /api/me
+      loaders.ts                protectedLoader für geschützte Datenabfragen
+      RequirePrivilege.tsx      Seitenberechtigung prüfen
+      response.ts               requireOk() für API-Antworten
+      returnTo.ts               Sichere Rückkehr nach der Anmeldung
+    errors.ts                   UiError und errorKey()
+    i18n.ts                     Sprachinitialisierung
+  locales/                      Sprachdateien
 ```
 
-Jedes Feature besitzt seine Seiten, API-Funktionen und Routen. Gemeinsames Layout und Anmeldung werden zentral weiterentwickelt. Die konkrete Referenz ist [residences/routes.tsx](src/features/residences/routes.tsx).
+Jedes Feature besitzt seine Seiten, API-Funktionen und Routen. Gemeinsames Layout und Anmeldung werden zentral weiterentwickelt. Die konkrete Referenz ist [residences/routes.tsx](src/features/residences/routes.tsx). Begründung und Importregeln der Ordnerstruktur stehen in der [Frontend-Ordnerstruktur](../docs/architektur/frontend-ordnerstruktur.md).
 
 ## Ein neues Feature registrieren
 
@@ -59,8 +66,8 @@ Das folgende Beispiel setzt einen noch zu implementierenden paginierten Backend-
 
 ```typescript
 // features/inspections/api.ts
-import { api } from '../../auth'
-import { requireOk } from '../../auth/response'
+import { api } from '@/lib/auth/client'
+import { requireOk } from '@/lib/auth/response'
 import type { InspectionPage } from './types'
 
 export async function listInspections(signal: AbortSignal): Promise<InspectionPage> {
@@ -77,8 +84,8 @@ export async function listInspections(signal: AbortSignal): Promise<InspectionPa
 ```tsx
 // features/inspections/routes.tsx
 import type { RouteObject } from 'react-router'
-import { protectedLoader } from '../../app/loaders'
-import RequirePrivilege from '../../app/RequirePrivilege'
+import { protectedLoader } from '@/lib/auth/loaders'
+import RequirePrivilege from '@/lib/auth/RequirePrivilege'
 import InspectionListPage from './InspectionListPage'
 import { listInspections } from './api'
 
@@ -147,7 +154,7 @@ Direkte Seitenaufrufe und Browser-Refresh funktionieren im Vite-Dev-Server und i
 
 ## Tests
 
-`npm test` führt unter anderem die Routingtests in [App.test.tsx](src/App.test.tsx) aus. Sie erzeugen mit `createMemoryRouter(createAppRoutes(), ...)` dieselben Routen wie die Anwendung. Für neue Features diesen Aufbau verwenden und mindestens prüfen:
+`npm test` führt unter anderem die Routingtests in [App.test.tsx](src/app/App.test.tsx) aus. Sie erzeugen mit `createMemoryRouter(createAppRoutes(), ...)` dieselben Routen wie die Anwendung. Für neue Features diesen Aufbau verwenden und mindestens prüfen:
 
 - Direkter Seitenaufruf mit vorhandener und fehlender Sitzung.
 - Rückkehr zum angeforderten Ziel nach dem Login.

@@ -1,5 +1,5 @@
 import AppLayout from './AppLayout'
-import RouteErrorPage from '../pages/RouteErrorPage'
+import RouteErrorPage from './routes/RouteErrorPage'
 
 export default function RouteErrorLayout() {
   return <AppLayout><RouteErrorPage /></AppLayout>

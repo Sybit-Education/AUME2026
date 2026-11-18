@@ -19,4 +19,23 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Dependencies point one way: components/lib -> features -> app.
+    files: ['src/features/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [{
+        group: ['**/app/**', '**/features/**'],
+        message: 'Features dürfen weder app/ noch andere Features importieren; Gemeinsames gehört nach components/ oder lib/.',
+      }] }],
+    },
+  },
+  {
+    files: ['src/components/**/*.{ts,tsx}', 'src/lib/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [{
+        group: ['**/app/**', '**/features/**'],
+        message: 'Gemeinsamer Code darf weder app/ noch Features importieren.',
+      }] }],
+    },
+  },
 ])

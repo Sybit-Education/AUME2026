@@ -5,6 +5,7 @@ Die Unterlagen beschreiben das Architekturziel für die Seezeit-Anwendung. Die f
 - [Architekturübersicht](Seezeit-Architektur.md): Qualitätsziele, Bausteine, Anbindungen, Betrieb und offene Entscheidungen.
 - [Datenmodell](datenmodell.md): ER-Diagramme der Backend-Entities, ein Diagramm je Modul.
 - [Systemarchitektur](SystemArchitektur.drawio): Systemarchitekturdiagramm
+- [Frontend-Ordnerstruktur](frontend-ordnerstruktur.md): Aufbau von `frontend/src/`, Abhängigkeitsregeln und Ablage neuen Codes.
 - [Entscheidungsindex](adr/README.md): akzeptierte Entscheidungen und offene Vorschläge.
 - [ADR-Workflow](ADR-Workflow.md): Entscheidungen vorschlagen, prüfen und ablösen.
 - [CRA-Checkliste](cra-checklist.md): vorhandener Arbeitsstand zur gesonderten Prüfung der Produktsicherheit.

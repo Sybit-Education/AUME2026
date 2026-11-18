@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react'
 import { Navigate } from 'react-router'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from './AuthContext'
 
 export default function RequirePrivilege({ privilege, children }: PropsWithChildren<{ privilege: string }>) {
   const { user } = useAuth()

@@ -25,7 +25,7 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals() })
 
 it('carries the full internal destination through a fragment-free OIDC callback', async () => {
-  const { login } = await import('../auth')
+  const { login } = await import('./client')
   await login(undefined, '/residences?page=1#assigned')
   const callback = new URL(keycloak.login.mock.calls[0][0].redirectUri)
   expect(callback.origin).toBe('https://app.example.org')
@@ -35,14 +35,14 @@ it('carries the full internal destination through a fragment-free OIDC callback'
 })
 
 it('does not put an external destination in the OIDC callback', async () => {
-  const { login } = await import('../auth')
+  const { login } = await import('./client')
   await login(undefined, '//untrusted.example')
   expect(new URL(keycloak.login.mock.calls[0][0].redirectUri).searchParams.get('returnTo')).toBe('/')
 })
 
 it('reports failed token renewal as an expired session without calling the data API', async () => {
   keycloak.updateToken.mockRejectedValue(new Error('Token expired'))
-  const { api } = await import('../auth')
+  const { api } = await import('./client')
   await expect(api('/api/residences')).rejects.toMatchObject({ key: 'errors.sessionExpired' })
   expect(fetch).toHaveBeenCalledTimes(1)
 })

@@ -1,5 +1,5 @@
 import 'i18next'
-import type de from './locales/de.json'
+import type de from '@/locales/de.json'
 
 declare module 'i18next' {
   interface CustomTypeOptions {

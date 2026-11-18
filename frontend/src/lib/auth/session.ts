@@ -1,5 +1,5 @@
-import { api, initializeAuth, login, logout, type LoggedInUser } from '../auth'
-import { UiError } from '../errors'
+import { api, initializeAuth, login, logout, type LoggedInUser } from './client'
+import { UiError } from '@/lib/errors'
 
 export interface Session {
   ready: boolean

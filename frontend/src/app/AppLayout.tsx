@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigation, useRevalidator } from 'react-router'
-import { useAuth } from '../auth/AuthContext'
-import { errorKey, type ErrorKey } from '../errors'
-import { supportedLanguage } from '../i18n'
+import { useAuth } from '@/lib/auth/AuthContext'
+import { errorKey, type ErrorKey } from '@/lib/errors'
+import { supportedLanguage } from '@/lib/i18n'
 import { navigation } from './navigation'
 
 export default function AppLayout({ children }: PropsWithChildren) {

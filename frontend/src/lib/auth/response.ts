@@ -1,5 +1,5 @@
 import { redirect } from 'react-router'
-import { UiError, type ErrorKey } from '../errors'
+import { UiError, type ErrorKey } from '@/lib/errors'
 import { forgetUser } from './session'
 
 export class SessionExpired extends Error {}

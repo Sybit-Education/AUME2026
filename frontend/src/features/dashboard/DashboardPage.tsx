@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData } from 'react-router'
-import { useAuth } from '../../auth/AuthContext'
-import LoadingPage from '../../pages/LoadingPage'
+import { useAuth } from '@/lib/auth/AuthContext'
+import LoadingPage from '@/components/LoadingPage'
 import type { loadDashboard } from './api'
 
 export default function DashboardPage() {
