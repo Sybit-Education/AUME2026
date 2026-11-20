@@ -41,7 +41,7 @@ beforeEach(async () => {
     if (path.startsWith('/api/residences?')) {
       const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
       return Response.json({
-        content: [{ id: page + 1, name: page === 0 ? 'Sonne' : 'Mond' }],
+        content: [{ id: page + 1, name: page === 0 ? 'Sonne' : 'Mond', flats: [], caretaker: null, deputy: null }],
         page: { number: page, size: 20, totalPages: 2, totalElements: 21 },
       })
     }
