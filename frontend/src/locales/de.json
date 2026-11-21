@@ -26,12 +26,16 @@
     "residences": "Die Wohnanlagen konnten nicht geladen werden.",
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
-    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
+    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen.",
+    "inspections": "Die Kontrollen konnten nicht geladen werden.",
+    "inspection": "Die Kontrolle konnte nicht geladen werden.",
+    "inspectionSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen."
   },
   "navigation": {
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
-    "residences": "Wohnanlagen"
+    "residences": "Wohnanlagen",
+    "inspections": "Kontrollen"
   },
   "pages": {
     "welcome": "Willkommen, {{name}}.",
@@ -45,5 +49,74 @@
     "notFound": "Seite nicht gefunden",
     "notFoundDescription": "Unter dieser Adresse gibt es keine Seite.",
     "error": "Die Seite konnte nicht geladen werden."
+  },
+  "inspections": {
+    "title": "Kontrolle · WG {{label}}",
+    "summaryTitle": "Abschluss · WG {{label}}",
+    "flat": "WG {{label}}",
+    "none": "Keine offenen Kontrollen in deiner Wohnanlage.",
+    "start": "Kontrolle starten",
+    "continue": "Kontrolle fortsetzen",
+    "started": "Kontrolle gestartet.",
+    "round": "Nachkontrolle {{round}}",
+    "places_one": "{{count}} Platz",
+    "places_other": "{{count}} Plätze",
+    "areas": "Bereiche",
+    "checklistOf": "Checkliste {{area}}",
+    "noChecklist": "Es ist keine veröffentlichte Checkliste vorhanden.",
+    "allOk": "Alles in Ordnung",
+    "allOkDone": "Alle offenen Kriterien sind in Ordnung.",
+    "areaOk": "Bereich in Ordnung",
+    "areaOkDone": "{{area}} ist in Ordnung.",
+    "toSummary": "Zum Abschluss",
+    "backToChecklist": "Zurück zur Checkliste",
+    "addDefect": "+ Mangel erfassen",
+    "defectTitle": "Mangel erfassen · {{area}}",
+    "criterion": "Kriterium",
+    "severityLabel": "Schwere",
+    "note": "Notiz",
+    "noteRequired": "Bitte beschreibe den Mangel.",
+    "cancel": "Abbrechen",
+    "saveDefect": "Mangel speichern",
+    "defectSaved": "Mangel gespeichert.",
+    "defectDeleted": "Mangel gelöscht.",
+    "defects": "Erfasste Mängel",
+    "resolveOnSite": "Vor Ort geklärt",
+    "buildingCause": "Gebäudeursache",
+    "delete": "Löschen",
+    "overview": "Zusammenfassung",
+    "area": "Bereich",
+    "state": "Stand",
+    "deficiencies_one": "{{count}} Mangel",
+    "deficiencies_other": "{{count}} Mängel",
+    "openCriteria_one": "{{count}} Kriterium offen",
+    "openCriteria_other": "{{count}} Kriterien offen",
+    "inOrder": "In Ordnung",
+    "overallResult": "Gesamtergebnis",
+    "resultHint": "Das Gesamtergebnis legst du fest. Der Vorschlag richtet sich nach den Mängeln.",
+    "result": "Ergebnis",
+    "rateAllFirst_one": "Noch {{count}} Kriterium ist nicht bewertet. Nutze „Bereich in Ordnung“ oder „Alles in Ordnung“.",
+    "rateAllFirst_other": "Noch {{count}} Kriterien sind nicht bewertet. Nutze „Bereich in Ordnung“ oder „Alles in Ordnung“.",
+    "finalize": "Kontrolle abschließen",
+    "finalized": "Kontrolle abgeschlossen.",
+    "status": {
+      "PLANNED": "Geplant",
+      "DRAFT": "In Bearbeitung",
+      "FINALIZED": "Abgeschlossen",
+      "PUBLISHED": "Veröffentlicht"
+    },
+    "rating": {
+      "OK": "In Ordnung",
+      "DEFICIENT": "Mangel",
+      "RESOLVED_ON_SITE": "Vor Ort geklärt"
+    },
+    "severity": {
+      "LIGHT": "Normal",
+      "SEVERE": "Schwer"
+    },
+    "overall": {
+      "PASSED": "Bestanden",
+      "FAILED": "Nachkontrolle erforderlich"
+    }
   }
 }

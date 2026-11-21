@@ -35,7 +35,7 @@ class ApplicationTests {
     @Autowired private SampleData sampleData;
 
     @ParameterizedTest
-    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,RESIDENCE_READ", "clerk,CLERK,RESIDENCE_READ"})
+    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,INSPECTION_PERFORM", "clerk,CLERK,RESIDENCE_READ"})
     void mockUsersReceiveTheirOwnRolesAndPrivileges(String key, String role, String privilege) throws Exception {
         var session = login(key);
         mvc.perform(get("/api/me").session(session))
@@ -142,7 +142,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(2));
+            .andExpect(jsonPath("$.privileges.length()").value(3));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -167,7 +167,7 @@ class ApplicationTests {
         assertThat(users.count()).isEqualTo(3);
         assertThat(residences.count()).isEqualTo(1);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(2);
+        assertThat(privileges.count()).isEqualTo(3);
     }
 
     private MockHttpSession login(String key) throws Exception {

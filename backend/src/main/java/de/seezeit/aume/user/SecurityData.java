@@ -22,8 +22,9 @@ public class SecurityData implements CommandLineRunner {
     public void run(String... args) {
         var greeting = privilege("GREETING_READ");
         var residence = privilege("RESIDENCE_READ");
+        var inspection = privilege("INSPECTION_PERFORM");
         role("STUDENT", Set.of(greeting));
-        role("CARETAKER", Set.of(residence));
+        role("CARETAKER", Set.of(residence, inspection));
         role("CLERK", Set.of(residence));
     }
 
