@@ -46,5 +46,25 @@
     "notFound": "Page not found",
     "notFoundDescription": "There is no page at this address.",
     "error": "The page could not be loaded."
+  },
+  "profile": {
+    "account": "My profile",
+    "signedIn": "Signed in",
+    "name": "Name",
+    "role": "Role",
+    "userKey": "User ID",
+    "permissions": "Permissions",
+    "noPermissions": "No permissions assigned.",
+    "signedInAs": "Signed in as",
+    "responsibility": "Responsibility",
+    "residences": "Residences",
+    "representative": "Representation",
+    "active": "Active",
+    "takeOverRepresentation": "Take over representation",
+    "representColleague": "I am currently representing a colleague",
+    "representDescription": "You will then also see their residence.",
+    "device": "Device",
+    "offlineMode": "Offline mode",
+    "offlineDescription": "In offline mode, you perform inspections without internet access. They are sent once you are online again."
   }
 }

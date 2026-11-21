@@ -6,7 +6,7 @@ import ProfilePage from './ProfilePage'
 export const profileRoutes: RouteObject[] = [{
   path: 'profile',
   Component: ProfilePage,
-  loader: protectedLoader(undefined, () => loadProfile()),
+  loader: protectedLoader(undefined, ({ request }, user) => loadProfile(user, request.signal)),
 }]
 
 export const profileNavigation = {
