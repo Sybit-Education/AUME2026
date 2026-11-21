@@ -31,7 +31,8 @@
   "navigation": {
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
-    "residences": "Wohnanlagen"
+    "residences": "Wohnanlagen",
+    "profile": "Profil"
   },
   "pages": {
     "welcome": "Willkommen, {{name}}.",

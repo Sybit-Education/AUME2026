@@ -31,7 +31,8 @@
   "navigation": {
     "main": "Main navigation",
     "dashboard": "Dashboard",
-    "residences": "Residences"
+    "residences": "Residences",
+    "profile": "Profile"
   },
   "pages": {
     "welcome": "Welcome, {{name}}.",

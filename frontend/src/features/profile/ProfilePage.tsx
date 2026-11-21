@@ -1,0 +1,21 @@
+import { useTranslation } from 'react-i18next'
+import { Link, useLoaderData } from 'react-router'
+import { useAuth } from '@/lib/auth/AuthContext'
+import LoadingPage from '@/components/LoadingPage'
+import type { loadProfile } from './api'
+
+export default function ProfilePage() {
+  const { t } = useTranslation()
+  const { user } = useAuth()
+  const data = useLoaderData<Awaited<ReturnType<typeof loadProfile>> | null>()
+  if (!data) return <LoadingPage />
+
+  return (
+    <section className="card">
+      <h2>{t('navigation.profile')}</h2>
+      <p>{t('pages.welcome', { name: user?.name })}</p>
+      {data.greeting && <p>{data.greeting}</p>}
+      {user?.privileges.includes('RESIDENCE_READ') && <p className="acts"><Link className="btn sec" to="/residences">{t('pages.openResidences')}</Link></p>}
+    </section>
+  )
+}
