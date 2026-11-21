@@ -2,6 +2,14 @@ import Keycloak from 'keycloak-js'
 import i18n from '@/lib/i18n'
 import { UiError } from '@/lib/errors'
 import { loginDestination } from './returnTo'
+import {
+  cacheApiResponse,
+  getCachedApiResponse,
+  getCachedAuthConfig,
+  isOfflineModeEnabled,
+  clearOfflineData,
+  saveAuthConfig,
+} from '@/lib/offline'
 
 export interface LoggedInUser {
   userKey: string
@@ -16,9 +24,23 @@ let initialization: Promise<AuthConfig> | undefined
 
 export function initializeAuth(): Promise<AuthConfig> {
   initialization ??= (async () => {
-    const response = await fetch('/api/auth/config')
+    let response: Response
+    try {
+      response = await fetch('/api/auth/config')
+    } catch (cause) {
+      const cached = cause instanceof TypeError && isOfflineModeEnabled()
+        ? getCachedAuthConfig<AuthConfig>()
+        : null
+      if (!cached) throw cause
+      response = Response.json(cached)
+    }
+    if (response.status >= 500 && isOfflineModeEnabled()) {
+      const cached = getCachedAuthConfig<AuthConfig>()
+      if (cached) response = Response.json(cached)
+    }
     if (!response.ok) throw new UiError('errors.authLoad')
     const config = (await response.json()) as AuthConfig
+    saveAuthConfig(config)
     if (config.mode === 'keycloak') {
       keycloak = new Keycloak(config)
       await keycloak.init({ pkceMethod: 'S256', checkLoginIframe: false })
@@ -32,12 +54,15 @@ export function initializeAuth(): Promise<AuthConfig> {
 
 export async function api(path: string, options: RequestInit = {}): Promise<Response> {
   const config = await initializeAuth()
+  const method = (options.method ?? 'GET').toUpperCase()
   const headers = new Headers(options.headers)
   headers.set('Accept-Language', i18n.resolvedLanguage ?? 'de')
   if (config.mode === 'keycloak' && keycloak?.authenticated) {
     try {
       await keycloak.updateToken(30)
     } catch {
+      const cached = method === 'GET' ? getCachedApiResponse(path) : null
+      if (cached) return cached
       throw new UiError('errors.sessionExpired')
     }
     headers.set('Authorization', `Bearer ${keycloak.token}`)
@@ -49,7 +74,22 @@ export async function api(path: string, options: RequestInit = {}): Promise<Resp
     const csrf = (await response.json()) as { headerName: string; token: string }
     headers.set(csrf.headerName, csrf.token)
   }
-  return fetch(path, { ...options, headers, credentials: config.mode === 'dev' ? 'same-origin' : 'omit' })
+  let response: Response
+  try {
+    response = await fetch(path, { ...options, headers, credentials: config.mode === 'dev' ? 'same-origin' : 'omit' })
+  } catch (cause) {
+    const cached = cause instanceof TypeError && !options.signal?.aborted && method === 'GET'
+      ? getCachedApiResponse(path)
+      : null
+    if (cached) return cached
+    throw cause
+  }
+  if (method === 'GET' && response.status >= 500) {
+    const cached = getCachedApiResponse(path)
+    if (cached) return cached
+  }
+  await cacheApiResponse(path, response)
+  return response
 }
 
 export async function login(userKey?: string, returnTo = '/'): Promise<void> {
@@ -68,10 +108,15 @@ export async function login(userKey?: string, returnTo = '/'): Promise<void> {
 
 export async function logout(): Promise<void> {
   const config = await initializeAuth()
+  if (isOfflineModeEnabled() && !navigator.onLine) {
+    throw new UiError('errors.logout')
+  }
   if (config.mode === 'keycloak') {
+    clearOfflineData()
     await keycloak!.logout({ redirectUri: window.location.origin })
     return
   }
   const response = await api('/api/auth/logout', { method: 'POST' })
   if (!response.ok) throw new UiError('errors.logout')
+  clearOfflineData()
 }

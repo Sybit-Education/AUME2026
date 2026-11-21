@@ -152,6 +152,14 @@ Beim Sprachwechsel revalidiert `AppLayout` die aktuellen Routen. Lokalisierte Lo
 
 Direkte Seitenaufrufe und Browser-Refresh funktionieren im Vite-Dev-Server und im Docker-Frontend: Die vorhandene Nginx-Konfiguration liefert für Seitenpfade `index.html`, während `/api/` an das Backend geht. Bei anderem Hosting denselben SPA-Fallback und die API-Weiterleitung einrichten. Frontend-Seitenpfade werden nicht im Spring-Backend registriert. Der gefundene beziehungsweise nicht gefundene Seiteninhalt wird clientseitig angezeigt; der statische Webserver liefert beim SPA-Fallback HTTP 200.
 
+## Aktueller Offline-Modus
+
+Die Profilseite der Objektbetreuung kann den Offline-Modus auf einem verbundenen Gerät vorbereiten. Dabei werden das angemeldete Profil, der erlaubte Gruß und alle zugewiesenen Wohnanlagen für die vorhandenen Ansichten vorgeladen. Erfolgreiche `GET`-Antworten dieser Endpunkte werden nutzerbezogen im Browser-`localStorage` gespeichert und bei einem Netzfehler daraus gelesen. Im Produktionsbuild hält ein Service Worker zusätzlich die App-Oberfläche für einen Browser-Refresh ohne Verbindung vor.
+
+Beim Ausschalten oder Abmelden werden die lokal gespeicherten API-Daten gelöscht. Der Browser-Speicher ist nicht verschlüsselt; den Offline-Modus deshalb nur auf einem vertrauenswürdigen, zugriffsgeschützten Gerät verwenden. Service Worker benötigen HTTPS oder `localhost`; im Entwicklungsserver können bereits geladene Ansichten den API-Cache verwenden, aber die App-Oberfläche wird nicht offline vorgehalten.
+
+Die Anwendung besitzt derzeit keine fachlichen Schreibendpunkte oder Erfassungsseiten. Es gibt daher noch keine offline erstellten Änderungen, die gepuffert oder synchronisiert werden könnten. Offline-Erfassung, Upload-Warteschlange und Konfliktbehandlung bleiben Teil des vorgeschlagenen [ADR-0011](../docs/architektur/adr/0011-preserve-inspection-drafts-during-network-loss.md), der erst nach Umsetzung und Annahme als vollständiger Offline-Workflow gelten kann.
+
 ## Tests
 
 `npm test` führt unter anderem die Routingtests in [App.test.tsx](src/app/App.test.tsx) aus. Sie erzeugen mit `createMemoryRouter(createAppRoutes(), ...)` dieselben Routen wie die Anwendung. Für neue Features diesen Aufbau verwenden und mindestens prüfen:

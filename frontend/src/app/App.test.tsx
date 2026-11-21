@@ -17,6 +17,7 @@ vi.mock('@/lib/auth/client', () => ({
 }))
 
 const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
+const caretaker: LoggedInUser = { userKey: 'caretaker', name: 'Casey', roles: ['CARETAKER'], privileges: ['RESIDENCE_READ'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
 let signedIn: LoggedInUser | null
 let routers: ReturnType<typeof createMemoryRouter>[] = []
@@ -31,9 +32,12 @@ function mount(path = '/') {
 beforeEach(async () => {
   vi.resetAllMocks()
   invalidateSession()
+  window.localStorage.clear()
   signedIn = null
   await i18n.changeLanguage('de')
-  vi.mocked(login).mockImplementation(async (key) => { signedIn = key === 'student' ? student : clerk })
+  vi.mocked(login).mockImplementation(async (key) => {
+    signedIn = key === 'student' ? student : key === 'caretaker' ? caretaker : clerk
+  })
   vi.mocked(logout).mockImplementation(async () => { signedIn = null })
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
@@ -155,4 +159,22 @@ it('renders translated loader errors and keeps the language picker usable', asyn
   fireEvent.change(screen.getByRole('combobox'), { target: { value: 'en' } })
   await screen.findByText('The user profile could not be loaded.')
   await waitFor(() => { expect((screen.getByRole('combobox') as HTMLSelectElement).disabled).toBe(false) })
+})
+
+it('downloads the current profile data when caretaker enables offline mode', async () => {
+  signedIn = caretaker
+  mount('/profile')
+
+  const checkbox = await screen.findByRole('checkbox', { name: 'Offline-Modus' })
+  fireEvent.click(checkbox)
+  await screen.findByText('Offline-Daten wurden auf diesem Gerät gespeichert.')
+
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/me')).toBe(true)
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/residences?page=0&size=100')).toBe(true)
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/residences?page=1&size=20')).toBe(true)
+  expect(window.localStorage.getItem('aume.offline.enabled')).toBe('true')
+
+  fireEvent.click(checkbox)
+  await waitFor(() => { expect((checkbox as HTMLInputElement).checked).toBe(false) })
+  expect(window.localStorage.getItem('aume.offline.enabled')).toBeNull()
 })

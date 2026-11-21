@@ -26,7 +26,10 @@
     "residences": "The residences could not be loaded.",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "network": "The backend is unreachable.",
-    "language": "The language could not be changed. Please try again."
+    "language": "The language could not be changed. Please try again.",
+    "offlineNeedsNetwork": "An internet connection is required to prepare offline mode.",
+    "offlineSetup": "Offline mode could not be prepared. Check your connection and try again.",
+    "offlineStorage": "Offline data could not be saved in browser storage."
   },
   "navigation": {
     "main": "Main navigation",
@@ -65,6 +68,7 @@
     "representDescription": "You will then also see their residence.",
     "device": "Device",
     "offlineMode": "Offline mode",
-    "offlineDescription": "In offline mode, you perform inspections without internet access. They are sent once you are online again."
+    "offlineDescription": "Downloads available profile data and residences for offline viewing. This app cannot currently record changes offline.",
+    "offlineReady": "Offline data is stored on this device."
   }
 }

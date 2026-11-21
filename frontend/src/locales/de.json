@@ -26,7 +26,10 @@
     "residences": "Die Wohnanlagen konnten nicht geladen werden.",
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
-    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
+    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen.",
+    "offlineNeedsNetwork": "Zum Vorbereiten des Offline-Modus ist eine Internetverbindung erforderlich.",
+    "offlineSetup": "Der Offline-Modus konnte nicht vorbereitet werden. Bitte Verbindung prüfen und erneut versuchen.",
+    "offlineStorage": "Offline-Daten konnten nicht im Browserspeicher abgelegt werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -65,6 +68,7 @@
     "representDescription": "Dann siehst du auch deren Anlage.",
     "device": "Gerät",
     "offlineMode": "Offline-Modus",
-    "offlineDescription": "Im Offline-Modus führst du Kontrollen ohne Internet durch. Sie werden gesendet, sobald du wieder online bist."
+    "offlineDescription": "Lädt die verfügbaren Profildaten und Wohnanlagen für die Offline-Ansicht herunter. Änderungen können in dieser App derzeit nicht offline erfasst werden.",
+    "offlineReady": "Offline-Daten wurden auf diesem Gerät gespeichert."
   }
 }

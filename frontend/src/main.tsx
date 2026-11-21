@@ -9,6 +9,12 @@ import { initializeAuth } from '@/lib/auth/client'
 import { invalidateSession } from '@/lib/auth/session'
 import LoadingPage from '@/components/LoadingPage'
 
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/sw.js').catch((cause: unknown) => {
+    console.error('Unable to register the offline application shell.', cause)
+  })
+}
+
 const root = createRoot(document.getElementById('root')!)
 root.render(<LoadingPage />)
 
