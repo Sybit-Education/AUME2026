@@ -4,6 +4,7 @@ import { NavLink, Outlet, useNavigation, useRevalidator } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { supportedLanguage } from '@/lib/i18n'
+import { isOfflineModeEnabled, offlineModeChangeEvent } from '@/lib/offline'
 import { navigation } from './navigation'
 
 export default function AppLayout({ children }: PropsWithChildren) {
@@ -15,6 +16,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const revalidator = useRevalidator()
   const busy = auth.busy || transition.state !== 'idle' || revalidator.state !== 'idle'
   const [error, setError] = useState<ErrorKey | null>(null)
+  const [offlineMode, setOfflineMode] = useState(isOfflineModeEnabled)
 
   useEffect(() => {
     if (previousLanguage.current !== language) {
@@ -22,6 +24,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
       void revalidator.revalidate()
     }
   }, [language, revalidator])
+
+  useEffect(() => {
+    const updateOfflineMode = () => setOfflineMode(isOfflineModeEnabled())
+    window.addEventListener(offlineModeChangeEvent, updateOfflineMode)
+    return () => window.removeEventListener(offlineModeChangeEvent, updateOfflineMode)
+  }, [])
 
   async function changeLanguage(value: string) {
     const next = supportedLanguage(value)
@@ -62,6 +70,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
       <div className="mn">
         {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
         {error && <p className="err" role="alert">{t(error)}</p>}
+        {auth.user && offlineMode && (
+          <p className="note offline-mode-notice" role="status">{t('app.offlineModeNotice')}</p>
+        )}
         <main>{children ?? <Outlet />}</main>
       </div>
     </div>

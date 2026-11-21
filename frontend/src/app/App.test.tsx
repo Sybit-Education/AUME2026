@@ -166,8 +166,20 @@ it('downloads the current profile data when caretaker enables offline mode', asy
   mount('/profile')
 
   const checkbox = await screen.findByRole('checkbox', { name: 'Offline-Modus' })
+  const originalApi = vi.mocked(api).getMockImplementation()
+  let delayActivation = false
+  vi.mocked(api).mockImplementation(async (path, options) => {
+    if (delayActivation && path === '/api/me') {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    return originalApi!(path, options)
+  })
+
+  delayActivation = true
   fireEvent.click(checkbox)
+  await screen.findByText('Offline-Daten werden geladen …')
   await screen.findByText('Offline-Daten wurden auf diesem Gerät gespeichert.')
+  await screen.findByText('Offline-Modus aktiv – angezeigte Daten können aus dem Gerätespeicher stammen.')
 
   expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/me')).toBe(true)
   expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/residences?page=0&size=100')).toBe(true)
@@ -177,4 +189,5 @@ it('downloads the current profile data when caretaker enables offline mode', asy
   fireEvent.click(checkbox)
   await waitFor(() => { expect((checkbox as HTMLInputElement).checked).toBe(false) })
   expect(window.localStorage.getItem('aume.offline.enabled')).toBeNull()
+  expect(screen.queryByText('Offline-Modus aktiv – angezeigte Daten können aus dem Gerätespeicher stammen.')).toBeNull()
 })

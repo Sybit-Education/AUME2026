@@ -2,7 +2,8 @@
   "app": {
     "name": "Seezeit",
     "language": "Sprache",
-    "loading": "Wird geladen …"
+    "loading": "Wird geladen …",
+    "offlineModeNotice": "Offline-Modus aktiv – angezeigte Daten können aus dem Gerätespeicher stammen."
   },
   "auth": {
     "mockLogin": "Testnutzer anmelden",
@@ -69,6 +70,7 @@
     "device": "Gerät",
     "offlineMode": "Offline-Modus",
     "offlineDescription": "Lädt die verfügbaren Profildaten und Wohnanlagen für die Offline-Ansicht herunter. Änderungen können in dieser App derzeit nicht offline erfasst werden.",
+    "offlineLoading": "Offline-Daten werden geladen …",
     "offlineReady": "Offline-Daten wurden auf diesem Gerät gespeichert."
   }
 }

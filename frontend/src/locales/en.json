@@ -2,7 +2,8 @@
   "app": {
     "name": "Seezeit",
     "language": "Language",
-    "loading": "Loading …"
+    "loading": "Loading …",
+    "offlineModeNotice": "Offline mode is active – displayed data may come from this device's storage."
   },
   "auth": {
     "mockLogin": "Sign in as a test user",
@@ -69,6 +70,7 @@
     "device": "Device",
     "offlineMode": "Offline mode",
     "offlineDescription": "Downloads available profile data and residences for offline viewing. This app cannot currently record changes offline.",
+    "offlineLoading": "Loading offline data …",
     "offlineReady": "Offline data is stored on this device."
   }
 }

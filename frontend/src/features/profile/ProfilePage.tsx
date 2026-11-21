@@ -86,7 +86,9 @@ export default function ProfilePage() {
           <span>{t('profile.offlineMode')}</span>
         </label>
         <p className="xs mut">{t('profile.offlineDescription')}</p>
-        {offline && <p className="xs" role="status">{t('profile.offlineReady')}</p>}
+        {offlineBusy
+          ? <p className="xs" role="status">{t('profile.offlineLoading')}</p>
+          : offline && <p className="xs" role="status">{t('profile.offlineReady')}</p>}
         {offlineError && <p className="err" role="alert">{t(offlineError)}</p>}
       </section>
     </div>

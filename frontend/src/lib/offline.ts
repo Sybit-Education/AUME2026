@@ -4,6 +4,7 @@ const enabledKey = 'aume.offline.enabled'
 const authConfigKey = 'aume.offline.auth-config'
 const ownerKey = 'aume.offline.owner'
 const responsePrefix = 'aume.offline.response.'
+export const offlineModeChangeEvent = 'aume:offline-mode-change'
 
 interface CachedResponse {
   body: string
@@ -66,12 +67,14 @@ export function setOfflineModeEnabled(enabled: boolean) {
   const store = storage()
   if (enabled) {
     write(store, enabledKey, 'true')
+    window.dispatchEvent(new Event(offlineModeChangeEvent))
     return
   }
 
   remove(store, enabledKey)
   remove(store, ownerKey)
   clearResponses(store)
+  window.dispatchEvent(new Event(offlineModeChangeEvent))
 }
 
 export function clearOfflineData() {
@@ -80,6 +83,7 @@ export function clearOfflineData() {
   remove(store, authConfigKey)
   remove(store, ownerKey)
   clearResponses(store)
+  window.dispatchEvent(new Event(offlineModeChangeEvent))
 }
 
 export function saveAuthConfig(config: unknown) {
