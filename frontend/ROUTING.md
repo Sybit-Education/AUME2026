@@ -9,6 +9,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
 | `/` | Angemeldet | Übersicht; Gruß mit `GREETING_READ`, Link zu Wohnanlagen mit `RESIDENCE_READ` |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
+| `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/forbidden` | Angemeldet | Fehlende Berechtigung |
 | Andere URLs | Öffentlich | Seite nicht gefunden |
 

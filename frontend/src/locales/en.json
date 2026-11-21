@@ -26,12 +26,28 @@
     "residences": "The residences could not be loaded.",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "network": "The backend is unreachable.",
-    "language": "The language could not be changed. Please try again."
+    "language": "The language could not be changed. Please try again.",
+    "infoPages": "The information could not be loaded.",
+    "infoPagesSave": "The information could not be saved.",
+    "infoTextRequired": "Please fill in all three texts.",
+    "infoTextTooLong": "A text is longer than 20,000 characters."
   },
   "navigation": {
     "main": "Main navigation",
     "dashboard": "Dashboard",
-    "residences": "Residences"
+    "residences": "Residences",
+    "standards": "Standards"
+  },
+  "standards": {
+    "title": "Standards and criteria",
+    "info": "Information for residents",
+    "infoHint": "Residents see these texts under inspection, date, process and consequences.",
+    "process": "Inspection process",
+    "consequences": "Consequences of defects",
+    "standards": "Cleanliness standards",
+    "save": "Save",
+    "saved": "Saved. Residents will see the new version.",
+    "readOnly": "You can only read these texts."
   },
   "pages": {
     "welcome": "Welcome, {{name}}.",

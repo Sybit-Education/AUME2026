@@ -1,6 +1,7 @@
 package de.seezeit.aume;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,7 +43,7 @@ class ApplicationTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userKey").value(key))
             .andExpect(jsonPath("$.roles[0]").value(role))
-            .andExpect(jsonPath("$.privileges[0]").value(privilege))
+            .andExpect(jsonPath("$.privileges", hasItem(privilege)))
             .andExpect(jsonPath("$.identitySubject").doesNotExist());
     }
 
@@ -142,7 +143,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(2));
+            .andExpect(jsonPath("$.privileges.length()").value(5));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -167,7 +168,7 @@ class ApplicationTests {
         assertThat(users.count()).isEqualTo(3);
         assertThat(residences.count()).isEqualTo(1);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(2);
+        assertThat(privileges.count()).isEqualTo(5);
     }
 
     private MockHttpSession login(String key) throws Exception {
