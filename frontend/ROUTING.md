@@ -8,8 +8,8 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | --- | --- | --- |
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
 | `/` | Angemeldet | Übersicht; Gruß mit `GREETING_READ`, Link zu Wohnanlagen mit `RESIDENCE_READ` |
-| `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit WGs, Objektbetreuung und Vertretung, mit Pagination |
-| `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Zuständigkeit einer Anlage bearbeiten; Speichern über die Route-Action |
+| `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
+| `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
 | `/forbidden` | Angemeldet | Fehlende Berechtigung |
 | Andere URLs | Öffentlich | Seite nicht gefunden |
 

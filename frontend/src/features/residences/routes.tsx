@@ -3,13 +3,14 @@ import { protectedLoader } from '@/lib/auth/loaders'
 import RequirePrivilege from '@/lib/auth/RequirePrivilege'
 import ResidencesPage from './ResidencesPage'
 import { assignStaffAction } from './actions'
-import { listCaretakers, listResidences, type ResidencePage, type StaffMember } from './api'
+import {
+  listCaretakers, listResidences, type Residence, type ResidencePage, type ResidenceSummaryPage, type StaffMember,
+} from './api'
 
-export interface ResidencesData {
-  residences: ResidencePage
-  // null, wenn der Nutzer die Zuständigkeit nicht ändern darf; das Backend prüft zusätzlich.
-  caretakers: StaffMember[] | null
-}
+// Sachbearbeitung: Tabelle mit Zuständigkeit. Alle anderen: bisherige Namensliste.
+export type ResidencesData =
+  | { kind: 'clerk'; residences: ResidencePage; caretakers: StaffMember[] }
+  | { kind: 'summary'; residences: ResidenceSummaryPage }
 
 export const residenceRoutes: RouteObject[] = [{
   path: 'residences',
@@ -17,12 +18,14 @@ export const residenceRoutes: RouteObject[] = [{
   loader: protectedLoader('RESIDENCE_READ', async ({ request }, user): Promise<ResidencesData> => {
     const page = Number(new URL(request.url).searchParams.get('page') ?? '0')
     if (!Number.isSafeInteger(page) || page < 0) throw redirect('/residences')
-    const canAssign = user.privileges.includes('RESIDENCE_ASSIGN_STAFF')
+    if (!user.privileges.includes('RESIDENCE_ASSIGN_STAFF')) {
+      return { kind: 'summary', residences: await listResidences(page, request.signal) }
+    }
     const [residences, caretakers] = await Promise.all([
-      listResidences(page, request.signal),
-      canAssign ? listCaretakers(request.signal) : Promise.resolve(null),
+      listResidences<Residence>(page, request.signal),
+      listCaretakers(request.signal),
     ])
-    return { residences, caretakers }
+    return { kind: 'clerk', residences, caretakers }
   }),
   action: assignStaffAction,
 }]

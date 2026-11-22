@@ -19,7 +19,8 @@ vi.mock('@/lib/auth/client', () => ({
 const clerk: LoggedInUser = {
   userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_ASSIGN_STAFF', 'RESIDENCE_READ'],
 }
-const caretaker: LoggedInUser = { userKey: 'caretaker', name: 'Kim', roles: ['CARETAKER'], privileges: ['RESIDENCE_READ'] }
+// Nur Leserecht, ohne RESIDENCE_ASSIGN_STAFF: bekommt das bisherige Verhalten.
+const reader: LoggedInUser = { userKey: 'reader', name: 'Kim', roles: [], privileges: ['RESIDENCE_READ'] }
 const bea = { id: 10, name: 'Bea' }
 const cem = { id: 11, name: 'Cem' }
 let signedIn: LoggedInUser | null
@@ -89,11 +90,12 @@ it('shows flats, caretaker and deputy of each residence and marks missing values
   expect(screen.getByText('Keine WGs')).toBeDefined()
 })
 
-it('lets staff without the assign privilege read but not edit, and never loads the caretaker list', async () => {
-  signedIn = caretaker
+it('keeps the previous name list for users without the assign privilege', async () => {
+  signedIn = reader
   mount('/residences?edit=1')
   await screen.findByText('Sonne')
-  expect(screen.queryByRole('link', { name: /bearbeiten/i })).toBeNull()
+  expect(screen.queryByRole('table')).toBeNull()
+  expect(screen.queryByText('S-01')).toBeNull()
   expect(screen.queryByRole('button', { name: 'Speichern' })).toBeNull()
   expect(vi.mocked(api).mock.calls.some(([path]) => path.startsWith('/api/caretakers'))).toBe(false)
 })

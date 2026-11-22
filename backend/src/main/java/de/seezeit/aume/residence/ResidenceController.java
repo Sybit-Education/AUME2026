@@ -24,7 +24,7 @@ public class ResidenceController {
 
     @GetMapping("/api/residences")
     @PreAuthorize("hasAuthority('RESIDENCE_READ')")
-    public PagedModel<ResidenceView> list(Principal principal, Pageable pageable) {
+    public PagedModel<?> list(Principal principal, Pageable pageable) {
         return new PagedModel<>(residences.list(principal.getName(), pageable));
     }
 

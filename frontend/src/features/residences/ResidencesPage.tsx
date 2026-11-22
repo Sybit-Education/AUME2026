@@ -10,7 +10,7 @@ function residencesUrl(page: number, edit?: number) {
   return edit === undefined ? `/residences?page=${page}` : `/residences?page=${page}&edit=${edit}`
 }
 
-function ViewRow({ residence, page, canEdit }: { residence: Residence; page: number; canEdit: boolean }) {
+function ViewRow({ residence, page }: { residence: Residence; page: number }) {
   const { t } = useTranslation()
   return (
     <tr>
@@ -24,12 +24,10 @@ function ViewRow({ residence, page, canEdit }: { residence: Residence; page: num
       </td>
       <td>{residence.caretaker?.name ?? <span className="mut">{t('residences.noCaretaker')}</span>}</td>
       <td>{residence.deputy?.name ?? <span className="mut">{t('residences.noDeputy')}</span>}</td>
-      {canEdit && (
-        <td className="r">
-          <Link className="btn gh sm" to={residencesUrl(page, residence.id)}
-            aria-label={t('residences.editFor', { name: residence.name })}>{t('residences.edit')}</Link>
-        </td>
-      )}
+      <td className="r">
+        <Link className="btn gh sm" to={residencesUrl(page, residence.id)}
+          aria-label={t('residences.editFor', { name: residence.name })}>{t('residences.edit')}</Link>
+      </td>
     </tr>
   )
 }
@@ -88,16 +86,17 @@ export default function ResidencesPage() {
 
   if (!data) return <LoadingPage />
 
-  const { residences, caretakers } = data
+  const { residences } = data
   const page = residences.page.number
-  const canEdit = caretakers !== null
   const editParam = params.get('edit')
-  const editingId = canEdit && editParam !== null && /^\d+$/.test(editParam) ? Number(editParam) : null
+  const editingId = editParam !== null && /^\d+$/.test(editParam) ? Number(editParam) : null
 
   return (
     <section className="card">
       <h2>{t('navigation.residences')}</h2>
-      {residences.content.length === 0 ? <p className="mut">{t('pages.noResidences')}</p> : (
+      {residences.content.length === 0 ? <p className="mut">{t('pages.noResidences')}</p> : data.kind === 'summary' ? (
+        <div>{data.residences.content.map((residence) => <div className="row" key={residence.id}><div>{residence.name}</div></div>)}</div>
+      ) : (
         <div className="tw">
           <table className="tbl" aria-label={t('navigation.residences')}>
             <thead>
@@ -106,14 +105,14 @@ export default function ResidencesPage() {
                 <th scope="col">{t('residences.flats')}</th>
                 <th scope="col">{t('residences.caretaker')}</th>
                 <th scope="col">{t('residences.deputy')}</th>
-                {canEdit && <th scope="col" className="r">{t('residences.actions')}</th>}
+                <th scope="col" className="r">{t('residences.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {residences.content.map((residence) => (
-                residence.id === editingId && canEdit
-                  ? <EditRow key={residence.id} residence={residence} page={page} caretakers={caretakers} />
-                  : <ViewRow key={residence.id} residence={residence} page={page} canEdit={canEdit} />
+              {data.residences.content.map((residence) => (
+                residence.id === editingId
+                  ? <EditRow key={residence.id} residence={residence} page={page} caretakers={data.caretakers} />
+                  : <ViewRow key={residence.id} residence={residence} page={page} />
               ))}
             </tbody>
           </table>

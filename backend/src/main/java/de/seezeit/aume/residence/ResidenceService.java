@@ -45,20 +45,25 @@ public class ResidenceService {
     }
 
     /**
-     * Die Sachbearbeitung sieht die ihr zugeordneten Wohnanlagen ({@link StaffKind#CLERK}),
-     * die Objektbetreuung ihre Anlage aus dem Nutzerprofil.
-     * WGs und Zuständigkeiten werden für die ganze Seite gebündelt geladen.
+     * Die Sachbearbeitung sieht die ihr zugeordneten Wohnanlagen ({@link StaffKind#CLERK}) mit WGs und
+     * Zuständigkeit, gebündelt für die ganze Seite geladen. Alle anderen Sichten behalten das bisherige
+     * Verhalten: ihre Anlage aus dem Nutzerprofil, nur ID und Name.
      */
-    public Page<ResidenceView> list(String userKey, Pageable pageable) {
+    public Page<?> list(String userKey, Pageable pageable) {
         var user = users.requireUser(userKey);
+        if (!(user instanceof ClerkEntity)) {
+            return residences.findById(user.getResidence().getId(), pageable)
+                .map(residence -> new ResidenceSummary(residence.getId(), residence.getName()));
+        }
         var sorted = pageable.getSort().isSorted() ? pageable
             : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("name", "id"));
-        Page<ResidenceEntity> page = user instanceof ClerkEntity
-            ? residences.findAssigned(user.getId(), StaffKind.CLERK, sorted)
-            : residences.findById(user.getResidence().getId(), sorted);
+        var page = residences.findAssigned(user.getId(), StaffKind.CLERK, sorted);
         var views = views(page.getContent());
         return page.map(residence -> views.get(residence.getId()));
     }
+
+    /** Bisherige Antwort für Sichten außer der Sachbearbeitung. */
+    public record ResidenceSummary(Long id, String name) {}
 
     /** Auswahlliste für Betreuung und Vertretung: nur Objektbetreuung, nur ID und Anzeigename. */
     public Page<StaffView> listCaretakers(Pageable pageable) {
