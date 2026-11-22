@@ -31,12 +31,72 @@
     "deputyMustDiffer": "Caretaker and deputy must be different people.",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "network": "The backend is unreachable.",
-    "language": "The language could not be changed. Please try again."
+    "language": "The language could not be changed. Please try again.",
+    "inspectionPlanning": "Inspection planning could not be loaded.",
+    "inspectionPlanningSave": "The change could not be saved.",
+    "periodDatesRequired": "Please enter a start and end date.",
+    "periodEndBeforeStart": "The end date is before the start date.",
+    "periodStartNotFuture": "The start date must be in the future.",
+    "periodTimeWindow": "The end time must be after the start time. Please fill in both fields or leave both empty.",
+    "periodNoFlats": "All flats of this residence already have an open inspection.",
+    "periodAnnounced": "This period has already been announced and can no longer be changed here.",
+    "periodChanged": "This period has changed in the meantime. Please check the current state.",
+    "periodInvalidStatus": "This step is not possible in the current status."
   },
   "navigation": {
     "main": "Main navigation",
     "dashboard": "Dashboard",
-    "residences": "Residences"
+    "residences": "Residences",
+    "inspectionPlanning": "Plan inspections"
+  },
+  "inspectionPlanning": {
+    "title": "Plan inspections",
+    "newPeriod": "New inspection",
+    "planned": "Planned inspections",
+    "residence": "Residence",
+    "flatCount_one": "{{count}} flat is part of the inspection",
+    "flatCount_other": "{{count}} flats are part of the inspection",
+    "flats_one": "{{count}} flat",
+    "flats_other": "{{count}} flats",
+    "kindLabel": "Inspection type",
+    "kind": {
+      "REGULAR": "Regular inspection"
+    },
+    "startsOn": "Start date",
+    "endsOn": "End date",
+    "windowStart": "Time from",
+    "windowEnd": "Time to",
+    "caretaker": "Caretaker",
+    "chooseCaretaker": "Choose caretaker",
+    "noCaretaker": "Not assigned",
+    "openFlats": "Open inspection for: {{flats}}. These flats will not get a second inspection.",
+    "allFlatsOpen": "All flats of this residence already have an open inspection: {{flats}}.",
+    "send": "Send proposal to caretaker",
+    "sendAgain": "Send to caretaker",
+    "editHint": "After a change, the caretaker has to agree again.",
+    "cancel": "Cancel",
+    "edit": "Change",
+    "editFor": "Change period for {{name}}",
+    "newPeriodShort": "New period",
+    "accept": "Accept",
+    "acceptFor": "Accept counter-proposal for {{name}}",
+    "counterProposal": "Counter-proposal",
+    "period": "Period",
+    "statusLabel": "Status",
+    "actions": "Actions",
+    "announced": "Announced",
+    "status": {
+      "WAITING_FOR_CARETAKER": "Waiting for caretaker",
+      "COUNTER_PROPOSED": "Counter-proposal",
+      "AGREED": "Agreed"
+    },
+    "saved": {
+      "created": "Proposal sent to the caretaker.",
+      "updated": "Change sent to the caretaker.",
+      "accepted": "Counter-proposal accepted."
+    },
+    "noResidences": "No residences are assigned to you.",
+    "noPeriods": "No inspections planned yet."
   },
   "residences": {
     "name": "Residence",

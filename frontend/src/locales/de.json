@@ -31,12 +31,72 @@
     "deputyMustDiffer": "Betreuung und Vertretung müssen verschiedene Personen sein.",
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
-    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
+    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen.",
+    "inspectionPlanning": "Die Kontrollplanung konnte nicht geladen werden.",
+    "inspectionPlanningSave": "Die Änderung konnte nicht gespeichert werden.",
+    "periodDatesRequired": "Bitte Start- und Enddatum angeben.",
+    "periodEndBeforeStart": "Das Enddatum liegt vor dem Startdatum.",
+    "periodStartNotFuture": "Das Startdatum muss in der Zukunft liegen.",
+    "periodTimeWindow": "Die Uhrzeit bis muss nach der Uhrzeit von liegen. Bitte beide Felder ausfüllen oder beide leer lassen.",
+    "periodNoFlats": "Alle WGs dieser Anlage haben bereits eine offene Kontrolle.",
+    "periodAnnounced": "Der Zeitraum wurde bereits angekündigt und kann hier nicht mehr geändert werden.",
+    "periodChanged": "Der Zeitraum wurde inzwischen geändert. Bitte prüfe den aktuellen Stand.",
+    "periodInvalidStatus": "Dieser Schritt ist im aktuellen Status nicht möglich."
   },
   "navigation": {
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
-    "residences": "Wohnanlagen"
+    "residences": "Wohnanlagen",
+    "inspectionPlanning": "Kontrollen planen"
+  },
+  "inspectionPlanning": {
+    "title": "Kontrollen planen",
+    "newPeriod": "Neue Kontrolle",
+    "planned": "Geplante Kontrollen",
+    "residence": "Wohnanlage",
+    "flatCount_one": "{{count}} WG gehört zur Kontrolle",
+    "flatCount_other": "{{count}} WGs gehören zur Kontrolle",
+    "flats_one": "{{count}} WG",
+    "flats_other": "{{count}} WGs",
+    "kindLabel": "Kontrollart",
+    "kind": {
+      "REGULAR": "Reguläre Kontrolle"
+    },
+    "startsOn": "Startdatum",
+    "endsOn": "Enddatum",
+    "windowStart": "Uhrzeit von",
+    "windowEnd": "Uhrzeit bis",
+    "caretaker": "Objektbetreuung",
+    "chooseCaretaker": "Objektbetreuung wählen",
+    "noCaretaker": "Nicht zugeordnet",
+    "openFlats": "Offene Kontrolle bei: {{flats}}. Diese WGs erhalten keine zweite Kontrolle.",
+    "allFlatsOpen": "Alle WGs dieser Anlage haben bereits eine offene Kontrolle: {{flats}}.",
+    "send": "Vorschlag an Objektbetreuung senden",
+    "sendAgain": "An Objektbetreuung senden",
+    "editHint": "Nach einer Änderung muss die Objektbetreuung erneut zustimmen.",
+    "cancel": "Abbrechen",
+    "edit": "Ändern",
+    "editFor": "Zeitraum für {{name}} ändern",
+    "newPeriodShort": "Neuer Zeitraum",
+    "accept": "Annehmen",
+    "acceptFor": "Gegenvorschlag für {{name}} annehmen",
+    "counterProposal": "Gegenvorschlag",
+    "period": "Zeitraum",
+    "statusLabel": "Status",
+    "actions": "Aktionen",
+    "announced": "Angekündigt",
+    "status": {
+      "WAITING_FOR_CARETAKER": "Wartet auf Objektbetreuung",
+      "COUNTER_PROPOSED": "Gegenvorschlag",
+      "AGREED": "Abgestimmt"
+    },
+    "saved": {
+      "created": "Vorschlag an die Objektbetreuung gesendet.",
+      "updated": "Änderung an die Objektbetreuung gesendet.",
+      "accepted": "Gegenvorschlag angenommen."
+    },
+    "noResidences": "Dir sind keine Wohnanlagen zugeordnet.",
+    "noPeriods": "Noch keine Kontrollen geplant."
   },
   "residences": {
     "name": "Wohnanlage",

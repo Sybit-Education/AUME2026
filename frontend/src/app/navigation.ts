@@ -1,5 +1,6 @@
 import type de from '@/locales/de.json'
 import { residenceNavigation } from '@/features/residences/routes'
+import { inspectionPlanningNavigation } from '@/features/inspection-planning/routes'
 
 type NavigationItem = {
   to: string
@@ -10,4 +11,5 @@ type NavigationItem = {
 export const navigation: NavigationItem[] = [
   { to: '/', label: 'navigation.dashboard' },
   residenceNavigation,
+  inspectionPlanningNavigation,
 ]
