@@ -24,6 +24,7 @@
     "profile": "The user profile could not be loaded.",
     "greeting": "The greeting could not be loaded.",
     "residences": "The residences could not be loaded.",
+    "studentInspectionAppointment": "The inspection appointment could not be loaded.",
     "sessionExpired": "Your session has expired. Please sign in again.",
     "network": "The backend is unreachable.",
     "language": "The language could not be changed. Please try again."
@@ -32,6 +33,16 @@
     "main": "Main navigation",
     "dashboard": "Dashboard",
     "residences": "Residences"
+  },
+  "studentInspections": {
+    "title": "Next inspection",
+    "detailsTitle": "Inspection",
+    "period": "Period",
+    "details": "Details",
+    "exactDay": "Inspection day: {{date}}",
+    "changed": "Inspection date changed",
+    "empty": "No inspection announced.",
+    "download": "Add to calendar"
   },
   "pages": {
     "welcome": "Welcome, {{name}}.",

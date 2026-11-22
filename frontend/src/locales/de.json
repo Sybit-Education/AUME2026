@@ -24,6 +24,7 @@
     "profile": "Das Nutzerprofil konnte nicht geladen werden.",
     "greeting": "Der Gruß konnte nicht geladen werden.",
     "residences": "Die Wohnanlagen konnten nicht geladen werden.",
+    "studentInspectionAppointment": "Der Kontrolltermin konnte nicht geladen werden.",
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
     "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
@@ -32,6 +33,16 @@
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
     "residences": "Wohnanlagen"
+  },
+  "studentInspections": {
+    "title": "Nächste Kontrolle",
+    "detailsTitle": "Kontrolle",
+    "period": "Zeitraum",
+    "details": "Details",
+    "exactDay": "Genauer Kontrolltag: {{date}}",
+    "changed": "Termin geändert",
+    "empty": "Keine Kontrolle angekündigt.",
+    "download": "In Kalender übernehmen"
   },
   "pages": {
     "welcome": "Willkommen, {{name}}.",

@@ -38,10 +38,11 @@ beforeEach(async () => {
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
     if (path === '/api/greeting') return new Response(i18n.resolvedLanguage === 'en' ? 'Hello Alex, welcome to Sonne.' : 'Hallo Alex, willkommen in Sonne.')
+    if (path === '/api/student/inspection-appointment') return new Response(null, { status: 204 })
     if (path.startsWith('/api/residences?')) {
       const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
       return Response.json({
-        content: [{ id: page + 1, name: page === 0 ? 'Sonne' : 'Mond' }],
+        content: [{ id: page + 1, name: page === 0 ? 'Sonne' : 'Mond', flats: [], caretaker: null, deputy: null }],
         page: { number: page, size: 20, totalPages: 2, totalElements: 21 },
       })
     }

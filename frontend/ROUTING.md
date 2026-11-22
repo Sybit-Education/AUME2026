@@ -9,10 +9,11 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
 | `/` | Angemeldet | Übersicht; Gruß mit `GREETING_READ`, Link zu Wohnanlagen mit `RESIDENCE_READ` |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
+| `/student/inspections` | Angemeldet, Rolle `STUDENT` | Kontrolltermin der eigenen WG mit Kalenderexport |
 | `/forbidden` | Angemeldet | Fehlende Berechtigung |
 | Andere URLs | Öffentlich | Seite nicht gefunden |
 
-Kontrollseiten sind z.B. noch nicht implementiert. Die Beispiele für `inspections` in dieser Anleitung beschreiben eine künftige Erweiterung.
+Die Beispiele für `inspections` in dieser Anleitung beschreiben eine künftige Erweiterung.
 
 ## Zuständigkeiten im Code
 

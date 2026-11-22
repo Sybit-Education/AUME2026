@@ -6,9 +6,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.jayway.jsonpath.JsonPath;
+import de.seezeit.aume.inspection.InspectionEntity;
+import de.seezeit.aume.planning.InspectionPeriodEntity;
+import de.seezeit.aume.residence.FlatEntity;
+import de.seezeit.aume.residence.MembershipEntity;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
 import de.seezeit.aume.user.*;
+import jakarta.persistence.EntityManager;
+import java.time.Instant;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -26,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ActiveProfiles("dev")
 @Transactional
 class ApplicationTests {
+    private static final String APPOINTMENT_PATH = "/api/student/inspection-appointment";
     @Autowired private MockMvc mvc;
     @Autowired private UserRepository users;
     @Autowired private ResidenceRepository residences;
@@ -33,6 +41,8 @@ class ApplicationTests {
     @Autowired private PrivilegeRepository privileges;
     @Autowired private SecurityData securityData;
     @Autowired private SampleData sampleData;
+    @Autowired private StudentSampleData studentSampleData;
+    @Autowired private EntityManager entities;
 
     @ParameterizedTest
     @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,RESIDENCE_READ", "clerk,CLERK,RESIDENCE_READ"})
@@ -168,6 +178,123 @@ class ApplicationTests {
         assertThat(residences.count()).isEqualTo(1);
         assertThat(roles.count()).isEqualTo(3);
         assertThat(privileges.count()).isEqualTo(2);
+    }
+
+    @Test
+    void sampleInspectionIsPersistedForTheStudentWithoutDuplicates() {
+        assertThat(entities.createQuery("select count(i) from InspectionEntity i", Long.class)
+            .getSingleResult()).isEqualTo(1L);
+        studentSampleData.run();
+        studentSampleData.run();
+        entities.flush();
+        entities.clear();
+
+        var memberships = entities.createQuery("""
+            select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
+            """, MembershipEntity.class).getResultList();
+        assertThat(memberships).hasSize(1);
+        var flat = memberships.getFirst().getFlat();
+        assertThat(flat.getLabel()).isEqualTo("S-01");
+        assertThat(flat.getResidence().getName()).isEqualTo("Wohnanlage Sonne");
+
+        var inspections = entities.createQuery("""
+            select i from InspectionEntity i where i.flat = :flat
+            """, InspectionEntity.class).setParameter("flat", flat).getResultList();
+        assertThat(inspections).hasSize(1);
+        var inspection = inspections.getFirst();
+        assertThat(inspection.getStatus()).isEqualTo(InspectionEntity.Status.PLANNED);
+        assertThat(inspection.getInspectedAt()).isNull();
+        var period = inspection.getPeriod();
+        assertThat(period.getResidence().getId()).isEqualTo(flat.getResidence().getId());
+        assertThat(period.getStartsOn()).isEqualTo(LocalDate.of(2026, 12, 7));
+        assertThat(period.getEndsOn()).isEqualTo(LocalDate.of(2026, 12, 11));
+        assertThat(period.getAnnouncedAt()).isNotNull();
+        assertThat(period.getAnnouncedBy().getUserKey()).isEqualTo("clerk");
+        assertThat(entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
+            .getSingleResult()).isEqualTo(1L);
+    }
+
+    @Test
+    void studentReadsTheNextAnnouncedPeriodOnlyFromTheirOwnFlat() throws Exception {
+        var today = LocalDate.now();
+        var own = sampleInspection();
+        own.getPeriod().setStartsOn(today.plusDays(2));
+        own.getPeriod().setEndsOn(today.plusDays(4));
+        var otherFlat = new FlatEntity(own.getFlat().getResidence(), "S-02", 1);
+        entities.persist(otherFlat);
+        var foreign = inspection(otherFlat, today, true);
+        inspection(own.getFlat(), today, false);
+        inspection(own.getFlat(), today.minusDays(7), true);
+        inspection(own.getFlat(), today.plusDays(10), true);
+        entities.flush();
+        entities.clear();
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student")).param("flatId", foreign.getFlat().getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(own.getId().intValue()))
+            .andExpect(jsonPath("$.startsOn").value(today.plusDays(2).toString()))
+            .andExpect(jsonPath("$.endsOn").value(today.plusDays(4).toString()))
+            .andExpect(jsonPath("$.exactDay").doesNotExist())
+            .andExpect(jsonPath("$.changed").doesNotExist());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"ended", "future", "missing", "ambiguous"})
+    void studentWithoutOneActiveFlatReceivesNoAppointment(String membershipState) throws Exception {
+        var today = LocalDate.now();
+        var membership = entities.createQuery("select m from MembershipEntity m", MembershipEntity.class).getSingleResult();
+        var period = sampleInspection().getPeriod();
+        period.setStartsOn(today.plusDays(1));
+        period.setEndsOn(today.plusDays(2));
+        switch (membershipState) {
+            case "ended" -> membership.setValidTo(today.minusDays(1));
+            case "future" -> membership.setValidFrom(today.plusDays(1));
+            case "missing" -> entities.remove(membership);
+            case "ambiguous" -> {
+                var otherFlat = new FlatEntity(membership.getFlat().getResidence(), "S-02", 1);
+                entities.persist(otherFlat);
+                entities.persist(new MembershipEntity(otherFlat, membership.getUser(), today));
+            }
+            default -> throw new IllegalArgumentException(membershipState);
+        }
+        entities.flush();
+        entities.clear();
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student"))).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void equallyEarlyAppointmentsAreNotSelectedArbitrarily() throws Exception {
+        var own = sampleInspection();
+        var start = LocalDate.now().plusDays(1);
+        own.getPeriod().setStartsOn(start);
+        own.getPeriod().setEndsOn(start.plusDays(2));
+        inspection(own.getFlat(), start, true);
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student"))).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void appointmentEndpointRejectsAnonymousAndStaffRequests() throws Exception {
+        mvc.perform(get(APPOINTMENT_PATH)).andExpect(status().isUnauthorized());
+        mvc.perform(get(APPOINTMENT_PATH).session(login("clerk"))).andExpect(status().isForbidden());
+    }
+
+    private InspectionEntity sampleInspection() {
+        return entities.createQuery("select i from InspectionEntity i", InspectionEntity.class).getSingleResult();
+    }
+
+    private InspectionEntity inspection(FlatEntity flat, LocalDate start, boolean announced) {
+        var clerk = users.findByUserKey("clerk").orElseThrow();
+        var period = new InspectionPeriodEntity(flat.getResidence(), start, start.plusDays(2), clerk);
+        if (announced) {
+            period.setAnnouncedAt(Instant.now());
+            period.setAnnouncedBy(clerk);
+        }
+        entities.persist(period);
+        var inspection = new InspectionEntity(flat, period);
+        entities.persist(inspection);
+        return inspection;
     }
 
     private MockHttpSession login(String key) throws Exception {
