@@ -51,16 +51,6 @@
   color:#fff;
   border-color:var(--t);
 }
-.ins-filter {
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
-  gap:0 12px;
-  align-items:end;
-  margin:10px 0 6px;
-}
-.ins-filter-acts {
-  margin:0 0 11px;
-}
 .protocol-item {
   margin-top:6px;
 }
@@ -101,4 +91,62 @@
 /* Mehrere Chips in einer Zeile: nur der erste rückt nach rechts. */
 .acc summary .chip + .chip {
   margin-left:6px;
+}
+
+/* Kontroll-Historie: Sortierung und Filter in der Kopfzeile */
+.ins-history {
+  position:relative;
+}
+.ins-th {
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+}
+.ins-th-sort,.ins-th-filter {
+  border:0;
+  background:none;
+  color:inherit;
+  font:inherit;
+  font-weight:700;
+  padding:3px 4px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.ins-th-sort:hover,.ins-th-filter:hover,.ins-th-filter[aria-expanded=true] {
+  background:#e2eeee;
+}
+.ins-th-sort.on,.ins-th-filter.on {
+  color:var(--t);
+}
+.ins-th-arrow {
+  opacity:.55;
+}
+.ins-th-sort.on .ins-th-arrow {
+  opacity:1;
+}
+.ins-th-filter {
+  display:inline-flex;
+  line-height:0;
+}
+.ins-pop {
+  position:absolute;
+  z-index:20;
+  max-width:calc(100% - 16px);
+  background:#fff;
+  border:1px solid var(--ln);
+  border-radius:12px;
+  box-shadow:0 8px 24px rgba(20,50,55,.16);
+  padding:12px;
+}
+.ins-active {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  margin:8px 0 10px;
+}
+.ins-active-chip {
+  border:0;
+  cursor:pointer;
+  font:inherit;
 }

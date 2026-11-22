@@ -163,7 +163,6 @@
     "tabHistory": "History",
     "history": {
       "title": "Inspection history",
-      "filter": "Filter history",
       "flat": "Flat",
       "kind": "Inspection",
       "all": "All",
@@ -179,7 +178,15 @@
       "viewOf": "View inspection of flat {{label}} on {{date}}",
       "empty": "There are no completed inspections in your residence yet.",
       "noMatch": "No inspections match this selection.",
-      "invalidRange": "The “from” date is after the “to” date."
+      "invalidRange": "The “from” date is after the “to” date.",
+      "hint": "Tap a heading to sort the table; the funnel icon filters it.",
+      "activeFilters": "Active filters",
+      "removeFilter": "Remove filter: {{filter}}",
+      "sortBy": "Sort by {{column}}",
+      "filterBy": "Filter by {{column}}",
+      "filterActive": "Filter for {{column}} active, change",
+      "flatContains": "Flat contains",
+      "clear": "Remove"
     },
     "protocol": {
       "title": "Report",

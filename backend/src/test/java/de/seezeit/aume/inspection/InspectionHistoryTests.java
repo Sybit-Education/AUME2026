@@ -75,6 +75,38 @@ class InspectionHistoryTests {
     }
 
     @Test
+    void historyCanBeSortedByColumn() throws Exception {
+        var session = login("caretaker");
+        // S-01 Nachkontrolle (vor 23 Tagen), S-02 (vor 28), S-01 Erstkontrolle (vor 30)
+        mvc.perform(get(HISTORY + "?orderBy=DATE&direction=ASC").session(session))
+            .andExpect(jsonPath("$.content[0].round").value(0))
+            .andExpect(jsonPath("$.content[2].round").value(1));
+        // Bei gleicher WG: neueste zuerst
+        mvc.perform(get(HISTORY + "?orderBy=FLAT").session(session))
+            .andExpect(jsonPath("$.content[0].flatLabel").value("S-01"))
+            .andExpect(jsonPath("$.content[0].round").value(1))
+            .andExpect(jsonPath("$.content[1].flatLabel").value("S-01"))
+            .andExpect(jsonPath("$.content[2].flatLabel").value("S-02"));
+        mvc.perform(get(HISTORY + "?orderBy=FLAT&direction=DESC").session(session))
+            .andExpect(jsonPath("$.content[0].flatLabel").value("S-02"));
+        mvc.perform(get(HISTORY + "?orderBy=RESULT").session(session))
+            .andExpect(jsonPath("$.content[0].overallResult").value("FAILED"));
+        mvc.perform(get(HISTORY + "?orderBy=KIND&direction=DESC").session(session))
+            .andExpect(jsonPath("$.content[0].round").value(1));
+        mvc.perform(get(HISTORY + "?orderBy=INSPECTOR").session(session)).andExpect(status().isOk());
+    }
+
+    @Test
+    void unknownSortColumnsAreRejectedAndRawSortIsIgnored() throws Exception {
+        var session = login("caretaker");
+        mvc.perform(get(HISTORY + "?orderBy=PASSWORD").session(session)).andExpect(status().isBadRequest());
+        mvc.perform(get(HISTORY + "?direction=UP").session(session)).andExpect(status().isBadRequest());
+        mvc.perform(get(HISTORY + "?sort=flat.residence.name,asc").session(session))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].round").value(1));
+    }
+
+    @Test
     void likeWildcardsInTheFlatFilterAreTakenLiterally() throws Exception {
         var session = login("caretaker");
         for (String wildcard : new String[]{"%", "_", "S_01", "S%"}) {

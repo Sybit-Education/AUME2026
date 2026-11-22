@@ -5,7 +5,10 @@ import java.time.LocalDate;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
 import de.seezeit.aume.inspection.InspectionHistoryService.HistoryEntry;
 import de.seezeit.aume.inspection.InspectionHistoryService.HistoryFilter;
+import de.seezeit.aume.inspection.InspectionHistoryService.HistoryOrder;
+import de.seezeit.aume.inspection.InspectionHistoryService.OrderBy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,8 +34,11 @@ public class InspectionHistoryController {
             @RequestParam(required = false) Result result,
             @RequestParam(required = false) Boolean followUp,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) OrderBy orderBy,
+            @RequestParam(required = false) Sort.Direction direction) {
         var filter = new HistoryFilter(flat, result, followUp, from, to);
-        return new PagedModel<>(history.history(principal.getName(), filter, pageable));
+        var order = new HistoryOrder(orderBy, direction);
+        return new PagedModel<>(history.history(principal.getName(), filter, order, pageable));
     }
 }
