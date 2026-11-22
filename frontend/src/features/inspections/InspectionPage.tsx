@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLoaderData } from 'react-router'
+import { useLoaderData, useLocation, useNavigate } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
-import { errorKey, type ErrorKey } from '@/lib/errors'
+import { SessionExpired } from '@/lib/auth/response'
+import { loginDestination } from '@/lib/auth/returnTo'
+import { forgetUser } from '@/lib/auth/session'
+import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
 import {
-  clearFinding, finalizeInspection, markOk, rateCriterion, startInspection,
+  clearFinding, finalizeInspection, getInspection, markOk, rateCriterion, startInspection,
   type Criterion, type Finding, type Inspection, type OverallResult, type Severity,
 } from './api'
 import { areaIcon, areas, suggestedResult, type AreaState } from './summary'
@@ -19,6 +22,8 @@ export default function InspectionPage() {
 
 function InspectionView({ initial }: { initial: Inspection }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [inspection, setInspection] = useState(initial)
   const [step, setStep] = useState<'check' | 'summary'>(initial.status === 'DRAFT' || initial.status === 'PLANNED' ? 'check' : 'summary')
   const [busy, setBusy] = useState(false)
@@ -46,10 +51,30 @@ function InspectionView({ initial }: { initial: Inspection }) {
       if (message) setToast(message)
       return true
     } catch (cause) {
+      if (cause instanceof SessionExpired || (cause instanceof UiError && cause.key === 'errors.sessionExpired')) {
+        forgetUser()
+        navigate(loginDestination(location.pathname + location.search), { replace: true })
+        return false
+      }
+      // requireOk wirft bei 403 eine Redirect-Response (z. B. auf /forbidden).
+      if (cause instanceof Response) {
+        navigate(cause.headers.get('Location') ?? '/forbidden', { replace: true })
+        return false
+      }
       setError(errorKey(cause, 'errors.inspectionSave'))
+      await reload()
       return false
     } finally {
       setBusy(false)
+    }
+  }
+
+  /** Holt nach einem Fehler den aktuellen Stand, damit die Seite nicht auf veraltetem Status weiterarbeitet. */
+  async function reload() {
+    try {
+      setInspection(await getInspection(inspection.id, new AbortController().signal))
+    } catch {
+      // Der ursprüngliche Fehler wird bereits angezeigt.
     }
   }
 
@@ -60,7 +85,7 @@ function InspectionView({ initial }: { initial: Inspection }) {
       <div className="ins-head">
         <h2>{t(step === 'summary' ? 'inspections.summaryTitle' : 'inspections.title', { label: inspection.flatLabel })}</h2>
         <div className="acts" style={{ marginTop: 0 }}>
-          {inspection.status === 'PLANNED' && (
+          {inspection.status === 'PLANNED' && inspection.criteria.length > 0 && (
             <button className="btn" disabled={busy} onClick={() => void run(() => startInspection(inspection.id), t('inspections.started'))}>{t('inspections.start')}</button>
           )}
           {editable && step === 'check' && (
@@ -121,7 +146,7 @@ function InspectionView({ initial }: { initial: Inspection }) {
       )}
 
       {dialogOpen && current && (
-        <DefectDialog area={current.area} criteria={current.criteria} busy={busy}
+        <DefectDialog area={current.area} criteria={current.criteria} findings={inspection.findings} busy={busy}
           onCancel={() => setDialogOpen(false)}
           onSave={async (criterionId: number, severity: Severity, note: string) => {
             if (await run(() => rateCriterion(inspection.id, criterionId, { rating: 'DEFICIENT', severity, note }), t('inspections.defectSaved'))) {

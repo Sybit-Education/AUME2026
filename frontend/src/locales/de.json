@@ -29,7 +29,8 @@
     "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen.",
     "inspections": "Die Kontrollen konnten nicht geladen werden.",
     "inspection": "Die Kontrolle konnte nicht geladen werden.",
-    "inspectionSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen."
+    "inspectionSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "inspectionConflict": "Die Kontrolle wurde inzwischen geändert. Der aktuelle Stand wurde neu geladen."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -64,6 +65,8 @@
     "areas": "Bereiche",
     "checklistOf": "Checkliste {{area}}",
     "noChecklist": "Es ist keine veröffentlichte Checkliste vorhanden.",
+    "hasDefect": "bereits Mangel",
+    "replacesDefect": "Für dieses Kriterium ist bereits ein Mangel erfasst. Speichern ersetzt ihn.",
     "allOk": "Alles in Ordnung",
     "allOkDone": "Alle offenen Kriterien sind in Ordnung.",
     "areaOk": "Bereich in Ordnung",

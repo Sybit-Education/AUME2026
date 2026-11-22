@@ -22,19 +22,23 @@ Die Objektbetreuung arbeitet bei einer Kontrolle die veröffentlichte Checkliste
 
 Daten: `inspections` und `inspection_findings` (Paket `inspection`), Kriterien aus `checklist_versions`/`checklist_criteria` über `ChecklistService` (Paket `standard`). Je Kontrolle und Kriterium gibt es höchstens einen Befund.
 
+Gleichzeitige Änderungen: Jede ändernde Anfrage lädt die Kontrolle mit `InspectionRepository.findLockedById` (`SELECT … FOR UPDATE`). Anfragen an dieselbe Kontrolle laufen dadurch nacheinander; so entstehen keine doppelten Befunde, und eine Kontrolle kann nicht abgeschlossen werden, während gleichzeitig ein Befund gelöscht wird. Das `@Version`-Feld allein reicht dafür nicht, weil sich bei Befundänderungen die Kontrolle selbst nicht ändert.
+
 ## API
 
 Alle Endpunkte verlangen `INSPECTION_PERFORM`. Änderungen sind nur im Status `DRAFT` erlaubt (sonst 409) und liefern die aktualisierte Kontrolle zurück.
 
 | Methode und Pfad | Zweck |
 | --- | --- |
-| `GET /api/inspections?page=&size=` | offene Kontrollen der eigenen Wohnanlage (paginiert) |
+| `GET /api/inspections?page=&size=` | offene Kontrollen der eigenen Wohnanlage (paginiert, standardmäßig nach `id` sortiert) |
 | `GET /api/inspections/{id}` | Kontrolle mit Kriterien und Befunden |
-| `POST /api/inspections/{id}/start` | `PLANNED` → `DRAFT`, Checkliste binden |
-| `PUT /api/inspections/{id}/findings/{criterionId}` | Befund setzen: `{rating, severity, note, buildingCauseSuspected}` |
+| `POST /api/inspections/{id}/start` | `PLANNED` → `DRAFT`, Checkliste binden; 409 ohne veröffentlichte Checkliste oder wenn sie keine Kriterien hat |
+| `PUT /api/inspections/{id}/findings/{criterionId}` | Befund setzen: `{rating, severity, note, buildingCauseSuspected}`. Die Notiz wird getrimmt und darf danach höchstens 2000 Zeichen haben; `severity` und `buildingCauseSuspected` werden bei `OK` nicht gespeichert |
 | `DELETE /api/inspections/{id}/findings/{criterionId}` | Befund entfernen |
 | `POST /api/inspections/{id}/mark-ok` | `{area}` oder ohne Body: unbewertete Kriterien auf `OK` |
-| `POST /api/inspections/{id}/finalize` | `{overallResult}`, `DRAFT` → `FINALIZED` |
+| `POST /api/inspections/{id}/finalize` | `{overallResult}`, `DRAFT` → `FINALIZED`; 409, solange ein Kriterium unbewertet ist oder die Checkliste keine Kriterien hat |
+
+Das Frontend zeigt bei 409 eine eigene Meldung und lädt die Kontrolle neu. Bei 401 leitet es zur Anmeldung weiter (Rückkehr zur Kontrolle), bei 403 auf `/forbidden`. „Kontrolle starten“ erscheint nur, wenn die Checkliste Kriterien hat. Der Mangel-Dialog wählt ein Kriterium ohne bestehenden Mangel vor und weist darauf hin, wenn Speichern einen bestehenden Mangel ersetzt.
 
 ## Entwicklungsdaten
 
@@ -42,7 +46,8 @@ Im Profil `dev` legt `InspectionSampleData` eine veröffentlichte Checkliste (Fa
 
 ## Prüfung
 
-- Backend: `InspectionTests` (Rechte, Ablauf bis zum Abschluss, fremde Wohnanlage, idempotente Startdaten)
+- Backend: `InspectionTests` (Rechte, Ablauf bis zum Abschluss, fremde Wohnanlage, idempotente Startdaten, Notizlänge, Gebäudeursache nur bei Mängeln, Checkliste ohne Kriterien)
+- Backend: `InspectionConcurrencyTests` (parallele Bewertungen, „Alles in Ordnung“ parallel zu Bewertungen, Abschließen parallel zum Löschen; ohne `@Transactional`, damit die Sperre wirkt)
 - Frontend: `features/inspections/summary.test.ts` (Gruppierung nach Bereichen, Ergebnisvorschlag)
 
 ## Offen
@@ -51,4 +56,5 @@ Im Profil `dev` legt `InspectionSampleData` eine veröffentlichte Checkliste (Fa
 - **Fotos** zu Mängeln (`inspection_finding_photos`) und **Vergleichsbilder** je Kriterium (`criterion_images`) sind noch nicht angebunden.
 - **Offline-Entwurf** bei Netzverlust (ADR-0011) fehlt.
 - **Seitenleiste** aus dem Wireframe: die Navigation nutzt bis dahin die gemeinsame Kopfzeile.
+- **Frontend-Tests** für Weiterleitung bei 401/403, Neuladen bei 409 und den Hinweis im Mangel-Dialog fehlen.
 - Veröffentlichen an die Studierenden (`FINALIZED` → `PUBLISHED`) und Nachkontrollen gehören zum Ergebnis-Feature.

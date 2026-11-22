@@ -1,5 +1,6 @@
 import { api } from '@/lib/auth/client'
 import { requireOk } from '@/lib/auth/response'
+import { UiError } from '@/lib/errors'
 
 export type InspectionStatus = 'PLANNED' | 'DRAFT' | 'FINALIZED' | 'PUBLISHED'
 export type OverallResult = 'PASSED' | 'FAILED'
@@ -66,11 +67,14 @@ export async function getInspection(id: number, signal: AbortSignal): Promise<In
 }
 
 async function change(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<Inspection> {
-  const response = requireOk(await api(path, {
+  const raw = await api(path, {
     method,
     headers: body === undefined ? undefined : json,
     body: body === undefined ? undefined : JSON.stringify(body),
-  }), 'errors.inspectionSave')
+  })
+  // 409: Die Kontrolle wurde inzwischen anderweitig geändert (gestartet, abgeschlossen, …).
+  if (raw.status === 409) throw new UiError('errors.inspectionConflict')
+  const response = requireOk(raw, 'errors.inspectionSave')
   return (await response.json()) as Inspection
 }
 

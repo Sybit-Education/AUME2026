@@ -1,18 +1,23 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Criterion, Severity } from './api'
+import type { Criterion, Finding, Severity } from './api'
 
 interface DefectDialogProps {
   area: string
   criteria: Criterion[]
+  findings: Finding[]
   busy: boolean
   onCancel: () => void
   onSave: (criterionId: number, severity: Severity, note: string) => void
 }
 
-export default function DefectDialog({ area, criteria, busy, onCancel, onSave }: DefectDialogProps) {
+export default function DefectDialog({ area, criteria, findings, busy, onCancel, onSave }: DefectDialogProps) {
   const { t } = useTranslation()
-  const [criterionId, setCriterionId] = useState(criteria[0]?.id)
+  const defectOf = (id: number | undefined) =>
+    findings.find((entry) => entry.criterionId === id && entry.rating !== 'OK')
+  // Vorauswahl auf ein Kriterium ohne Mangel, damit ein bestehender Mangel nicht versehentlich ersetzt wird.
+  const [criterionId, setCriterionId] = useState((criteria.find((criterion) => !defectOf(criterion.id)) ?? criteria[0])?.id)
+  const existing = defectOf(criterionId)
   const [severity, setSeverity] = useState<Severity>('LIGHT')
   const [note, setNote] = useState('')
   const [missing, setMissing] = useState(false)
@@ -32,8 +37,13 @@ export default function DefectDialog({ area, criteria, busy, onCancel, onSave }:
         <div className="fld">
           <label htmlFor="defect-criterion">{t('inspections.criterion')} *</label>
           <select id="defect-criterion" value={criterionId} onChange={(event) => setCriterionId(Number(event.target.value))}>
-            {criteria.map((criterion) => <option key={criterion.id} value={criterion.id}>{criterion.title}</option>)}
+            {criteria.map((criterion) => (
+              <option key={criterion.id} value={criterion.id}>
+                {defectOf(criterion.id) ? `${criterion.title} (${t('inspections.hasDefect')})` : criterion.title}
+              </option>
+            ))}
           </select>
+          {existing && <p className="note wr" role="status">{t('inspections.replacesDefect')}</p>}
         </div>
         <div className="fld">
           <label htmlFor="defect-severity">{t('inspections.severityLabel')}</label>

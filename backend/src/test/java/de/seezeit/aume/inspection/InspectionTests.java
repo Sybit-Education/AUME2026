@@ -11,6 +11,7 @@ import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
+import de.seezeit.aume.standard.ChecklistVersionEntity;
 import de.seezeit.aume.standard.ChecklistVersionRepository;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-inspection-tests;DB_CLOSE_DELAY=-1")
@@ -110,10 +112,74 @@ class InspectionTests {
     }
 
     @Test
+    void noteLimitAppliesToTheStoredText() throws Exception {
+        var session = login("caretaker");
+        Long id = firstInspection();
+        Integer criterion = startAndFirstCriterion(session, id);
+        String padded = "a".repeat(1990) + " ".repeat(20);
+        mvc.perform(rate(session, id, criterion,
+                "{\"rating\":\"DEFICIENT\",\"severity\":\"LIGHT\",\"note\":\"" + padded + "\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.findings[0].note").value("a".repeat(1990)));
+        mvc.perform(rate(session, id, criterion,
+                "{\"rating\":\"DEFICIENT\",\"severity\":\"LIGHT\",\"note\":\"" + "a".repeat(2001) + "\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void buildingCauseIsOnlyKeptForDefects() throws Exception {
+        var session = login("caretaker");
+        Long id = firstInspection();
+        Integer criterion = startAndFirstCriterion(session, id);
+        mvc.perform(rate(session, id, criterion, "{\"rating\":\"OK\",\"buildingCauseSuspected\":true}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.findings[0].buildingCauseSuspected").value(false));
+        mvc.perform(rate(session, id, criterion,
+                "{\"rating\":\"DEFICIENT\",\"severity\":\"LIGHT\",\"note\":\"Riss\",\"buildingCauseSuspected\":true}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.findings[0].buildingCauseSuspected").value(true));
+    }
+
+    @Test
+    void emptyChecklistCanNeitherBeStartedNorFinalized() throws Exception {
+        var session = login("caretaker");
+        Long id = firstInspection();
+        var current = versions.findFirstByStatusOrderByVersionNoDesc(ChecklistVersionEntity.Status.PUBLISHED)
+            .orElseThrow();
+        var empty = new ChecklistVersionEntity(current.getVersionNo() + 1, current.getCreatedBy());
+        empty.setStatus(ChecklistVersionEntity.Status.PUBLISHED);
+        versions.save(empty);
+
+        mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
+            .andExpect(status().isConflict());
+
+        // Auch eine bereits an eine leere Fassung gebundene Kontrolle darf nicht ohne Bewertung abschließen.
+        var inspection = inspections.findById(id).orElseThrow();
+        inspection.setChecklistVersion(empty);
+        inspection.setStatus(InspectionEntity.Status.DRAFT);
+        inspections.flush();
+        mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
+            .contentType(MediaType.APPLICATION_JSON).content("{\"overallResult\":\"PASSED\"}"))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
     void sampleDataIsIdempotent() {
         sampleData.run();
         assertThat(versions.count()).isEqualTo(1);
         assertThat(inspections.count()).isEqualTo(2);
+    }
+
+    private Integer startAndFirstCriterion(MockHttpSession session, Long id) throws Exception {
+        String started = mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        List<Integer> criteria = JsonPath.read(started, "$.criteria[*].id");
+        return criteria.get(0);
+    }
+
+    private RequestBuilder rate(MockHttpSession session, Long id, Integer criterion, String body) {
+        return put("/api/inspections/" + id + "/findings/" + criterion).session(session).with(csrf())
+            .contentType(MediaType.APPLICATION_JSON).content(body);
     }
 
     private Long firstInspection() {

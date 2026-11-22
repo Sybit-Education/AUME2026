@@ -58,12 +58,15 @@ public class InspectionService {
     /** PLANNED → DRAFT: bindet die aktuell veröffentlichte Checkliste unveränderlich an die Kontrolle. */
     public InspectionView start(String userKey, Long id) {
         var user = users.requireUser(userKey);
-        var inspection = require(user, id);
+        var inspection = requireLocked(user, id);
         if (inspection.getStatus() != Status.PLANNED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Inspection was already started");
         }
         var version = checklists.currentPublished().orElseThrow(() ->
             new ResponseStatusException(HttpStatus.CONFLICT, "No published checklist"));
+        if (checklists.criteria(version).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Published checklist has no criteria");
+        }
         inspection.setChecklistVersion(version);
         inspection.setInspector(user);
         inspection.setInspectedAt(Instant.now());
@@ -83,15 +86,18 @@ public class InspectionService {
         if (deficient && (request.severity() == null || !StringUtils.hasText(request.note()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Deficiencies need a severity and a note");
         }
-        if (request.note() != null && request.note().length() > 2000) {
+        var note = StringUtils.hasText(request.note()) ? request.note().strip() : null;
+        if (note != null && note.length() > 2000) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Note is too long");
         }
         var finding = findings.findByInspectionIdAndCriterionId(inspection.getId(), criterion.getId())
             .orElseGet(() -> new FindingEntity(inspection, criterion, request.rating()));
         finding.setRating(request.rating());
         finding.setSeverity(deficient ? request.severity() : null);
-        finding.setNote(StringUtils.hasText(request.note()) ? request.note().strip() : null);
-        finding.setBuildingCauseSuspected(Boolean.TRUE.equals(request.buildingCauseSuspected()));
+        finding.setNote(note);
+        // Ein Verdacht auf bauliche Ursache gehört nur zu einem Mangel, nicht zu einer OK-Bewertung.
+        finding.setBuildingCauseSuspected(request.rating() != Rating.OK
+            && Boolean.TRUE.equals(request.buildingCauseSuspected()));
         findings.save(finding);
         return toView(inspection);
     }
@@ -120,7 +126,11 @@ public class InspectionService {
         if (overallResult == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Overall result is required");
         }
-        if (findings.findByInspectionId(inspection.getId()).size() < criteria(inspection).size()) {
+        var criteria = criteria(inspection);
+        if (criteria.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Checklist has no criteria");
+        }
+        if (findings.findByInspectionId(inspection.getId()).size() < criteria.size()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Every criterion must be rated");
         }
         inspection.setOverallResult(overallResult);
@@ -134,8 +144,15 @@ public class InspectionService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
+    /** Wie {@link #require}, sperrt die Kontrolle aber für die restliche Transaktion. */
+    private InspectionEntity requireLocked(UserEntity user, Long id) {
+        return inspections.findLockedById(id)
+            .filter(inspection -> inspection.getFlat().getResidence().getId().equals(user.getResidence().getId()))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
     private InspectionEntity requireDraft(UserEntity user, Long id) {
-        var inspection = require(user, id);
+        var inspection = requireLocked(user, id);
         if (inspection.getStatus() != Status.DRAFT) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Inspection is not editable");
         }

@@ -6,6 +6,7 @@ import de.seezeit.aume.inspection.InspectionService.FindingRequest;
 import de.seezeit.aume.inspection.InspectionService.InspectionSummary;
 import de.seezeit.aume.inspection.InspectionService.InspectionView;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class InspectionController {
     }
 
     @GetMapping
-    public PagedModel<InspectionSummary> list(Principal principal, Pageable pageable) {
+    public PagedModel<InspectionSummary> list(Principal principal, @PageableDefault(sort = "id") Pageable pageable) {
         return new PagedModel<>(inspections.listOpen(principal.getName(), pageable));
     }
 

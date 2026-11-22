@@ -29,7 +29,8 @@
     "language": "The language could not be changed. Please try again.",
     "inspections": "The inspections could not be loaded.",
     "inspection": "The inspection could not be loaded.",
-    "inspectionSave": "The change could not be saved. Please try again."
+    "inspectionSave": "The change could not be saved. Please try again.",
+    "inspectionConflict": "The inspection was changed in the meantime. The current state has been reloaded."
   },
   "navigation": {
     "main": "Main navigation",
@@ -64,6 +65,8 @@
     "areas": "Areas",
     "checklistOf": "Checklist {{area}}",
     "noChecklist": "There is no published checklist.",
+    "hasDefect": "already deficient",
+    "replacesDefect": "A defect is already recorded for this criterion. Saving replaces it.",
     "allOk": "All in order",
     "allOkDone": "All open criteria are in order.",
     "areaOk": "Area in order",
