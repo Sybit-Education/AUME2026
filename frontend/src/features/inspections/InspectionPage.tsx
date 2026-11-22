@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLoaderData, useLocation, useNavigate } from 'react-router'
+import { Link, useLoaderData, useLocation, useNavigate } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
@@ -12,6 +12,8 @@ import {
 } from './api'
 import { areaIcon, areas, suggestedResult, type AreaState } from './summary'
 import DefectDialog from './DefectDialog'
+import { formatDate } from './history'
+import Protocol from './Protocol'
 import './inspections.css'
 
 export default function InspectionPage() {
@@ -21,7 +23,7 @@ export default function InspectionPage() {
 }
 
 function InspectionView({ initial }: { initial: Inspection }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [inspection, setInspection] = useState(initial)
@@ -35,6 +37,7 @@ function InspectionView({ initial }: { initial: Inspection }) {
   const [selected, setSelected] = useState(states[0]?.area)
   const current = states.find((state) => state.area === selected) ?? states[0]
   const editable = inspection.status === 'DRAFT'
+  const done = inspection.status === 'FINALIZED' || inspection.status === 'PUBLISHED'
   const open = states.reduce((sum, state) => sum + state.open, 0)
 
   useEffect(() => {
@@ -104,7 +107,12 @@ function InspectionView({ initial }: { initial: Inspection }) {
         <span>{t('inspections.places', { count: inspection.capacity })}</span>
         <span>{t(`inspections.status.${inspection.status}`)}</span>
         {inspection.round > 0 && <span>{t('inspections.round', { round: inspection.round })}</span>}
+        {done && inspection.inspectedAt && (
+          <span>{t('inspections.protocol.inspectedOn', { date: formatDate(inspection.inspectedAt, i18n.resolvedLanguage) })}</span>
+        )}
+        {done && inspection.inspectorName && <span>{t('inspections.protocol.inspectedBy', { name: inspection.inspectorName })}</span>}
       </div>
+      {done && <p className="xs"><Link to="/inspections/history">{t('inspections.protocol.backToHistory')}</Link></p>}
       {error && <p className="err" role="alert">{t(error)}</p>}
 
       {states.length === 0 ? (
@@ -141,8 +149,11 @@ function InspectionView({ initial }: { initial: Inspection }) {
             onDelete={(item) => void run(() => clearFinding(inspection.id, item.criterionId), t('inspections.defectDeleted'))} />
         </>
       ) : (
-        <Summary inspection={inspection} states={states} open={open} busy={busy}
-          onFinalize={(result) => void run(() => finalizeInspection(inspection.id, result), t('inspections.finalized'))} />
+        <>
+          <Summary inspection={inspection} states={states} open={open} busy={busy}
+            onFinalize={(result) => void run(() => finalizeInspection(inspection.id, result), t('inspections.finalized'))} />
+          {done && <Protocol states={states} findings={inspection.findings} />}
+        </>
       )}
 
       {dialogOpen && current && (

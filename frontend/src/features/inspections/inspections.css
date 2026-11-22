@@ -34,3 +34,44 @@
 .acc summary .chip {
   margin-left:auto;
 }
+
+/* Kontroll-Historie */
+.tabs a {
+  border:1px solid #cad9da;
+  background:#fff;
+  color:#466166;
+  padding:8px 12px;
+  border-radius:9px;
+  font-size:13px;
+  font-weight:650;
+  text-decoration:none;
+}
+.tabs a.on {
+  background:var(--t);
+  color:#fff;
+  border-color:var(--t);
+}
+.ins-filter {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:0 12px;
+  align-items:end;
+  margin:10px 0 6px;
+}
+.ins-filter-acts {
+  margin:0 0 11px;
+}
+.protocol-item {
+  margin-top:6px;
+}
+.protocol-item .chip {
+  margin-left:6px;
+}
+.ins-sr {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+}

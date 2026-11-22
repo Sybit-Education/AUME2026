@@ -43,8 +43,26 @@ export interface Inspection {
   round: number
   status: InspectionStatus
   overallResult: OverallResult | null
+  inspectedAt: string | null
+  inspectorName: string | null
   criteria: Criterion[]
   findings: Finding[]
+}
+
+export interface HistoryEntry {
+  id: number
+  flatLabel: string
+  inspectedAt: string | null
+  round: number
+  status: InspectionStatus
+  overallResult: OverallResult | null
+  deficiencies: number
+  inspectorName: string | null
+}
+
+export interface HistoryPage {
+  content: HistoryEntry[]
+  page: { number: number; size: number; totalElements: number; totalPages: number }
 }
 
 export interface FindingInput {
@@ -59,6 +77,12 @@ const json = { 'Content-Type': 'application/json' }
 export async function listInspections(page: number, signal: AbortSignal): Promise<InspectionPage> {
   const response = requireOk(await api(`/api/inspections?page=${page}&size=20`, { signal }), 'errors.inspections')
   return (await response.json()) as InspectionPage
+}
+
+/** `query` ist bereits geprüft, siehe `historyQuery` in history.ts. */
+export async function listHistory(query: URLSearchParams, signal: AbortSignal): Promise<HistoryPage> {
+  const response = requireOk(await api(`/api/inspections/history?${query}`, { signal }), 'errors.history')
+  return (await response.json()) as HistoryPage
 }
 
 export async function getInspection(id: number, signal: AbortSignal): Promise<Inspection> {
