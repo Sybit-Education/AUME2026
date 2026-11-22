@@ -65,5 +65,5 @@ Die Kriterien speichern die deutsche Fassung. Englische Texte stehen in `checkli
 
 ## Prüfung
 
-- Backend: `ResidentChecklistTests` (Deutsch, Englisch, Rückfall auf Deutsch, nicht veröffentlicht, ohne Anmeldung, ohne Privileg); Privilegienzahl in `ApplicationTests` auf 7 angepasst.
+- Backend: `ResidentChecklistTests` (Deutsch, Englisch, Rückfall auf Deutsch, nicht veröffentlicht, ohne Anmeldung, ohne Privileg); Privilegienzahl in `ApplicationTests` auf 8 angepasst (zusammen mit `INSPECTION_PERFORM` aus Team 3).
 - Frontend: `App.test.tsx` prüft Tab-Leiste und aktiven Tab, Kopfnavigation für Personal, Sprachwechsel unter Mehr → Einstellungen samt Speicherung, Checkliste mit Details und Sprachwechsel, leeren Zustand und fehlendes Privileg.

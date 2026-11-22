@@ -1,0 +1,36 @@
+/* Kontrolle der Objektbetreuung, Aufbau nach dem Wireframe (Seezeit_Wireframe_Feedback_klickbar-2). */
+
+.ins-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.ins-head h2 {
+  font-size:22px;
+}
+.ins-meta {
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  font-size:12.5px;
+  font-weight:700;
+  color:#4a6168;
+  margin:0 0 12px 8px;
+}
+.tabs .badge {
+  display:inline-block;
+  margin-left:6px;
+  min-width:20px;
+  border-radius:10px;
+  font-size:11px;
+  padding:1px 6px;
+  font-weight:800;
+  background:var(--badb);
+  color:var(--bad);
+}
+.acc summary .chip {
+  margin-left:auto;
+}
