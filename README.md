@@ -150,11 +150,13 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei 
 
 | Nutzer | Rolle | Berechtigung |
 | --- | --- | --- |
-| `student` | `STUDENT` | `GREETING_READ` |
+| `student` | `STUDENT` | `GREETING_READ`, `INFO_PAGE_READ` |
 | `caretaker` | `CARETAKER` | `RESIDENCE_READ` |
-| `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF` |
+
+| `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF` , `INFO_PAGE_READ`, `INFO_PAGE_EDIT`, `STANDARDS_VIEW`|
 
 `clerk` ist Sonne und Egg zugeordnet, nicht Petershausen. Weitere Nutzer in `SampleData` (`caretaker2`, `caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
+
 
 Das Frontend unter http://localhost:5173 bietet drei Schaltflächen zur Anmeldung an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak wird in diesem Profil nicht benötigt. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
 

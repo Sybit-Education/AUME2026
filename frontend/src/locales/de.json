@@ -31,12 +31,28 @@
     "deputyMustDiffer": "Betreuung und Vertretung müssen verschiedene Personen sein.",
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
-    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen."
+    "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen.",
+    "infoPages": "Die Informationen konnten nicht geladen werden.",
+    "infoPagesSave": "Die Informationen konnten nicht gespeichert werden.",
+    "infoTextRequired": "Bitte alle drei Texte ausfüllen.",
+    "infoTextTooLong": "Ein Text ist länger als 20.000 Zeichen."
   },
   "navigation": {
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
-    "residences": "Wohnanlagen"
+    "residences": "Wohnanlagen",
+    "standards": "Standards"
+  },
+  "standards": {
+    "title": "Standards und Kriterien",
+    "info": "Informationen für Bewohnende",
+    "infoHint": "Diese Texte sehen Bewohnende unter Kontrolle, Termin, Ablauf und Konsequenzen.",
+    "process": "Ablauf der Kontrolle",
+    "consequences": "Folgen bei Mängeln",
+    "standards": "Sauberkeitsstandards",
+    "save": "Speichern",
+    "saved": "Gespeichert. Bewohnende sehen die neuen Texte.",
+    "readOnly": "Du kannst diese Texte nur lesen."
   },
   "residences": {
     "name": "Wohnanlage",
