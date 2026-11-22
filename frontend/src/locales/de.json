@@ -76,7 +76,8 @@
     "planAssignee": "Bitte wähle eine Person aus deiner WG aus.",
     "planNotAssignee": "Nur die zugeteilte Person kann diese Aufgabe abhaken.",
     "planNotDue": "Diese Aufgabe ist in dieser Woche nicht fällig.",
-    "planCriterion": "Dieser Vorschlag ist nicht mehr in der aktuellen Checkliste."
+    "planCriterion": "Dieser Vorschlag ist nicht mehr in der aktuellen Checkliste.",
+    "overview": "Die Übersicht konnte nicht geladen werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -493,5 +494,48 @@
     "progress": "{{done}} von {{total}} Aufgaben erledigt",
     "onlyCurrentWeek": "Nur die aktuelle Woche lässt sich abhaken.",
     "fromChecklist": "Aus der Checkliste"
+  },
+  "overview": {
+    "hello": "Hallo {{name}}",
+    "tiles": {
+      "proposals": "Vorschläge zu beantworten",
+      "announced": "Angekündigte Kontrollen",
+      "followUps": "Nachkontrollen",
+      "openDamages": "Offene Schäden"
+    },
+    "notAvailable": "Fehlt noch: Schadensmeldungen",
+    "upcoming": "Anstehend",
+    "none": "Keine anstehenden Kontrollen.",
+    "columns": {
+      "flat": "WG",
+      "kind": "Kontrolle",
+      "date": "Zeitraum",
+      "state": "Status",
+      "action": "Aktion"
+    },
+    "kind": {
+      "INITIAL": "Erstkontrolle",
+      "FOLLOW_UP": "Nachkontrolle {{round}}"
+    },
+    "period": "{{from}} bis {{to}}",
+    "dueBy": "bis {{date}}",
+    "noDate": "Noch kein Zeitraum",
+    "state": {
+      "PROPOSED": "Vorschlag",
+      "COUNTER_PROPOSED": "Gegenvorschlag",
+      "AGREED": "Abgestimmt",
+      "ANNOUNCED": "Angekündigt",
+      "PLANNED": "Geplant",
+      "IN_PROGRESS": "Läuft"
+    },
+    "start": "Kontrolle starten",
+    "continue": "Fortsetzen",
+    "answer": "Beantworten",
+    "waiting": {
+      "PROPOSED": "Wartet auf die zuständige Objektbetreuung",
+      "COUNTER_PROPOSED": "Wartet auf die Sachbearbeitung",
+      "AGREED": "Wartet auf die Ankündigung"
+    },
+    "missing": "Fehlt noch: Beantworten"
   }
 }
