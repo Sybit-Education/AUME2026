@@ -3,16 +3,16 @@ import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
 import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
-import { acceptCounter, createPeriod, updatePeriod, type PeriodInput } from './api'
+import { acceptCounter, createPeriod, updatePeriod, withdrawPeriod, type PeriodInput } from './api'
 
-export type PlanningIntent = 'create' | 'update' | 'accept'
+export type PlanningIntent = 'create' | 'update' | 'accept' | 'withdraw'
 
 export interface PlanningActionResult {
   intent: PlanningIntent
   error: ErrorKey
 }
 
-const saved: Record<PlanningIntent, string> = { create: 'created', update: 'updated', accept: 'accepted' }
+const saved: Record<PlanningIntent, string> = { create: 'created', update: 'updated', accept: 'accepted', withdraw: 'withdrawn' }
 
 function number(value: FormDataEntryValue | null): number | null {
   return typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : null
@@ -42,7 +42,7 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
 
   const form = await request.formData()
   const value = form.get('intent')
-  const intent: PlanningIntent = value === 'update' || value === 'accept' ? value : 'create'
+  const intent: PlanningIntent = value === 'update' || value === 'accept' || value === 'withdraw' ? value : 'create'
   const residenceId = number(form.get('residenceId'))
   const periodId = number(form.get('periodId'))
   const version = number(form.get('version'))
@@ -54,7 +54,8 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
     } else {
       if (periodId === null || version === null) return { intent, error: 'errors.inspectionPlanningSave' }
       if (intent === 'update') await updatePeriod(periodId, periodInput(form), version, request.signal)
-      else await acceptCounter(periodId, version, request.signal)
+      else if (intent === 'accept') await acceptCounter(periodId, version, request.signal)
+      else await withdrawPeriod(periodId, version, request.signal)
     }
   } catch (cause) {
     if (cause instanceof Response) throw cause

@@ -41,7 +41,8 @@
     "periodNoFlats": "All flats of this residence already have an open inspection.",
     "periodAnnounced": "This period has already been announced and can no longer be changed here.",
     "periodChanged": "This period has changed in the meantime. Please check the current state.",
-    "periodInvalidStatus": "This step is not possible in the current status."
+    "periodInvalidStatus": "This step is not possible in the current status.",
+    "periodStarted": "At least one inspection has already started. The proposal can no longer be withdrawn."
   },
   "navigation": {
     "main": "Main navigation",
@@ -93,10 +94,15 @@
     "saved": {
       "created": "Proposal sent to the caretaker.",
       "updated": "Change sent to the caretaker.",
-      "accepted": "Counter-proposal accepted."
+      "accepted": "Counter-proposal accepted.",
+      "withdrawn": "Proposal withdrawn."
     },
     "noResidences": "No residences are assigned to you.",
-    "noPeriods": "No inspections planned yet."
+    "noPeriods": "No inspections planned yet.",
+    "withdraw": "Withdraw",
+    "withdrawFor": "Withdraw proposal for {{name}}",
+    "withdrawTitle": "Withdraw proposal?",
+    "withdrawConfirm": "The proposal for {{name}} will be deleted. The planned flat inspections will be removed."
   },
   "residences": {
     "name": "Residence",

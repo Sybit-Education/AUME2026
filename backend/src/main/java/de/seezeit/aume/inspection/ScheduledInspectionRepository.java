@@ -11,6 +11,10 @@ import org.springframework.data.repository.query.Param;
 interface ScheduledInspectionRepository extends Repository<InspectionEntity, Long> {
     InspectionEntity save(InspectionEntity inspection);
 
+    List<InspectionEntity> findByPeriodId(Long periodId);
+
+    void deleteAll(Iterable<? extends InspectionEntity> inspections);
+
     @Query("select distinct i.flat.id from InspectionEntity i where i.flat.id in :flatIds and i.status in :statuses")
     Set<Long> findFlatIdsWithStatus(@Param("flatIds") Collection<Long> flatIds,
         @Param("statuses") Collection<InspectionEntity.Status> statuses);

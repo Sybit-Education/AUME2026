@@ -23,6 +23,7 @@ Die Sachbearbeitung legt unter `/inspection-planning` für eine ganze Wohnanlage
 - Zustimmen ist nur möglich, solange der Start in der Zukunft liegt (sonst `400 start_not_in_future`). Ein Gegenvorschlag bleibt möglich.
 - Ein Gegenvorschlag kann auch eine andere Uhrzeit enthalten. Ohne Angabe bleibt die Uhrzeit aus dem Vorschlag.
 - Nach der Ankündigung ist der Zeitraum hier nicht mehr änderbar.
+- Zurückziehen löscht einen nicht angekündigten Zeitraum und seine geplanten WG-Kontrollen. Die WGs sind danach wieder frei. Wurde eine Kontrolle schon begonnen, antwortet die API mit `409 period_started`.
 - `version` schützt vor veralteten Aktionen: Wurde ein Zeitraum inzwischen geändert, antwortet die API mit `409 period_changed`.
 
 ## Rechte
@@ -43,6 +44,7 @@ Alle Pfade beginnen mit `/api/inspection-periods`.
 | `POST /` | `INSPECTION_PLAN` | `residenceId`, `startsOn`, `endsOn`, `windowStart`, `windowEnd`, `caretakerId` |
 | `PUT /{id}` | `INSPECTION_PLAN` | `startsOn`, `endsOn`, `windowStart`, `windowEnd`, `caretakerId`, `version` |
 | `POST /{id}/accept-counter` | `INSPECTION_PLAN` | `version` |
+| `POST /{id}/withdraw` | `INSPECTION_PLAN` | `version`; Antwort `204` |
 | `GET /assigned` | `INSPECTION_PERIOD_RESPOND` | Paginierte, noch nicht angekündigte Zeiträume der angemeldeten Person |
 | `POST /{id}/agree` | `INSPECTION_PERIOD_RESPOND` | `version` |
 | `POST /{id}/counter` | `INSPECTION_PERIOD_RESPOND` | `startsOn`, `endsOn`, `windowStart` und `windowEnd` (optional), `reason`, `version` |
@@ -74,7 +76,7 @@ Ein Zeitraum in der Antwort:
 }
 ```
 
-Fachliche Fehler kommen als `400` oder `409` mit `{"code": …}`: `dates_required`, `end_before_start`, `start_not_in_future`, `invalid_time_window`, `caretaker_required`, `unknown_caretaker`, `reason_required`, `reason_too_long`, `no_flats_available`, `period_announced`, `period_changed`, `invalid_period_status`.
+Fachliche Fehler kommen als `400` oder `409` mit `{"code": …}`: `dates_required`, `end_before_start`, `start_not_in_future`, `invalid_time_window`, `caretaker_required`, `unknown_caretaker`, `reason_required`, `reason_too_long`, `no_flats_available`, `period_announced`, `period_changed`, `period_started`, `invalid_period_status`.
 
 ## Entwicklungsdaten
 

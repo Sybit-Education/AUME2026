@@ -59,6 +59,13 @@ public class InspectionPlanningController {
         return planning.acceptCounter(principal.getName(), id, request.version());
     }
 
+    @PostMapping("/{id}/withdraw")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize(PLAN)
+    public void withdraw(Principal principal, @PathVariable Long id, @RequestBody VersionRequest request) {
+        planning.withdraw(principal.getName(), id, request.version());
+    }
+
     @GetMapping("/assigned")
     @PreAuthorize(RESPOND)
     public PagedModel<PeriodView> assigned(Principal principal, Pageable pageable) {

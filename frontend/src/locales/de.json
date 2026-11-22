@@ -41,7 +41,8 @@
     "periodNoFlats": "Alle WGs dieser Anlage haben bereits eine offene Kontrolle.",
     "periodAnnounced": "Der Zeitraum wurde bereits angekündigt und kann hier nicht mehr geändert werden.",
     "periodChanged": "Der Zeitraum wurde inzwischen geändert. Bitte prüfe den aktuellen Stand.",
-    "periodInvalidStatus": "Dieser Schritt ist im aktuellen Status nicht möglich."
+    "periodInvalidStatus": "Dieser Schritt ist im aktuellen Status nicht möglich.",
+    "periodStarted": "Mindestens eine Kontrolle wurde bereits begonnen. Der Vorschlag kann nicht mehr zurückgezogen werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -93,10 +94,15 @@
     "saved": {
       "created": "Vorschlag an die Objektbetreuung gesendet.",
       "updated": "Änderung an die Objektbetreuung gesendet.",
-      "accepted": "Gegenvorschlag angenommen."
+      "accepted": "Gegenvorschlag angenommen.",
+      "withdrawn": "Vorschlag zurückgezogen."
     },
     "noResidences": "Dir sind keine Wohnanlagen zugeordnet.",
-    "noPeriods": "Noch keine Kontrollen geplant."
+    "noPeriods": "Noch keine Kontrollen geplant.",
+    "withdraw": "Zurückziehen",
+    "withdrawFor": "Vorschlag für {{name}} zurückziehen",
+    "withdrawTitle": "Vorschlag zurückziehen?",
+    "withdrawConfirm": "Der Vorschlag für {{name}} wird gelöscht. Die geplanten WG-Kontrollen werden entfernt."
   },
   "residences": {
     "name": "Wohnanlage",

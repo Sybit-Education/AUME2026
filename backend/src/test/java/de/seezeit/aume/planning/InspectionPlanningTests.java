@@ -398,6 +398,61 @@ class InspectionPlanningTests {
         return id;
     }
 
+    @Test
+    void withdrawingRemovesTheProposalAndFreesTheFlats() throws Exception {
+        long id = proposal();
+        withdraw(id, "clerk").andExpect(status().isNoContent());
+
+        assertThat(periods.existsById(id)).isFalse();
+        mvc.perform(get(PATH + "/options").session(login("clerk")))
+            .andExpect(jsonPath("$.residences[1].flatsWithOpenInspection").isEmpty());
+        mvc.perform(get(PATH + "/assigned").session(login("caretaker")))
+            .andExpect(jsonPath("$.content[*].id", not(hasItem((int) id))));
+        propose(sonne(), day(10), day(12), userId("caretaker"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.flatCount").value(2));
+    }
+
+    @Test
+    void startedInspectionsBlockWithdrawing() throws Exception {
+        long id = proposal();
+        var inspection = entities.createQuery("select i from InspectionEntity i where i.period.id = :id", InspectionEntity.class)
+            .setParameter("id", id).setMaxResults(1).getSingleResult();
+        inspection.setStatus(InspectionEntity.Status.DRAFT);
+        entities.flush();
+
+        withdraw(id, "clerk")
+            .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("period_started"));
+        assertThat(periods.existsById(id)).isTrue();
+    }
+
+    @Test
+    void announcedPeriodCannotBeWithdrawn() throws Exception {
+        long id = proposal();
+        var period = periods.findById(id).orElseThrow();
+        period.setAnnouncedAt(Instant.now());
+        periods.saveAndFlush(period);
+        withdraw(id, "clerk")
+            .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("period_announced"));
+    }
+
+    @Test
+    void withdrawingIsProtected() throws Exception {
+        long id = proposal();
+        withdraw(id, "caretaker").andExpect(status().isForbidden());
+        write(post(PATH + "/" + id + "/withdraw"), "clerk", "{\"version\":99}")
+            .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("period_changed"));
+
+        var petershausen = residences.findFirstByName("Petershausen").orElseThrow();
+        var foreign = periods.saveAndFlush(new InspectionPeriodEntity(petershausen, day(10), day(12),
+            users.findByUserKey("clerk2").orElseThrow()));
+        withdraw(foreign.getId(), "clerk").andExpect(status().isNotFound());
+    }
+
+    private ResultActions withdraw(long id, String key) throws Exception {
+        return write(post(PATH + "/" + id + "/withdraw"), key, version(id));
+    }
+
     private static String updateBody(LocalDate startsOn, LocalDate endsOn, String windowStart, String windowEnd,
             Long caretakerId, long version) {
         return "{\"startsOn\":\"%s\",\"endsOn\":\"%s\",\"windowStart\":\"%s\",\"windowEnd\":\"%s\",\"caretakerId\":%d,\"version\":%d}"

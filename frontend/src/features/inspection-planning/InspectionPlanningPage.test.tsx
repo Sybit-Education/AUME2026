@@ -206,6 +206,29 @@ it.each([
   expect(await screen.findByText('Urlaub')).toBeDefined()
 })
 
+it('withdraws a proposal after confirming the dialog', async () => {
+  periods = [period()]
+  mount()
+  fireEvent.click(await screen.findByRole('button', { name: 'Vorschlag für Sonne zurückziehen' }))
+  const dialog = within(await screen.findByRole('dialog', { name: 'Vorschlag zurückziehen?' }))
+  expect(dialog.getByText('Der Vorschlag für Sonne wird gelöscht. Die geplanten WG-Kontrollen werden entfernt.')).toBeDefined()
+  expect(writes()).toHaveLength(0)
+  fireEvent.click(dialog.getByRole('button', { name: 'Zurückziehen' }))
+  expect((await screen.findByRole('status')).textContent).toBe('Vorschlag zurückgezogen.')
+  expect(writes()[0][0]).toBe('/api/inspection-periods/7/withdraw')
+  expect(JSON.parse(String(writes()[0][1]?.body))).toEqual({ version: 3 })
+})
+
+it('keeps the proposal when withdrawing is cancelled', async () => {
+  periods = [period()]
+  mount()
+  fireEvent.click(await screen.findByRole('button', { name: 'Vorschlag für Sonne zurückziehen' }))
+  const dialog = within(await screen.findByRole('dialog'))
+  fireEvent.click(dialog.getByRole('button', { name: 'Abbrechen' }))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(writes()).toHaveLength(0)
+})
+
 it('does not load the page without the planning privilege', async () => {
   signedIn = caretaker
   mount()

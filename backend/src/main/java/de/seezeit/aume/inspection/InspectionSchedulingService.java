@@ -33,6 +33,15 @@ public class InspectionSchedulingService {
         flats.forEach(flat -> inspections.save(new InspectionEntity(flat, period)));
     }
 
+    /** Entfernt die Kontrollen eines Zeitraums, solange keine davon begonnen wurde. */
+    @Transactional
+    public boolean removeIfNotStarted(InspectionPeriodEntity period) {
+        var scheduled = inspections.findByPeriodId(period.getId());
+        if (scheduled.stream().anyMatch(inspection -> inspection.getStatus() != Status.PLANNED)) return false;
+        inspections.deleteAll(scheduled);
+        return true;
+    }
+
     public Map<Long, Long> flatCountByPeriod(Collection<Long> periodIds) {
         if (periodIds.isEmpty()) return Map.of();
         return inspections.countByPeriod(periodIds).stream()

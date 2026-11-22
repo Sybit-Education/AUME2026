@@ -68,6 +68,7 @@ const saveErrors: Record<string, ErrorKey> = {
   period_announced: 'errors.periodAnnounced',
   period_changed: 'errors.periodChanged',
   invalid_period_status: 'errors.periodInvalidStatus',
+  period_started: 'errors.periodStarted',
 }
 
 export async function getPlanningOptions(signal: AbortSignal): Promise<PlanningOptions> {
@@ -104,4 +105,8 @@ export function updatePeriod(id: number, input: PeriodInput, version: number, si
 
 export function acceptCounter(id: number, version: number, signal: AbortSignal): Promise<void> {
   return send(`/api/inspection-periods/${id}/accept-counter`, 'POST', { version }, signal)
+}
+
+export function withdrawPeriod(id: number, version: number, signal: AbortSignal): Promise<void> {
+  return send(`/api/inspection-periods/${id}/withdraw`, 'POST', { version }, signal)
 }

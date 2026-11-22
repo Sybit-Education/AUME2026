@@ -184,6 +184,17 @@ public class InspectionPlanningService {
         return saved(period);
     }
 
+    /** Zieht einen noch nicht angekündigten Vorschlag zurück und gibt die WGs wieder frei. */
+    @Transactional
+    public void withdraw(String userKey, Long id, Long version) {
+        var period = requireForClerk(users.requireUser(userKey), id);
+        requireVersion(period, version);
+        if (period.getAnnouncedAt() != null) throw conflict("period_announced");
+        if (!inspections.removeIfNotStarted(period)) throw conflict("period_started");
+        periods.delete(period);
+        periods.flush();
+    }
+
     private InspectionPeriodEntity requireWaitingForCaretaker(UserEntity user, Long id, Long version) {
         var period = periods.findById(id)
             .filter(candidate -> candidate.getCaretaker() != null
