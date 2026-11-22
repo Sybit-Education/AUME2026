@@ -7,9 +7,14 @@ export interface StaffMember {
   name: string
 }
 
-export interface Residence {
+// Bisherige Antwort für alle Sichten außer der Sachbearbeitung.
+export interface ResidenceSummary {
   id: number
   name: string
+}
+
+// Antwort für die Sachbearbeitung.
+export interface Residence extends ResidenceSummary {
   flats: string[]
   caretaker: StaffMember | null
   deputy: StaffMember | null
@@ -21,11 +26,12 @@ interface Page<T> {
 }
 
 export type ResidencePage = Page<Residence>
+export type ResidenceSummaryPage = Page<ResidenceSummary>
 export type CaretakerPage = Page<StaffMember>
 
-export async function listResidences(page: number, signal: AbortSignal): Promise<ResidencePage> {
+export async function listResidences<T extends ResidenceSummary>(page: number, signal: AbortSignal): Promise<Page<T>> {
   const response = requireOk(await api(`/api/residences?page=${page}&size=20`, { signal }), 'errors.residences')
-  return (await response.json()) as ResidencePage
+  return (await response.json()) as Page<T>
 }
 
 // Auswahlliste für Betreuung und Vertretung. Das Backend begrenzt eine Seite auf 100 Einträge.

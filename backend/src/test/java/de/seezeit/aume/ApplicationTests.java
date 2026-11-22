@@ -82,17 +82,14 @@ class ApplicationTests {
     }
 
     @Test
-    void caretakerOnlyReadsTheirOwnResidenceWithItsFlatsAndStaff() throws Exception {
+    void caretakerCanOnlyReadTheirAssignedResidence() throws Exception {
         residences.save(new ResidenceEntity("Andere Wohnanlage"));
         var session = login("caretaker");
         mvc.perform(get("/api/residences").session(session).param("size", "2"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.size").value(2))
             .andExpect(jsonPath("$.page.totalElements").value(1))
-            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"))
-            .andExpect(jsonPath("$.content[0].flats").value(org.hamcrest.Matchers.contains("S-01", "S-02")))
-            .andExpect(jsonPath("$.content[0].caretaker.name").value("Objektbetreuung"))
-            .andExpect(jsonPath("$.content[0].deputy.name").value("Objektbetreuung Petershausen"));
+            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isForbidden());
         mvc.perform(get("/api/residences").session(session).param("page", "1").param("size", "1"))
             .andExpect(jsonPath("$.content").isEmpty());
