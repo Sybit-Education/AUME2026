@@ -9,6 +9,7 @@ import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
 import { dashboardRoutes } from '@/features/dashboard/routes'
 import { residenceRoutes } from '@/features/residences/routes'
+import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 
 export function createAppRoutes(): RouteObject[] {
@@ -23,7 +24,7 @@ export function createAppRoutes(): RouteObject[] {
       ...authRoutes,
       {
         Component: RequireAuth,
-        children: [...dashboardRoutes, ...residenceRoutes, ...standardsRoutes, { path: 'forbidden', Component: ForbiddenPage }],
+        children: [...dashboardRoutes, ...residenceRoutes, ...standardsRoutes, ...inspectionRoutes, { path: 'forbidden', Component: ForbiddenPage }],
       },
       { path: '*', Component: NotFoundPage },
     ],

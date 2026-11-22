@@ -1,5 +1,6 @@
 import type de from '@/locales/de.json'
 import { residenceNavigation } from '@/features/residences/routes'
+import { inspectionNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
 
 type NavigationItem = {
@@ -11,5 +12,6 @@ type NavigationItem = {
 export const navigation: NavigationItem[] = [
   { to: '/', label: 'navigation.dashboard' },
   residenceNavigation,
+  inspectionNavigation,
   standardsNavigation,
 ]
