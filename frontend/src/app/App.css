@@ -41,3 +41,56 @@ a.btn {
     font-size: 12px;
   }
 }
+
+/* Tab-Leiste der Studierenden-Ansicht (Wireframe). Die Basisstile für .tabbar stehen in index.css. */
+.tabbar a {
+  padding: 9px 4px 11px;
+  font-size: 11.5px;
+  color: #6a7f85;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  font-weight: 600;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.tabbar a .i {
+  font-size: 20px;
+}
+
+.tabbar a.on,
+.tabbar a[aria-current="page"] {
+  color: var(--t);
+}
+
+.tabbar a.on .i {
+  transform: scale(1.08);
+}
+
+.st-body main > .ch:first-child h2 {
+  font-size: 21px;
+}
+
+a.back {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lang-switch .btn.sm {
+  min-height: 36px;
+  padding: 7px 12px;
+}
+
+@media (max-width: 600px) {
+  /* Tab-Leiste bleibt am unteren Bildschirmrand, auch wenn die Seite kurz ist. */
+  .st-wrap {
+    min-height: calc(100dvh - 57px);
+  }
+}

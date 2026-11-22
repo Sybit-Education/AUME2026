@@ -150,7 +150,7 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei 
 
 | Nutzer | Rolle | Berechtigung |
 | --- | --- | --- |
-| `student` | `STUDENT` | `GREETING_READ`, `INFO_PAGE_READ` |
+| `student` | `STUDENT` | `GREETING_READ`, `INFO_PAGE_READ`, `CHECKLIST_READ` |
 | `caretaker` | `CARETAKER` | `RESIDENCE_READ` |
 
 | `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF` , `INFO_PAGE_READ`, `INFO_PAGE_EDIT`, `STANDARDS_VIEW`|

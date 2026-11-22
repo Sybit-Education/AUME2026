@@ -35,13 +35,19 @@
     "infoPages": "Die Informationen konnten nicht geladen werden.",
     "infoPagesSave": "Die Informationen konnten nicht gespeichert werden.",
     "infoTextRequired": "Bitte alle drei Texte ausfüllen.",
-    "infoTextTooLong": "Ein Text ist länger als 20.000 Zeichen."
+    "infoTextTooLong": "Ein Text ist länger als 20.000 Zeichen.",
+    "checklist": "Die Checkliste konnte nicht geladen werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
     "residences": "Wohnanlagen",
-    "standards": "Standards"
+    "standards": "Standards",
+    "start": "Start",
+    "cleaningPlan": "Putzplan",
+    "inspection": "Kontrolle",
+    "more": "Mehr",
+    "studentTabs": "Navigation der Studierenden"
   },
   "standards": {
     "title": "Standards und Kriterien",
@@ -81,6 +87,30 @@
     "forbiddenDescription": "Für diese Seite fehlt dir die Berechtigung.",
     "notFound": "Seite nicht gefunden",
     "notFoundDescription": "Unter dieser Adresse gibt es keine Seite.",
-    "error": "Die Seite konnte nicht geladen werden."
+    "error": "Die Seite konnte nicht geladen werden.",
+    "comingSoon": "Kommt bald",
+    "comingSoonDescription": "Diese Funktion wird gerade entwickelt."
+  },
+  "more": {
+    "title": "Mehr",
+    "account": "Konto und Datenschutz",
+    "settings": "Einstellungen",
+    "settingsHint": "Sprache",
+    "back": "Mehr"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "languageHint": "Die Auswahl gilt für die ganze App und bleibt nach dem Neuladen erhalten."
+  },
+  "checklist": {
+    "title": "Checkliste",
+    "language": "Sprache",
+    "sameCriteria": "Diese Kriterien nutzt auch die Objektbetreuung bei der Kontrolle.",
+    "details": "Details",
+    "less": "Weniger",
+    "explanation": "Erklärung:",
+    "empty": "Seezeit hat noch keine Checkliste veröffentlicht.",
+    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien."
   }
 }
