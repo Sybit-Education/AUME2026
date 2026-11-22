@@ -3,7 +3,9 @@ import { protectedLoader } from '@/lib/auth/loaders'
 import RequirePrivilege from '@/lib/auth/RequirePrivilege'
 import InspectionsPage from './InspectionsPage'
 import InspectionPage from './InspectionPage'
-import { getInspection, listInspections } from './api'
+import HistoryPage, { type HistoryLoaderData } from './HistoryPage'
+import { getInspection, listHistory, listInspections } from './api'
+import { historyQuery, invalidRange, readHistoryFilter } from './history'
 
 const privilege = 'INSPECTION_PERFORM'
 
@@ -14,6 +16,14 @@ export const inspectionRoutes: RouteObject[] = [{
     const page = Number(new URL(request.url).searchParams.get('page') ?? '0')
     if (!Number.isSafeInteger(page) || page < 0) throw redirect('/inspections')
     return listInspections(page, request.signal)
+  }),
+}, {
+  path: 'inspections/history',
+  element: <RequirePrivilege privilege={privilege}><HistoryPage /></RequirePrivilege>,
+  loader: protectedLoader(privilege, async ({ request }): Promise<HistoryLoaderData> => {
+    const filter = readHistoryFilter(new URL(request.url).searchParams)
+    if (invalidRange(filter)) return { filter, data: null }
+    return { filter, data: await listHistory(historyQuery(filter), request.signal) }
   }),
 }, {
   path: 'inspections/:id',

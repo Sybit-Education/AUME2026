@@ -39,7 +39,8 @@
     "infoPages": "The information could not be loaded.",
     "infoPagesSave": "The information could not be saved.",
     "infoTextRequired": "Please fill in all three texts.",
-    "infoTextTooLong": "A text is longer than 20,000 characters."
+    "infoTextTooLong": "A text is longer than 20,000 characters.",
+    "history": "The inspection history could not be loaded."
   },
   "navigation": {
     "main": "Main navigation",
@@ -157,6 +158,34 @@
     "overall": {
       "PASSED": "Passed",
       "FAILED": "Follow-up required"
+    },
+    "tabOpen": "Open",
+    "tabHistory": "History",
+    "history": {
+      "title": "Inspection history",
+      "filter": "Filter history",
+      "flat": "Flat",
+      "kind": "Inspection",
+      "all": "All",
+      "initial": "Initial inspection",
+      "followUp": "Follow-up",
+      "from": "From",
+      "to": "To",
+      "apply": "Filter",
+      "reset": "Reset",
+      "date": "Date",
+      "inspector": "Inspected by",
+      "view": "View",
+      "viewOf": "View inspection of flat {{label}} on {{date}}",
+      "empty": "There are no completed inspections in your residence yet.",
+      "noMatch": "No inspections match this selection.",
+      "invalidRange": "The “from” date is after the “to” date."
+    },
+    "protocol": {
+      "title": "Report",
+      "inspectedOn": "Inspected on {{date}}",
+      "inspectedBy": "by {{name}}",
+      "backToHistory": "← Back to inspection history"
     }
   }
 }

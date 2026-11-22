@@ -167,7 +167,7 @@ class InspectionTests {
     void sampleDataIsIdempotent() {
         sampleData.run();
         assertThat(versions.count()).isEqualTo(1);
-        assertThat(inspections.count()).isEqualTo(2);
+        assertThat(inspections.count()).isEqualTo(5);
     }
 
     private Integer startAndFirstCriterion(MockHttpSession session, Long id) throws Exception {
@@ -183,7 +183,8 @@ class InspectionTests {
     }
 
     private Long firstInspection() {
-        return inspections.findAll().stream().filter(i -> i.getFlat().getLabel().equals("S-01"))
+        return inspections.findAll().stream()
+            .filter(i -> i.getFlat().getLabel().equals("S-01") && i.getStatus() == InspectionEntity.Status.PLANNED)
             .findFirst().orElseThrow().getId();
     }
 

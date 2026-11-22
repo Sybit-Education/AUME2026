@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData, useSearchParams } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import type { InspectionPage } from './api'
+import InspectionTabs from './InspectionTabs'
 
 export default function InspectionsPage() {
   const { t } = useTranslation()
@@ -18,6 +19,7 @@ export default function InspectionsPage() {
 
   return (
     <section className="card obm">
+      <InspectionTabs />
       <h2>{t('navigation.inspections')}</h2>
       {data.content.length === 0 ? <p className="mut">{t('inspections.none')}</p> : (
         <div>
