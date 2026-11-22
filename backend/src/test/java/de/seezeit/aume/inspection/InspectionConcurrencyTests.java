@@ -128,7 +128,7 @@ class InspectionConcurrencyTests {
     private Long newInspection() {
         return tx.execute(status -> {
             var template = inspections.findAll().stream()
-                .filter(i -> i.getFlat().getLabel().equals("4.12")).findFirst().orElseThrow();
+                .filter(i -> i.getFlat().getLabel().equals("S-01")).findFirst().orElseThrow();
             return inspections.save(new InspectionEntity(template.getFlat(), null)).getId();
         });
     }

@@ -46,7 +46,7 @@ class InspectionTests {
         mvc.perform(get("/api/inspections").session(login("caretaker")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.totalElements").value(2))
-            .andExpect(jsonPath("$.content[0].flatLabel").value("4.12"))
+            .andExpect(jsonPath("$.content[0].flatLabel").value("S-01"))
             .andExpect(jsonPath("$.content[0].status").value("PLANNED"));
     }
 
@@ -183,7 +183,7 @@ class InspectionTests {
     }
 
     private Long firstInspection() {
-        return inspections.findAll().stream().filter(i -> i.getFlat().getLabel().equals("4.12"))
+        return inspections.findAll().stream().filter(i -> i.getFlat().getLabel().equals("S-01"))
             .findFirst().orElseThrow().getId();
     }
 

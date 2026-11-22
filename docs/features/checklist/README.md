@@ -42,7 +42,7 @@ Das Frontend zeigt bei 409 eine eigene Meldung und lädt die Kontrolle neu. Bei 
 
 ## Entwicklungsdaten
 
-Im Profil `dev` legt `InspectionSampleData` eine veröffentlichte Checkliste (Fassung 1, zehn Kriterien aus dem Wireframe), die WGs 4.12 und 4.13 in der Wohnanlage Sonne und je eine geplante Kontrolle an. Anmeldung als `caretaker`.
+Im Profil `dev` legt `InspectionSampleData` eine veröffentlichte Checkliste (Fassung 1, zehn Kriterien aus dem Wireframe), für die WGs S-01 und S-02 der Wohnanlage Sonne (aus `SampleData`) je eine geplante Kontrolle an. Anmeldung als `caretaker`.
 
 ## Prüfung
 

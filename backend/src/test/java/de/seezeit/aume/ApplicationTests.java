@@ -1,13 +1,16 @@
 package de.seezeit.aume;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.jayway.jsonpath.JsonPath;
+import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
+import de.seezeit.aume.residence.StaffAssignmentRepository;
 import de.seezeit.aume.user.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,20 +32,23 @@ class ApplicationTests {
     @Autowired private MockMvc mvc;
     @Autowired private UserRepository users;
     @Autowired private ResidenceRepository residences;
+    @Autowired private FlatRepository flats;
+    @Autowired private StaffAssignmentRepository staffAssignments;
     @Autowired private RoleRepository roles;
     @Autowired private PrivilegeRepository privileges;
     @Autowired private SecurityData securityData;
     @Autowired private SampleData sampleData;
 
     @ParameterizedTest
-    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,INSPECTION_PERFORM", "clerk,CLERK,RESIDENCE_READ"})
+    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,INSPECTION_PERFORM",
+        "clerk,CLERK,RESIDENCE_ASSIGN_STAFF"})
     void mockUsersReceiveTheirOwnRolesAndPrivileges(String key, String role, String privilege) throws Exception {
         var session = login(key);
         mvc.perform(get("/api/me").session(session))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userKey").value(key))
             .andExpect(jsonPath("$.roles[0]").value(role))
-            .andExpect(jsonPath("$.privileges[0]").value(privilege))
+            .andExpect(jsonPath("$.privileges", hasItem(privilege)))
             .andExpect(jsonPath("$.identitySubject").doesNotExist());
     }
 
@@ -76,11 +82,10 @@ class ApplicationTests {
             .andExpect(content().string(greeting));
     }
 
-    @ParameterizedTest
-    @CsvSource({"caretaker", "clerk"})
-    void staffCanOnlyReadTheirAssignedResidence(String key) throws Exception {
+    @Test
+    void caretakerCanOnlyReadTheirAssignedResidence() throws Exception {
         residences.save(new ResidenceEntity("Andere Wohnanlage"));
-        var session = login(key);
+        var session = login("caretaker");
         mvc.perform(get("/api/residences").session(session).param("size", "2"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.size").value(2))
@@ -89,6 +94,29 @@ class ApplicationTests {
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isForbidden());
         mvc.perform(get("/api/residences").session(session).param("page", "1").param("size", "1"))
             .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    void clerkReadsOnlyAssignedResidencesSortedByNameWithFlatsAndStaff() throws Exception {
+        residences.save(new ResidenceEntity("Andere Wohnanlage"));
+        var session = login("clerk");
+        mvc.perform(get("/api/residences").session(session))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content[0].name").value("Egg"))
+            .andExpect(jsonPath("$.content[0].flats").value(org.hamcrest.Matchers.contains("E-12", "E-14")))
+            .andExpect(jsonPath("$.content[0].caretaker.name").value("Objektbetreuung Egg"))
+            .andExpect(jsonPath("$.content[0].deputy").value(org.hamcrest.Matchers.nullValue()))
+            .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[1].flats").value(org.hamcrest.Matchers.contains("S-01", "S-02")))
+            .andExpect(jsonPath("$.content[1].caretaker.name").value("Objektbetreuung"))
+            .andExpect(jsonPath("$.content[1].deputy.name").value("Objektbetreuung Petershausen"))
+            .andExpect(jsonPath("$.content[*].name").value(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.hasItem("Petershausen"))));
+        mvc.perform(get("/api/residences").session(session).param("page", "1").param("size", "1"))
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"));
     }
 
     @Test
@@ -142,7 +170,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(3));
+            .andExpect(jsonPath("$.privileges.length()").value(7));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -164,10 +192,12 @@ class ApplicationTests {
     void seedersAreIdempotent() {
         securityData.run();
         sampleData.run();
-        assertThat(users.count()).isEqualTo(3);
-        assertThat(residences.count()).isEqualTo(1);
+        assertThat(users.count()).isEqualTo(6);
+        assertThat(residences.count()).isEqualTo(3);
+        assertThat(flats.count()).isEqualTo(9);
+        assertThat(staffAssignments.count()).isEqualTo(8);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(3);
+        assertThat(privileges.count()).isEqualTo(7);
     }
 
     private MockHttpSession login(String key) throws Exception {

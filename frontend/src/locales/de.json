@@ -24,19 +24,56 @@
     "profile": "Das Nutzerprofil konnte nicht geladen werden.",
     "greeting": "Der Gruß konnte nicht geladen werden.",
     "residences": "Die Wohnanlagen konnten nicht geladen werden.",
+    "caretakers": "Die Objektbetreuung konnte nicht geladen werden.",
+    "assignStaff": "Die Zuständigkeit konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "caretakerRequired": "Bitte eine Objektbetreuung auswählen.",
+    "unknownCaretaker": "Die ausgewählte Person ist keine Objektbetreuung.",
+    "deputyMustDiffer": "Betreuung und Vertretung müssen verschiedene Personen sein.",
     "sessionExpired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
     "network": "Das Backend ist nicht erreichbar.",
     "language": "Die Sprache konnte nicht gewechselt werden. Bitte erneut versuchen.",
     "inspections": "Die Kontrollen konnten nicht geladen werden.",
     "inspection": "Die Kontrolle konnte nicht geladen werden.",
     "inspectionSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen.",
-    "inspectionConflict": "Die Kontrolle wurde inzwischen geändert. Der aktuelle Stand wurde neu geladen."
+    "inspectionConflict": "Die Kontrolle wurde inzwischen geändert. Der aktuelle Stand wurde neu geladen.",
+    "infoPages": "Die Informationen konnten nicht geladen werden.",
+    "infoPagesSave": "Die Informationen konnten nicht gespeichert werden.",
+    "infoTextRequired": "Bitte alle drei Texte ausfüllen.",
+    "infoTextTooLong": "Ein Text ist länger als 20.000 Zeichen."
   },
   "navigation": {
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
     "residences": "Wohnanlagen",
-    "inspections": "Kontrollen"
+    "inspections": "Kontrollen",
+    "standards": "Standards"
+  },
+  "standards": {
+    "title": "Standards und Kriterien",
+    "info": "Informationen für Bewohnende",
+    "infoHint": "Diese Texte sehen Bewohnende unter Kontrolle, Termin, Ablauf und Konsequenzen.",
+    "process": "Ablauf der Kontrolle",
+    "consequences": "Folgen bei Mängeln",
+    "standards": "Sauberkeitsstandards",
+    "save": "Speichern",
+    "saved": "Gespeichert. Bewohnende sehen die neuen Texte.",
+    "readOnly": "Du kannst diese Texte nur lesen."
+  },
+  "residences": {
+    "name": "Wohnanlage",
+    "flats": "WGs",
+    "noFlats": "Keine WGs",
+    "caretaker": "Objektbetreuung",
+    "noCaretaker": "Keine Objektbetreuung",
+    "deputy": "Vertretung",
+    "noDeputy": "Keine Vertretung",
+    "chooseCaretaker": "Objektbetreuung auswählen",
+    "actions": "Aktionen",
+    "edit": "Bearbeiten",
+    "editFor": "Zuständigkeit von {{name}} bearbeiten",
+    "save": "Speichern",
+    "saving": "Wird gespeichert …",
+    "cancel": "Abbrechen"
   },
   "pages": {
     "welcome": "Willkommen, {{name}}.",

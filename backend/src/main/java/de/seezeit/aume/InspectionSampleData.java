@@ -21,7 +21,8 @@ import de.seezeit.aume.user.UserRepository;
 
 /**
  * Entwicklungsdaten für die Kontrolle: eine veröffentlichte Checkliste nach dem Wireframe,
- * zwei WGs in der Wohnanlage Sonne und je eine geplante Kontrolle. Läuft nach {@link SampleData}.
+ * je eine geplante Kontrolle für die WGs S-01 und S-02 der Wohnanlage Sonne. Läuft nach {@link SampleData},
+ * das die Wohnanlage und die WGs anlegt.
  */
 @Component
 @Profile("dev")
@@ -74,8 +75,8 @@ public class InspectionSampleData implements CommandLineRunner {
         if (versions.count() == 0) seedChecklist();
         if (inspections.count() == 0) {
             var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
-            inspections.save(new InspectionEntity(flat(residence, "4.12", 4), null));
-            inspections.save(new InspectionEntity(flat(residence, "4.13", 3), null));
+            inspections.save(new InspectionEntity(flat(residence, "S-01", 4), null));
+            inspections.save(new InspectionEntity(flat(residence, "S-02", 3), null));
         }
     }
 
