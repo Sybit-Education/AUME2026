@@ -186,6 +186,15 @@
       "inspectedOn": "Geprüft am {{date}}",
       "inspectedBy": "von {{name}}",
       "backToHistory": "← Zur Kontroll-Historie"
+    },
+    "previous": {
+      "title": "Vorgeschichte der WG",
+      "none": "Keine früheren Kontrollen dieser WG.",
+      "summary_one": "Letzte abgeschlossene Kontrolle",
+      "summary_other": "Letzte {{count}} abgeschlossene Kontrollen",
+      "noDefects": "Keine Mängel.",
+      "earlier": "früher auffällig · {{date}}",
+      "earlierNote": "Zuletzt notiert: {{note}}"
     }
   }
 }

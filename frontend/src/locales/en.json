@@ -186,6 +186,15 @@
       "inspectedOn": "Inspected on {{date}}",
       "inspectedBy": "by {{name}}",
       "backToHistory": "← Back to inspection history"
+    },
+    "previous": {
+      "title": "History of this flat",
+      "none": "No earlier inspections of this flat.",
+      "summary_one": "Last completed inspection",
+      "summary_other": "Last {{count}} completed inspections",
+      "noDefects": "No defects.",
+      "earlier": "previously flagged · {{date}}",
+      "earlierNote": "Last note: {{note}}"
     }
   }
 }

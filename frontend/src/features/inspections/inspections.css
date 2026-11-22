@@ -75,3 +75,30 @@
   clip:rect(0 0 0 0);
   white-space:nowrap;
 }
+
+/* Vorgeschichte der WG (US-51) */
+.ins-previous > summary {
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  flex-wrap:wrap;
+  cursor:pointer;
+  list-style-position:inside;
+}
+.ins-previous > summary h3 {
+  display:inline;
+}
+.ins-previous-list {
+  margin:4px 0 0;
+  padding-left:18px;
+}
+.ins-previous-list li {
+  margin-top:4px;
+}
+.ins-previous-list .chip {
+  margin-left:6px;
+}
+/* Mehrere Chips in einer Zeile: nur der erste rückt nach rechts. */
+.acc summary .chip + .chip {
+  margin-left:6px;
+}

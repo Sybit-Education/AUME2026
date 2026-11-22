@@ -65,6 +65,24 @@ export interface HistoryPage {
   page: { number: number; size: number; totalElements: number; totalPages: number }
 }
 
+/** Mangel oder vor Ort geklärter Befund aus einer früheren Kontrolle derselben WG (US-51). */
+export interface PreviousDefect {
+  area: string
+  criterionTitle: string
+  rating: Exclude<Rating, 'OK'>
+  severity: Severity | null
+  note: string | null
+  buildingCauseSuspected: boolean
+}
+
+export interface PreviousInspection {
+  id: number
+  inspectedAt: string | null
+  round: number
+  overallResult: OverallResult | null
+  defects: PreviousDefect[]
+}
+
 export interface FindingInput {
   rating: Rating
   severity?: Severity | null
@@ -88,6 +106,12 @@ export async function listHistory(query: URLSearchParams, signal: AbortSignal): 
 export async function getInspection(id: number, signal: AbortSignal): Promise<Inspection> {
   const response = requireOk(await api(`/api/inspections/${id}`, { signal }), 'errors.inspection')
   return (await response.json()) as Inspection
+}
+
+/** Höchstens drei abgeschlossene frühere Kontrollen der WG, neueste zuerst. */
+export async function getPreviousFindings(id: number, signal: AbortSignal): Promise<PreviousInspection[]> {
+  const response = requireOk(await api(`/api/inspections/${id}/previous-findings`, { signal }), 'errors.inspection')
+  return (await response.json()) as PreviousInspection[]
 }
 
 async function change(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<Inspection> {

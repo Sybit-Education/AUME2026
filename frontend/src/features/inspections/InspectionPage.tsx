@@ -8,21 +8,29 @@ import { forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
 import {
   clearFinding, finalizeInspection, getInspection, markOk, rateCriterion, startInspection,
-  type Criterion, type Finding, type Inspection, type OverallResult, type Severity,
+  type Criterion, type Finding, type Inspection, type OverallResult, type PreviousInspection, type Severity,
 } from './api'
 import { areaIcon, areas, suggestedResult, type AreaState } from './summary'
 import DefectDialog from './DefectDialog'
 import { formatDate } from './history'
 import Protocol from './Protocol'
+import { criterionKey, earlierDefects, type EarlierDefect } from './previous'
+import PreviousInspections from './PreviousInspections'
 import './inspections.css'
 
-export default function InspectionPage() {
-  const loaded = useLoaderData<Inspection | null>()
-  if (!loaded) return <LoadingPage />
-  return <InspectionView key={loaded.id} initial={loaded} />
+export interface InspectionLoaderData {
+  inspection: Inspection
+  /** Vorgeschichte der WG (US-51), neueste zuerst. */
+  previous: PreviousInspection[]
 }
 
-function InspectionView({ initial }: { initial: Inspection }) {
+export default function InspectionPage() {
+  const loaded = useLoaderData<InspectionLoaderData | null>()
+  if (!loaded) return <LoadingPage />
+  return <InspectionView key={loaded.inspection.id} initial={loaded.inspection} previous={loaded.previous} />
+}
+
+function InspectionView({ initial, previous }: { initial: Inspection; previous: PreviousInspection[] }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
@@ -38,6 +46,7 @@ function InspectionView({ initial }: { initial: Inspection }) {
   const current = states.find((state) => state.area === selected) ?? states[0]
   const editable = inspection.status === 'DRAFT'
   const done = inspection.status === 'FINALIZED' || inspection.status === 'PUBLISHED'
+  const earlier = earlierDefects(previous)
   const open = states.reduce((sum, state) => sum + state.open, 0)
 
   useEffect(() => {
@@ -119,6 +128,7 @@ function InspectionView({ initial }: { initial: Inspection }) {
         <div className="card empty"><h4>{t('inspections.noChecklist')}</h4></div>
       ) : step === 'check' && current ? (
         <>
+          <PreviousInspections previous={previous} />
           <div className="tabs" role="tablist" aria-label={t('inspections.areas')}>
             {states.map((state) => (
               <button key={state.area} role="tab" aria-selected={state.area === current.area}
@@ -131,7 +141,8 @@ function InspectionView({ initial }: { initial: Inspection }) {
           <section className="card">
             <h3>{t('inspections.checklistOf', { area: current.area })}</h3>
             {current.criteria.map((criterion) => (
-              <CriterionRow key={criterion.id} criterion={criterion} finding={finding(criterion.id)} />
+              <CriterionRow key={criterion.id} criterion={criterion} finding={finding(criterion.id)}
+                earlier={earlier.get(criterionKey(criterion.area, criterion.title))} />
             ))}
             {editable && (
               <div className="acts">
@@ -170,15 +181,21 @@ function InspectionView({ initial }: { initial: Inspection }) {
   )
 }
 
-function CriterionRow({ criterion, finding }: { criterion: Criterion; finding?: Finding }) {
-  const { t } = useTranslation()
+function CriterionRow({ criterion, finding, earlier }: { criterion: Criterion; finding?: Finding; earlier?: EarlierDefect }) {
+  const { t, i18n } = useTranslation()
   return (
     <details className="acc">
       <summary>
         {criterion.title}
+        {earlier && (
+          <span className="chip wr ins-earlier">{t('inspections.previous.earlier', { date: formatDate(earlier.inspectedAt, i18n.resolvedLanguage) })}</span>
+        )}
         {finding && <span className={`chip ${finding.rating === 'DEFICIENT' ? 'bad' : 'ok'}`}>{t(`inspections.rating.${finding.rating}`)}</span>}
       </summary>
-      <div className="in"><p className="sm2">{criterion.description}</p></div>
+      <div className="in">
+        <p className="sm2">{criterion.description}</p>
+        {earlier?.defect.note && <p className="sm2 mut">{t('inspections.previous.earlierNote', { note: earlier.defect.note })}</p>}
+      </div>
     </details>
   )
 }

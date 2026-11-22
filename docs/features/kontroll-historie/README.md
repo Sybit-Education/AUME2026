@@ -1,6 +1,6 @@
 # Kontroll-Historie der Objektbetreuung
 
-Die Objektbetreuung sieht die abgeschlossenen Kontrollen ihrer Wohnanlage, kann sie filtern und jede Kontrolle als Protokoll ansehen. Umgesetzt sind die Board-Karten #40 (Historie), #42 (Filter) und #43 (Detailansicht). Baut auf dem Feature [Kontrolle durch die Objektbetreuung](../checklist/README.md) auf.
+Die Objektbetreuung sieht die abgeschlossenen Kontrollen ihrer Wohnanlage, kann sie filtern und jede Kontrolle als Protokoll ansehen. In der laufenden Kontrolle sieht sie außerdem die früheren Mängel der WG. Umgesetzt sind die Board-Karten #40 (Historie), #42 (Filter), #43 (Detailansicht) und #14 (US-51 Vorgeschichte der WG vor Ort sehen). Baut auf dem Feature [Kontrolle durch die Objektbetreuung](../checklist/README.md) auf.
 
 ## Ablauf
 
@@ -11,6 +11,14 @@ Die Objektbetreuung sieht die abgeschlossenen Kontrollen ihrer Wohnanlage, kann 
 
 Ein Etage-Filter wie im Wireframe fehlt, weil `flats` keine Etage speichert.
 
+### Vorgeschichte der WG in der Kontrolle (US-51)
+
+Beim Abarbeiten der Checkliste (Status `PLANNED` oder `DRAFT`) zeigt die Kontrollseite oben die Karte **Vorgeschichte der WG**: die letzten drei abgeschlossenen Kontrollen derselben WG mit Datum, Erst- oder Nachkontrolle, Ergebnis und ihren Mängeln (Bereich, Kriterium, Schwere, Notiz, Gebäudeursache, „vor Ort geklärt“). Gibt es frühere Mängel, ist die Karte aufgeklappt, sonst zugeklappt. Der Aufbau folgt „Frühere Kontrollen“ aus dem Wireframe; eine eigene Ansicht für die Objektbetreuung zeigt das Wireframe nicht.
+
+Zusätzlich trägt jedes Kriterium, das in einer dieser Kontrollen auffällig war, den Hinweis **„früher auffällig · Datum“**; aufgeklappt steht die zuletzt notierte Bemerkung darunter. „Auffällig“ statt „Mangel“, weil auch vor Ort geklärte Befunde zählen, die fachlich kein Mangel sind. Zugeordnet wird über Bereich und Kriteriumstitel, nicht über die ID, weil jede Checklisten-Fassung eigene Kriterien-IDs hat.
+
+Ältere Kontrollen stehen in der Historie. Das gezielte Nachprüfen nur der offenen Mängel einer Nachkontrolle ist US-44 und nicht Teil davon.
+
 ## Rollen und Daten
 
 | Rolle | Berechtigung | Zugriff |
@@ -18,7 +26,7 @@ Ein Etage-Filter wie im Wireframe fehlt, weil `flats` keine Etage speichert.
 | Objektbetreuung (`CARETAKER`) | `INSPECTION_PERFORM` | nur Kontrollen von WGs der eigenen Wohnanlage; fremde Kontrollen antworten mit 404 |
 | Studierende, Sachbearbeitung | – | 403 |
 
-Keine neuen Tabellen. Gelesen werden `inspections` und `inspection_findings` (Paket `inspection`, `InspectionHistoryService`).
+Keine neuen Tabellen. Gelesen werden `inspections` und `inspection_findings` (Paket `inspection`, `InspectionHistoryService` und `PreviousFindingsService`).
 
 ## API
 
@@ -26,6 +34,7 @@ Keine neuen Tabellen. Gelesen werden `inspections` und `inspection_findings` (Pa
 | --- | --- |
 | `GET /api/inspections/history?page=&size=&flat=&result=&followUp=&from=&to=` | abgeschlossene Kontrollen der eigenen Wohnanlage, paginiert |
 | `GET /api/inspections/{id}` | wie bisher; liefert zusätzlich `inspectedAt` und `inspectorName` |
+| `GET /api/inspections/{id}/previous-findings` | Vorgeschichte: bis zu drei abgeschlossene Kontrollen derselben WG vor dieser Kontrolle, neueste zuerst |
 
 Parameter der Historie, alle optional:
 
@@ -40,17 +49,21 @@ Sortiert wird immer nach `inspectedAt` absteigend, dann `id`; ein `sort`-Paramet
 
 Antwort je Eintrag: `{id, flatLabel, inspectedAt, round, status, overallResult, deficiencies, inspectorName}`.
 
+Vorgeschichte: Liste von `{id, inspectedAt, round, overallResult, defects}`; `defects` enthält je Befund mit `DEFICIENT` oder `RESOLVED_ON_SITE` die Felder `{area, criterionTitle, rating, severity, note, buildingCauseSuspected}` in Checklisten-Reihenfolge. „Vor dieser Kontrolle“ heißt: vor ihrem `inspectedAt`, bei einer noch nicht gestarteten Kontrolle vor jetzt. Die Kontrolle selbst und andere WGs sind nie enthalten. Zugriff wie bei `GET /api/inspections/{id}`.
+
 ## Entwicklungsdaten
 
-`InspectionSampleData` legt im Profil `dev` zusätzlich drei abgeschlossene Kontrollen an: WG S-01 vor 30 Tagen nicht bestanden (zwei Mängel, einer vor Ort geklärt), deren Nachkontrolle vor 23 Tagen bestanden, und WG S-02 vor 28 Tagen bestanden. Anmeldung als `caretaker`.
+`InspectionSampleData` legt im Profil `dev` zusätzlich drei abgeschlossene Kontrollen an: WG S-01 vor 30 Tagen nicht bestanden (zwei Mängel und ein vor Ort geklärter Befund), deren Nachkontrolle vor 23 Tagen bestanden, und WG S-02 vor 28 Tagen bestanden. Anmeldung als `caretaker`. Die geplante Kontrolle von S-01 zeigt damit eine Vorgeschichte mit Hinweisen an „Herd & Backofen“, „Mülltrennung“ und „Dusche & WC“.
 
 ## Prüfung
 
 - Backend: `InspectionHistoryTests` (Rechte, Sortierung, alle Filter, Platzhalterzeichen, ungültige Filter, fremde Wohnanlage, Detailansicht, frisch abgeschlossene Kontrolle erscheint in der Historie)
+- Backend: `PreviousFindingsTests` (Rechte, Reihenfolge und Inhalt, nur frühere Kontrollen derselben WG, höchstens drei, gestartete Kontrolle, fremde Wohnanlage und unbekannte ID)
 - Frontend: `features/inspections/history.test.ts` (Filter aus der Adresse lesen, ungültige Werte verwerfen, Zeitraum prüfen)
+- Frontend: `features/inspections/previous.test.ts` (jüngster früherer Befund je Kriterium, Zuordnung über Bereich und Titel)
 
 ## Offen
 
-- Frontend-Komponententests für Historie und Protokoll fehlen.
+- Frontend-Komponententests für Historie, Protokoll und Vorgeschichte fehlen.
 - **Protokoll herunterladen** und **An WG übermitteln** aus dem Wireframe gehören zu US-40 bzw. zum Ergebnis-Feature.
 - Etage-Filter, sobald `flats` eine Etage hat.

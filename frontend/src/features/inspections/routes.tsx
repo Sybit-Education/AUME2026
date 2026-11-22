@@ -2,9 +2,9 @@ import { redirect, type RouteObject } from 'react-router'
 import { protectedLoader } from '@/lib/auth/loaders'
 import RequirePrivilege from '@/lib/auth/RequirePrivilege'
 import InspectionsPage from './InspectionsPage'
-import InspectionPage from './InspectionPage'
+import InspectionPage, { type InspectionLoaderData } from './InspectionPage'
 import HistoryPage, { type HistoryLoaderData } from './HistoryPage'
-import { getInspection, listHistory, listInspections } from './api'
+import { getInspection, getPreviousFindings, listHistory, listInspections } from './api'
 import { historyQuery, invalidRange, readHistoryFilter } from './history'
 
 const privilege = 'INSPECTION_PERFORM'
@@ -28,10 +28,13 @@ export const inspectionRoutes: RouteObject[] = [{
 }, {
   path: 'inspections/:id',
   element: <RequirePrivilege privilege={privilege}><InspectionPage /></RequirePrivilege>,
-  loader: protectedLoader(privilege, ({ params, request }) => {
+  loader: protectedLoader(privilege, async ({ params, request }): Promise<InspectionLoaderData> => {
     const id = Number(params.id)
     if (!Number.isSafeInteger(id) || id < 1) throw redirect('/inspections')
-    return getInspection(id, request.signal)
+    const [inspection, previous] = await Promise.all([
+      getInspection(id, request.signal), getPreviousFindings(id, request.signal),
+    ])
+    return { inspection, previous }
   }),
 }]
 
