@@ -139,21 +139,39 @@ it('names the reason and keeps the input when the backend rejects the dates', as
   expect(((await newForm()).getByLabelText('Startdatum') as HTMLInputElement).value).toBe('2026-12-05')
 })
 
-it('shows a counter proposal with its reason and accepts it', async () => {
+it('shows a short counter proposal in the list and its details in a dialog', async () => {
   periods = [period({ status: 'COUNTER_PROPOSED', counter: { startsOn: '2026-12-10', endsOn: '2026-12-12', windowStart: '10:00:00', windowEnd: '14:00:00', reason: 'Urlaub' } })]
   mount()
-  expect(await screen.findByText('Urlaub')).toBeDefined()
-  expect(screen.getByText('10:00 – 14:00')).toBeDefined()
-  fireEvent.click(screen.getByRole('button', { name: 'Gegenvorschlag für Sonne annehmen' }))
+  expect(await screen.findByText('Neu: 10.–12.12.')).toBeDefined()
+  expect(screen.queryByText('Urlaub')).toBeNull()
+  fireEvent.click(screen.getByRole('link', { name: 'Gegenvorschlag für Sonne prüfen' }))
+  const dialog = within(await screen.findByRole('dialog', { name: 'Gegenvorschlag · Sonne' }))
+  expect(dialog.getByText('01.–03.12.2026')).toBeDefined()
+  expect(dialog.getByText('10.–12.12.2026')).toBeDefined()
+  expect(dialog.getByText('09:00 – 16:00')).toBeDefined()
+  expect(dialog.getByText('10:00 – 14:00')).toBeDefined()
+  expect(dialog.getByText('Urlaub')).toBeDefined()
+  fireEvent.click(dialog.getByRole('button', { name: 'Annehmen' }))
   expect((await screen.findByRole('status')).textContent).toBe('Gegenvorschlag angenommen.')
   expect(writes()[0][0]).toBe('/api/inspection-periods/7/accept-counter')
   expect(JSON.parse(String(writes()[0][1]?.body))).toEqual({ version: 3 })
+})
+
+it('opens the edit form from the review dialog', async () => {
+  periods = [period({ status: 'COUNTER_PROPOSED', counter: { startsOn: '2026-12-10', endsOn: '2026-12-12', windowStart: '10:00:00', windowEnd: '14:00:00', reason: 'Urlaub' } })]
+  mount('/inspection-planning?review=7')
+  const review = within(await screen.findByRole('dialog', { name: 'Gegenvorschlag · Sonne' }))
+  fireEvent.click(review.getByRole('link', { name: 'Neuer Zeitraum' }))
+  expect(await screen.findByRole('dialog', { name: 'Zeitraum ändern · Sonne' })).toBeDefined()
+  expect(screen.queryByRole('dialog', { name: 'Gegenvorschlag · Sonne' })).toBeNull()
 })
 
 it('sends a changed period with its version', async () => {
   periods = [period({ status: 'AGREED' })]
   mount()
   fireEvent.click(await screen.findByRole('link', { name: 'Zeitraum für Sonne ändern' }))
+  expect(await screen.findByRole('dialog', { name: 'Zeitraum ändern · Sonne' })).toBeDefined()
+  expect(screen.getByRole('table', { name: 'Geplante Kontrollen' }).textContent).toContain('Sonne')
   const form = within(await screen.findByRole('form', { name: 'Zeitraum für Sonne ändern' }))
   fireEvent.change(form.getByLabelText('Enddatum'), { target: { value: '2026-12-04' } })
   fireEvent.change(form.getByLabelText('Objektbetreuung'), { target: { value: '11' } })
@@ -200,10 +218,11 @@ it.each([
 ])('shows an error when accepting fails because of %s', async (_case, response, message) => {
   periods = [period({ status: 'COUNTER_PROPOSED', counter: { startsOn: '2026-12-10', endsOn: '2026-12-12', windowStart: '10:00:00', windowEnd: '14:00:00', reason: 'Urlaub' } })]
   writeResponse = response
-  mount()
-  fireEvent.click(await screen.findByRole('button', { name: 'Gegenvorschlag für Sonne annehmen' }))
-  expect((await screen.findByRole('alert')).textContent).toBe(message)
-  expect(await screen.findByText('Urlaub')).toBeDefined()
+  mount('/inspection-planning?review=7')
+  const dialog = within(await screen.findByRole('dialog', { name: 'Gegenvorschlag · Sonne' }))
+  fireEvent.click(dialog.getByRole('button', { name: 'Annehmen' }))
+  expect((await dialog.findByRole('alert')).textContent).toBe(message)
+  expect(dialog.getByText('Urlaub')).toBeDefined()
 })
 
 it('withdraws a proposal after confirming the dialog', async () => {

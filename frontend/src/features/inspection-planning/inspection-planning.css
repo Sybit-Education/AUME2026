@@ -19,13 +19,32 @@
 
 .planning-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   gap: 6px;
-  min-width: 160px;
 }
 
-@media (max-width: 1000px) {
+.planning-grid .tbl .chip {
+  white-space: normal;
+}
+
+.planning-period {
+  white-space: nowrap;
+}
+
+.planning-dialog:focus {
+  outline: none;
+}
+
+.planning-compare {
+  margin-bottom: 12px;
+}
+
+.planning-reason {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1240px) {
   .planning-grid {
     grid-template-columns: minmax(0, 1fr);
   }

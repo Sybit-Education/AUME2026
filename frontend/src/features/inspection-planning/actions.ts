@@ -69,6 +69,7 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
 
   const next = new URLSearchParams(url.search)
   next.delete('edit')
+  next.delete('review')
   next.set('saved', saved[intent])
   return redirect(`${url.pathname}?${next}`)
 }

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Form, Link, useActionData, useLoaderData, useNavigation, useSearchParams } from 'react-router'
+import { Form, Link, useActionData, useLoaderData, useNavigate, useNavigation, useSearchParams } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import type { PlanningActionResult } from './actions'
 import type { InspectionPeriod, PeriodStatus, PlanningData, ResidenceOption, StaffMember } from './api'
@@ -12,8 +12,16 @@ const statusChip: Record<PeriodStatus, string> = {
   AGREED: 'ok',
 }
 
-function formatDate(value: string, language: string) {
-  return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`))
+const FULL_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' }
+const SHORT_DATE: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit' }
+
+function formatRange(from: string, to: string, language: string, format = FULL_DATE) {
+  const date = (value: string) => new Date(`${value}T00:00:00Z`)
+  return new Intl.DateTimeFormat(language, { ...format, timeZone: 'UTC' }).formatRange(date(from), date(to))
+}
+
+function formatWindow(start: string | null, end: string | null) {
+  return start && end ? `${start.slice(0, 5)} – ${end.slice(0, 5)}` : '–'
 }
 
 function urlWith(params: URLSearchParams, changes: Record<string, string | null>) {
@@ -119,75 +127,155 @@ function NewPeriodForm({ residences, caretakers, residence, error, onResidence }
   )
 }
 
-function EditRow({ period, caretakers, error, cancelUrl }: {
+function Dialog({ title, onClose, children }: PropsWithChildren<{ title: string; onClose: () => void }>) {
+  const titleId = useId()
+  const dialog = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const previous = document.activeElement
+    dialog.current?.focus()
+    return () => { if (previous instanceof HTMLElement) previous.focus() }
+  }, [])
+
+  return (
+    <div className="mbg"
+      onClick={(event) => { if (event.target === event.currentTarget) onClose() }}
+      onKeyDown={(event) => { if (event.key === 'Escape') onClose() }}>
+      <div ref={dialog} className="mdl planning-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+        <h3 id={titleId}>{title}</h3>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function EditDialog({ period, caretakers, error, closeUrl, onClose }: {
   period: InspectionPeriod
   caretakers: StaffMember[]
   error?: PlanningActionResult
-  cancelUrl: string
+  closeUrl: string
+  onClose: () => void
 }) {
   const { t } = useTranslation()
   const saving = useNavigation().state === 'submitting'
   return (
-    <tr>
-      <td colSpan={5}>
-        <Form method="post" aria-label={t('inspectionPlanning.editFor', { name: period.residenceName })}>
-          <input type="hidden" name="intent" value="update" />
-          <input type="hidden" name="periodId" value={period.id} />
-          <input type="hidden" name="version" value={period.version} />
-          <p className="b">{period.residenceName}</p>
-          <PeriodFields
-            prefix={`edit-${period.id}`}
-            caretakers={caretakers}
-            defaults={{
-              startsOn: period.startsOn,
-              endsOn: period.endsOn,
-              windowStart: period.windowStart?.slice(0, 5) ?? '',
-              windowEnd: period.windowEnd?.slice(0, 5) ?? '',
-              caretakerId: period.caretaker?.id ?? null,
-            }}
-          />
-          <p className="hint">{t('inspectionPlanning.editHint')}</p>
-          {error && <p className="err" role="alert">{t(error.error)}</p>}
-          <div className="acts">
-            <button className="btn sm" type="submit" disabled={saving}>{t('inspectionPlanning.sendAgain')}</button>
-            <Link className="btn gh sm" to={cancelUrl}>{t('inspectionPlanning.cancel')}</Link>
-          </div>
-        </Form>
-      </td>
-    </tr>
+    <Dialog title={t('inspectionPlanning.editTitle', { name: period.residenceName })} onClose={onClose}>
+      <Form method="post" aria-label={t('inspectionPlanning.editFor', { name: period.residenceName })}>
+        <input type="hidden" name="intent" value="update" />
+        <input type="hidden" name="periodId" value={period.id} />
+        <input type="hidden" name="version" value={period.version} />
+        <PeriodFields
+          prefix={`edit-${period.id}`}
+          caretakers={caretakers}
+          defaults={{
+            startsOn: period.startsOn,
+            endsOn: period.endsOn,
+            windowStart: period.windowStart?.slice(0, 5) ?? '',
+            windowEnd: period.windowEnd?.slice(0, 5) ?? '',
+            caretakerId: period.caretaker?.id ?? null,
+          }}
+        />
+        <p className="hint">{t('inspectionPlanning.editHint')}</p>
+        {error && <p className="err" role="alert">{t(error.error)}</p>}
+        <div className="ft">
+          <Link className="btn gh" to={closeUrl} replace>{t('inspectionPlanning.cancel')}</Link>
+          <button className="btn" type="submit" disabled={saving}>{t('inspectionPlanning.sendAgain')}</button>
+        </div>
+      </Form>
+    </Dialog>
   )
 }
 
-function PeriodRow({ period, editUrl, onWithdraw }: {
+function ReviewDialog({ period, counter, error, closeUrl, editUrl, onClose }: {
   period: InspectionPeriod
+  counter: NonNullable<InspectionPeriod['counter']>
+  error?: PlanningActionResult
+  closeUrl: string
   editUrl: string
-  onWithdraw: (id: number) => void
+  onClose: () => void
 }) {
   const { t, i18n } = useTranslation()
   const saving = useNavigation().state === 'submitting'
   const language = i18n.resolvedLanguage ?? 'de'
+  return (
+    <Dialog title={t('inspectionPlanning.reviewTitle', { name: period.residenceName })} onClose={onClose}>
+      <div className="tw planning-compare">
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th scope="col" />
+              <th scope="col">{t('inspectionPlanning.current')}</th>
+              <th scope="col">{t('inspectionPlanning.proposed')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="b">{t('inspectionPlanning.period')}</td>
+              <td>{formatRange(period.startsOn, period.endsOn, language)}</td>
+              <td className="b">{formatRange(counter.startsOn, counter.endsOn, language)}</td>
+            </tr>
+            <tr>
+              <td className="b">{t('inspectionPlanning.time')}</td>
+              <td>{formatWindow(period.windowStart, period.windowEnd)}</td>
+              <td className="b">{formatWindow(counter.windowStart, counter.windowEnd)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="planning-reason"><b>{t('inspectionPlanning.reason')}:</b> {counter.reason}</p>
+      {error && <p className="err" role="alert">{t(error.error)}</p>}
+      <Form method="post">
+        <input type="hidden" name="intent" value="accept" />
+        <input type="hidden" name="periodId" value={period.id} />
+        <input type="hidden" name="version" value={period.version} />
+        <div className="ft">
+          <Link className="btn gh" to={closeUrl} replace>{t('inspectionPlanning.cancel')}</Link>
+          <Link className="btn sec" to={editUrl} replace>{t('inspectionPlanning.newPeriodShort')}</Link>
+          <button className="btn" type="submit" disabled={saving}>{t('inspectionPlanning.accept')}</button>
+        </div>
+      </Form>
+    </Dialog>
+  )
+}
+
+function WithdrawDialog({ period, onClose }: { period: InspectionPeriod; onClose: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <Dialog title={t('inspectionPlanning.withdrawTitle')} onClose={onClose}>
+      <p>{t('inspectionPlanning.withdrawConfirm', { name: period.residenceName })}</p>
+      <Form method="post" onSubmit={onClose}>
+        <input type="hidden" name="intent" value="withdraw" />
+        <input type="hidden" name="periodId" value={period.id} />
+        <input type="hidden" name="version" value={period.version} />
+        <div className="ft">
+          <button className="btn gh" type="button" onClick={onClose}>{t('inspectionPlanning.cancel')}</button>
+          <button className="btn dg" type="submit">{t('inspectionPlanning.withdraw')}</button>
+        </div>
+      </Form>
+    </Dialog>
+  )
+}
+
+function PeriodRow({ period, actionUrl, onWithdraw }: {
+  period: InspectionPeriod
+  actionUrl: string
+  onWithdraw: (id: number) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'de'
   const announced = period.announcedAt !== null
-  const range = (from: string, to: string) => `${formatDate(from, language)} – ${formatDate(to, language)}`
+  const counter = period.counter
   return (
     <tr>
       <td>
         <b>{period.residenceName}</b>
-        <div className="xs mut">{t('inspectionPlanning.kind.REGULAR')} · {t('inspectionPlanning.flats', { count: period.flatCount })}</div>
+        <div className="xs mut">{t('inspectionPlanning.flats', { count: period.flatCount })}</div>
       </td>
-      <td>
-        {range(period.startsOn, period.endsOn)}
-        {period.windowStart && period.windowEnd && (
-          <div className="xs mut">{period.windowStart.slice(0, 5)} – {period.windowEnd.slice(0, 5)}</div>
-        )}
-        {period.counter && (
-          <div className="xs">
-            <b>{t('inspectionPlanning.counterProposal')}:</b> {range(period.counter.startsOn, period.counter.endsOn)}
-            {period.counter.windowStart && period.counter.windowEnd && (
-              <div className="mut">{period.counter.windowStart.slice(0, 5)} – {period.counter.windowEnd.slice(0, 5)}</div>
-            )}
-            <div className="mut">{period.counter.reason}</div>
-          </div>
-        )}
+      <td className="planning-period">
+        {formatRange(period.startsOn, period.endsOn, language)}
+        {counter
+          ? <div className="xs b">{t('inspectionPlanning.newShort')}: {formatRange(counter.startsOn, counter.endsOn, language, SHORT_DATE)}</div>
+          : period.windowStart && period.windowEnd && <div className="xs mut">{formatWindow(period.windowStart, period.windowEnd)}</div>}
       </td>
       <td>{period.caretaker?.name ?? <span className="mut">{t('inspectionPlanning.noCaretaker')}</span>}</td>
       <td>
@@ -198,19 +286,9 @@ function PeriodRow({ period, editUrl, onWithdraw }: {
       <td>
         {!announced && (
           <div className="planning-actions">
-            {period.status === 'COUNTER_PROPOSED' && (
-              <Form method="post">
-                <input type="hidden" name="intent" value="accept" />
-                <input type="hidden" name="periodId" value={period.id} />
-                <input type="hidden" name="version" value={period.version} />
-                <button className="btn sm" type="submit" disabled={saving}
-                  aria-label={t('inspectionPlanning.acceptFor', { name: period.residenceName })}>
-                  {t('inspectionPlanning.accept')}
-                </button>
-              </Form>
-            )}
-            <Link className="btn gh sm" to={editUrl} aria-label={t('inspectionPlanning.editFor', { name: period.residenceName })}>
-              {t(period.status === 'COUNTER_PROPOSED' ? 'inspectionPlanning.newPeriodShort' : 'inspectionPlanning.edit')}
+            <Link className={counter ? 'btn sm' : 'btn gh sm'} to={actionUrl}
+              aria-label={t(counter ? 'inspectionPlanning.reviewFor' : 'inspectionPlanning.editFor', { name: period.residenceName })}>
+              {t(counter ? 'inspectionPlanning.review' : 'inspectionPlanning.edit')}
             </Link>
             <button className="btn gh sm" type="button" title={t('inspectionPlanning.withdraw')}
               aria-label={t('inspectionPlanning.withdrawFor', { name: period.residenceName })}
@@ -224,34 +302,12 @@ function PeriodRow({ period, editUrl, onWithdraw }: {
   )
 }
 
-function WithdrawDialog({ period, onClose }: { period: InspectionPeriod; onClose: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <div className="mbg"
-      onClick={(event) => { if (event.target === event.currentTarget) onClose() }}
-      onKeyDown={(event) => { if (event.key === 'Escape') onClose() }}>
-      <div className="mdl" role="dialog" aria-modal="true" aria-labelledby="withdraw-title">
-        <h3 id="withdraw-title">{t('inspectionPlanning.withdrawTitle')}</h3>
-        <p>{t('inspectionPlanning.withdrawConfirm', { name: period.residenceName })}</p>
-        <Form method="post" onSubmit={onClose}>
-          <input type="hidden" name="intent" value="withdraw" />
-          <input type="hidden" name="periodId" value={period.id} />
-          <input type="hidden" name="version" value={period.version} />
-          <div className="ft">
-            <button className="btn gh" type="button" autoFocus onClick={onClose}>{t('inspectionPlanning.cancel')}</button>
-            <button className="btn dg" type="submit">{t('inspectionPlanning.withdraw')}</button>
-          </div>
-        </Form>
-      </div>
-    </div>
-  )
-}
-
 export default function InspectionPlanningPage() {
   const { t } = useTranslation()
   const data = useLoaderData<PlanningData | null>()
   const result = useActionData<PlanningActionResult | undefined>()
   const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
   const [withdrawId, setWithdrawId] = useState<number | null>(null)
 
   if (!data) return <LoadingPage />
@@ -262,9 +318,15 @@ export default function InspectionPlanningPage() {
     ?? options.residences[0]
   const saved = params.get('saved')
   const savedKey = saved === 'created' || saved === 'updated' || saved === 'accepted' || saved === 'withdrawn' ? saved : null
-  const editing = params.get('edit')
   const page = periods.page
+  const openPeriod = (id: string | null) => periods.content.find((period) => String(period.id) === id && period.announcedAt === null)
+  const editing = openPeriod(params.get('edit'))
+  const reviewing = openPeriod(params.get('review'))
   const withdrawing = periods.content.find((period) => period.id === withdrawId && period.announcedAt === null)
+  const closeUrl = urlWith(params, { edit: null, review: null })
+  const closeDialog = () => { void navigate(closeUrl, { replace: true }) }
+  const editUrl = (id: number) => urlWith(params, { edit: String(id), review: null })
+  const reviewUrl = (id: number) => urlWith(params, { review: String(id), edit: null })
 
   function chooseResidence(id: string) {
     const next = new URLSearchParams(params)
@@ -293,7 +355,7 @@ export default function InspectionPlanningPage() {
         </section>
         <section className="card">
           <h3>{t('inspectionPlanning.planned')}</h3>
-          {(result?.intent === 'accept' || result?.intent === 'withdraw') && <p className="err" role="alert">{t(result.error)}</p>}
+          {result?.intent === 'withdraw' && <p className="err" role="alert">{t(result.error)}</p>}
           {periods.content.length === 0 ? <p className="mut">{t('inspectionPlanning.noPeriods')}</p> : (
             <div className="tw">
               <table className="tbl" aria-label={t('inspectionPlanning.planned')}>
@@ -308,10 +370,12 @@ export default function InspectionPlanningPage() {
                 </thead>
                 <tbody>
                   {periods.content.map((period) => (
-                    String(period.id) === editing && period.announcedAt === null
-                      ? <EditRow key={period.id} period={period} caretakers={options.caretakers}
-                          error={result?.intent === 'update' ? result : undefined} cancelUrl={urlWith(params, { edit: null })} />
-                      : <PeriodRow key={period.id} period={period} editUrl={urlWith(params, { edit: String(period.id) })} onWithdraw={setWithdrawId} />
+                    <PeriodRow
+                      key={period.id}
+                      period={period}
+                      actionUrl={period.counter ? reviewUrl(period.id) : editUrl(period.id)}
+                      onWithdraw={setWithdrawId}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -320,13 +384,33 @@ export default function InspectionPlanningPage() {
           {page.totalPages > 1 && (
             <nav className="acts" aria-label={t('pages.pagination')}>
               <Link className={`btn sec${page.number === 0 ? ' disabled' : ''}`} aria-disabled={page.number === 0}
-                to={urlWith(params, { page: String(Math.max(page.number - 1, 0)), edit: null })}>{t('pages.previous')}</Link>
+                to={urlWith(params, { page: String(Math.max(page.number - 1, 0)), edit: null, review: null })}>{t('pages.previous')}</Link>
               <Link className={`btn sec${page.number + 1 >= page.totalPages ? ' disabled' : ''}`} aria-disabled={page.number + 1 >= page.totalPages}
-                to={urlWith(params, { page: String(Math.min(page.number + 1, page.totalPages - 1)), edit: null })}>{t('pages.next')}</Link>
+                to={urlWith(params, { page: String(Math.min(page.number + 1, page.totalPages - 1)), edit: null, review: null })}>{t('pages.next')}</Link>
             </nav>
           )}
         </section>
       </div>
+      {editing && (
+        <EditDialog
+          key={editing.id}
+          period={editing}
+          caretakers={options.caretakers}
+          error={result?.intent === 'update' ? result : undefined}
+          closeUrl={closeUrl}
+          onClose={closeDialog}
+        />
+      )}
+      {reviewing?.counter && (
+        <ReviewDialog
+          period={reviewing}
+          counter={reviewing.counter}
+          error={result?.intent === 'accept' ? result : undefined}
+          closeUrl={closeUrl}
+          editUrl={editUrl(reviewing.id)}
+          onClose={closeDialog}
+        />
+      )}
       {withdrawing && <WithdrawDialog period={withdrawing} onClose={() => setWithdrawId(null)} />}
     </>
   )
