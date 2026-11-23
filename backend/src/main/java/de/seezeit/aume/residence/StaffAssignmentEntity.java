@@ -6,7 +6,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** Zuständigkeit von Objektbetreuung und Sachbearbeitung für eine Wohnanlage. */
+/**
+ * Zuständigkeit einer Person für eine Wohnanlage: Objektbetreuung, Vertretung oder Sachbearbeitung.
+ * Eine Person hat pro Anlage höchstens eine Zuständigkeit.
+ */
 @Entity
 @Table(name = "staff_assignments", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "residence_id"}))
 @Getter
@@ -24,8 +27,13 @@ public class StaffAssignmentEntity {
     @JoinColumn(name = "residence_id", nullable = false)
     private ResidenceEntity residence;
 
-    public StaffAssignmentEntity(UserEntity user, ResidenceEntity residence) {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StaffKind kind;
+
+    public StaffAssignmentEntity(UserEntity user, ResidenceEntity residence, StaffKind kind) {
         this.user = user;
         this.residence = residence;
+        this.kind = kind;
     }
 }

@@ -46,3 +46,15 @@ jobs:
       - run: docker compose -f infrastructure/compose.yaml config
       - run: docker build frontend
       - run: docker build backend
+
+  ci:
+    name: CI
+    needs: [backend, frontend, compose]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require backend, frontend, and compose to succeed
+        run: |
+          test "${{ needs.backend.result }}" = success
+          test "${{ needs.frontend.result }}" = success
+          test "${{ needs.compose.result }}" = success
