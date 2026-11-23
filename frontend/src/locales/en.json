@@ -40,7 +40,7 @@
     "infoPagesSave": "The information could not be saved.",
     "infoTextRequired": "Please fill in all three texts.",
     "infoTextTooLong": "A text is longer than 20,000 characters.",
-    "checklist": "The checklist could not be loaded."
+    "checklist": "The checklist could not be loaded.",
     "history": "The inspection history could not be loaded."
   },
   "navigation": {
