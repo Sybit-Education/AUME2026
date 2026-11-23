@@ -32,16 +32,28 @@
     "sessionExpired": "Your session has expired. Please sign in again.",
     "network": "The backend is unreachable.",
     "language": "The language could not be changed. Please try again.",
+    "inspections": "The inspections could not be loaded.",
+    "inspection": "The inspection could not be loaded.",
+    "inspectionSave": "The change could not be saved. Please try again.",
+    "inspectionConflict": "The inspection was changed in the meantime. The current state has been reloaded.",
     "infoPages": "The information could not be loaded.",
     "infoPagesSave": "The information could not be saved.",
     "infoTextRequired": "Please fill in all three texts.",
-    "infoTextTooLong": "A text is longer than 20,000 characters."
+    "infoTextTooLong": "A text is longer than 20,000 characters.",
+    "checklist": "The checklist could not be loaded.",
+    "history": "The inspection history could not be loaded."
   },
   "navigation": {
     "main": "Main navigation",
     "dashboard": "Dashboard",
     "residences": "Residences",
-    "standards": "Standards"
+    "standards": "Standards",
+    "inspections": "Inspections",
+    "start": "Home",
+    "cleaningPlan": "Cleaning plan",
+    "inspection": "Inspection",
+    "more": "More",
+    "studentTabs": "Student navigation"
   },
   "standards": {
     "title": "Standards and criteria",
@@ -81,6 +93,129 @@
     "forbiddenDescription": "You do not have permission to view this page.",
     "notFound": "Page not found",
     "notFoundDescription": "There is no page at this address.",
-    "error": "The page could not be loaded."
+    "error": "The page could not be loaded.",
+    "comingSoon": "Coming soon",
+    "comingSoonDescription": "This feature is being developed."
+  },
+  "more": {
+    "title": "More",
+    "account": "Account and privacy",
+    "settings": "Settings",
+    "settingsHint": "Language",
+    "back": "More"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Your choice applies to the whole app and is kept after reloading."
+  },
+  "checklist": {
+    "title": "Checklist",
+    "language": "Language",
+    "sameCriteria": "The caretakers use the same criteria during the inspection.",
+    "details": "Details",
+    "less": "Less",
+    "explanation": "Explanation:",
+    "empty": "Seezeit has not published a checklist yet.",
+    "emptyHint": "As soon as it is published, you will see all criteria here."
+  },
+  "inspections": {
+    "title": "Inspection · Flat {{label}}",
+    "summaryTitle": "Completion · Flat {{label}}",
+    "flat": "Flat {{label}}",
+    "none": "No open inspections in your residence.",
+    "start": "Start inspection",
+    "continue": "Continue inspection",
+    "started": "Inspection started.",
+    "round": "Follow-up {{round}}",
+    "places_one": "{{count}} place",
+    "places_other": "{{count}} places",
+    "areas": "Areas",
+    "checklistOf": "Checklist {{area}}",
+    "noChecklist": "There is no published checklist.",
+    "hasDefect": "already deficient",
+    "replacesDefect": "A defect is already recorded for this criterion. Saving replaces it.",
+    "allOk": "All in order",
+    "allOkDone": "All open criteria are in order.",
+    "areaOk": "Area in order",
+    "areaOkDone": "{{area}} is in order.",
+    "toSummary": "Go to completion",
+    "backToChecklist": "Back to checklist",
+    "addDefect": "+ Record defect",
+    "defectTitle": "Record defect · {{area}}",
+    "criterion": "Criterion",
+    "severityLabel": "Severity",
+    "note": "Note",
+    "noteRequired": "Please describe the defect.",
+    "cancel": "Cancel",
+    "saveDefect": "Save defect",
+    "defectSaved": "Defect saved.",
+    "defectDeleted": "Defect deleted.",
+    "defects": "Recorded defects",
+    "resolveOnSite": "Resolved on site",
+    "buildingCause": "Building cause",
+    "delete": "Delete",
+    "overview": "Summary",
+    "area": "Area",
+    "state": "Status",
+    "deficiencies_one": "{{count}} defect",
+    "deficiencies_other": "{{count}} defects",
+    "openCriteria_one": "{{count}} criterion open",
+    "openCriteria_other": "{{count}} criteria open",
+    "inOrder": "In order",
+    "overallResult": "Overall result",
+    "resultHint": "You decide the overall result. The suggestion is based on the defects.",
+    "result": "Result",
+    "rateAllFirst_one": "{{count}} criterion has not been rated yet. Use “Area in order” or “All in order”.",
+    "rateAllFirst_other": "{{count}} criteria have not been rated yet. Use “Area in order” or “All in order”.",
+    "finalize": "Complete inspection",
+    "finalized": "Inspection completed.",
+    "status": {
+      "PLANNED": "Planned",
+      "DRAFT": "In progress",
+      "FINALIZED": "Completed",
+      "PUBLISHED": "Published"
+    },
+    "rating": {
+      "OK": "In order",
+      "DEFICIENT": "Defect",
+      "RESOLVED_ON_SITE": "Resolved on site"
+    },
+    "severity": {
+      "LIGHT": "Normal",
+      "SEVERE": "Severe"
+    },
+    "overall": {
+      "PASSED": "Passed",
+      "FAILED": "Follow-up required"
+    },
+    "tabOpen": "Open",
+    "tabHistory": "History",
+    "history": {
+      "title": "Inspection history",
+      "filter": "Filter history",
+      "flat": "Flat",
+      "kind": "Inspection",
+      "all": "All",
+      "initial": "Initial inspection",
+      "followUp": "Follow-up",
+      "from": "From",
+      "to": "To",
+      "apply": "Filter",
+      "reset": "Reset",
+      "date": "Date",
+      "inspector": "Inspected by",
+      "view": "View",
+      "viewOf": "View inspection of flat {{label}} on {{date}}",
+      "empty": "There are no completed inspections in your residence yet.",
+      "noMatch": "No inspections match this selection.",
+      "invalidRange": "The “from” date is after the “to” date."
+    },
+    "protocol": {
+      "title": "Report",
+      "inspectedOn": "Inspected on {{date}}",
+      "inspectedBy": "by {{name}}",
+      "backToHistory": "← Back to inspection history"
+    }
   }
 }
