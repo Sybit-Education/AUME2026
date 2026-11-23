@@ -9,7 +9,7 @@ import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,11 +67,33 @@ class InspectionHistoryTests {
         expectTotal(session, "?followUp=true", 1);
         expectTotal(session, "?followUp=false", 2);
         expectTotal(session, "?flat=S-01&followUp=false&result=FAILED", 1);
+    }
 
-        var cutoff = LocalDate.now(ZoneId.of("Europe/Berlin")).minusDays(29);
-        expectTotal(session, "?from=" + cutoff, 2);
-        expectTotal(session, "?to=" + cutoff, 1);
-        expectTotal(session, "?from=" + cutoff + "&to=" + cutoff, 0);
+    @Test
+    void periodFilterUsesBerlinCalendarDays() throws Exception {
+        // Feste Prüfdaten statt "vor N Tagen": Sonst hängt das Ergebnis von Uhrzeit und Zeitumstellung
+        // des Testlaufs ab. Die Daten liegen bewusst um die Umstellung auf Sommerzeit am 29.03.2026.
+        inspectedAt("S-01", 0, "2026-03-27T23:30");  // Erstkontrolle, spät abends in Winterzeit
+        inspectedAt("S-02", 0, "2026-03-29T00:30");  // kurz nach Mitternacht am Tag der Umstellung
+        inspectedAt("S-01", 1, "2026-04-03T12:00");  // Nachkontrolle
+
+        var session = login("caretaker");
+        expectTotal(session, "?from=2026-03-28", 2);
+        expectTotal(session, "?to=2026-03-28", 1);
+        expectTotal(session, "?from=2026-03-28&to=2026-03-28", 0);
+        // beide Tage inklusive, auch für Prüfungen kurz vor bzw. nach Mitternacht
+        expectTotal(session, "?from=2026-03-27&to=2026-03-27", 1);
+        expectTotal(session, "?from=2026-03-29&to=2026-03-29", 1);
+        expectTotal(session, "?from=2026-03-27&to=2026-04-03", 3);
+    }
+
+    /** Setzt das Prüfdatum einer abgeschlossenen Dev-Kontrolle auf eine feste Berliner Ortszeit. */
+    private void inspectedAt(String flat, int round, String berlinLocalTime) {
+        var inspection = inspections.findAll().stream()
+            .filter(i -> i.getFlat().getLabel().equals(flat) && i.getRound() == round
+                && i.getStatus() == InspectionEntity.Status.FINALIZED)
+            .findFirst().orElseThrow();
+        inspection.setInspectedAt(LocalDateTime.parse(berlinLocalTime).atZone(ZoneId.of("Europe/Berlin")).toInstant());
     }
 
     @Test
