@@ -40,7 +40,7 @@
     "infoPagesSave": "Die Informationen konnten nicht gespeichert werden.",
     "infoTextRequired": "Bitte alle drei Texte ausfüllen.",
     "infoTextTooLong": "Ein Text ist länger als 20.000 Zeichen.",
-    "checklist": "Die Checkliste konnte nicht geladen werden."
+    "checklist": "Die Checkliste konnte nicht geladen werden.",
     "history": "Die Kontroll-Historie konnte nicht geladen werden."
   },
   "navigation": {
