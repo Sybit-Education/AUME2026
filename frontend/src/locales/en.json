@@ -40,14 +40,20 @@
     "infoPagesSave": "The information could not be saved.",
     "infoTextRequired": "Please fill in all three texts.",
     "infoTextTooLong": "A text is longer than 20,000 characters.",
+    "checklist": "The checklist could not be loaded.",
     "history": "The inspection history could not be loaded."
   },
   "navigation": {
     "main": "Main navigation",
     "dashboard": "Dashboard",
     "residences": "Residences",
+    "standards": "Standards",
     "inspections": "Inspections",
-    "standards": "Standards"
+    "start": "Home",
+    "cleaningPlan": "Cleaning plan",
+    "inspection": "Inspection",
+    "more": "More",
+    "studentTabs": "Student navigation"
   },
   "standards": {
     "title": "Standards and criteria",
@@ -87,7 +93,31 @@
     "forbiddenDescription": "You do not have permission to view this page.",
     "notFound": "Page not found",
     "notFoundDescription": "There is no page at this address.",
-    "error": "The page could not be loaded."
+    "error": "The page could not be loaded.",
+    "comingSoon": "Coming soon",
+    "comingSoonDescription": "This feature is being developed."
+  },
+  "more": {
+    "title": "More",
+    "account": "Account and privacy",
+    "settings": "Settings",
+    "settingsHint": "Language",
+    "back": "More"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Your choice applies to the whole app and is kept after reloading."
+  },
+  "checklist": {
+    "title": "Checklist",
+    "language": "Language",
+    "sameCriteria": "The caretakers use the same criteria during the inspection.",
+    "details": "Details",
+    "less": "Less",
+    "explanation": "Explanation:",
+    "empty": "Seezeit has not published a checklist yet.",
+    "emptyHint": "As soon as it is published, you will see all criteria here."
   },
   "inspections": {
     "title": "Inspection · Flat {{label}}",
