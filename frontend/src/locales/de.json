@@ -41,6 +41,7 @@
     "infoTextRequired": "Bitte alle drei Texte ausfüllen.",
     "infoTextTooLong": "Ein Text ist länger als 20.000 Zeichen.",
     "checklist": "Die Checkliste konnte nicht geladen werden."
+    "history": "Die Kontroll-Historie konnte nicht geladen werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -187,6 +188,34 @@
     "overall": {
       "PASSED": "Bestanden",
       "FAILED": "Nachkontrolle erforderlich"
+    },
+    "tabOpen": "Offen",
+    "tabHistory": "Historie",
+    "history": {
+      "title": "Kontroll-Historie",
+      "filter": "Historie filtern",
+      "flat": "WG",
+      "kind": "Kontrolle",
+      "all": "Alle",
+      "initial": "Erstkontrolle",
+      "followUp": "Nachkontrolle",
+      "from": "Von",
+      "to": "Bis",
+      "apply": "Filtern",
+      "reset": "Zurücksetzen",
+      "date": "Datum",
+      "inspector": "Geprüft von",
+      "view": "Ansehen",
+      "viewOf": "Kontrolle WG {{label}} vom {{date}} ansehen",
+      "empty": "In deiner Wohnanlage gibt es noch keine abgeschlossenen Kontrollen.",
+      "noMatch": "Keine Kontrollen für diese Auswahl.",
+      "invalidRange": "Das „Von“-Datum liegt nach dem „Bis“-Datum."
+    },
+    "protocol": {
+      "title": "Protokoll",
+      "inspectedOn": "Geprüft am {{date}}",
+      "inspectedBy": "von {{name}}",
+      "backToHistory": "← Zur Kontroll-Historie"
     }
   }
 }

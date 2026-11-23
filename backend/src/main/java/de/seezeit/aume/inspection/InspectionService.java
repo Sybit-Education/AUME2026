@@ -176,15 +176,17 @@ public class InspectionService {
                 f.isBuildingCauseSuspected()))
             .sorted(Comparator.comparing(FindingView::criterionId))
             .toList();
+        var inspector = inspection.getInspector();
         return new InspectionView(inspection.getId(), flat.getLabel(), flat.getResidence().getName(),
             flat.getCapacity(), inspection.getRound(), inspection.getStatus(), inspection.getOverallResult(),
-            criteria, rated);
+            inspection.getInspectedAt(), inspector == null ? null : inspector.getName(), criteria, rated);
     }
 
     public record InspectionSummary(Long id, String flatLabel, Status status, int round) {}
 
     public record InspectionView(Long id, String flatLabel, String residenceName, int capacity, int round,
-        Status status, Result overallResult, List<CriterionView> criteria, List<FindingView> findings) {}
+        Status status, Result overallResult, Instant inspectedAt, String inspectorName,
+        List<CriterionView> criteria, List<FindingView> findings) {}
 
     public record CriterionView(Long id, String area, String title, String description, int position) {}
 
