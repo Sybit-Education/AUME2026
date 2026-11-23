@@ -2,6 +2,7 @@ import type de from '@/locales/de.json'
 import { residenceNavigation } from '@/features/residences/routes'
 import { inspectionNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
+import { wgNavigation } from '@/features/wg/routes'
 
 type NavigationItem = {
   to: string
@@ -14,6 +15,7 @@ export const navigation: NavigationItem[] = [
   residenceNavigation,
   inspectionNavigation,
   standardsNavigation,
+  wgNavigation,
 ]
 
 type StudentTab = NavigationItem & { icon: string }

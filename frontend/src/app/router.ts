@@ -4,7 +4,6 @@ import RequireAuth from './RequireAuth'
 import RouteErrorLayout from './RouteErrorLayout'
 import ForbiddenPage from './routes/ForbiddenPage'
 import NotFoundPage from './routes/NotFoundPage'
-import ComingSoonPage from './routes/ComingSoonPage'
 import LoadingPage from '@/components/LoadingPage'
 import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
@@ -14,6 +13,8 @@ import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
 import { moreRoutes } from '@/features/more/routes'
+import { wgRoutes } from '@/features/wg/routes'
+import { planRoutes } from '@/features/putzplan/routes'
 
 export function createAppRoutes(): RouteObject[] {
   return [{
@@ -34,8 +35,8 @@ export function createAppRoutes(): RouteObject[] {
           ...inspectionRoutes,
           ...checklistRoutes,
           ...moreRoutes,
-          // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
-          { path: 'putzplan', Component: ComingSoonPage },
+          ...wgRoutes,
+          ...planRoutes,
           { path: 'forbidden', Component: ForbiddenPage },
         ],
       },

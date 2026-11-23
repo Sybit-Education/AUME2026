@@ -15,8 +15,8 @@ Feature-Team 2, Sprint 1. Umgesetzte Stories:
 Nutzer, die nur die Rolle `STUDENT` haben, sehen die App-Ansicht aus dem Wireframe: Inhalt im Smartphone-Rahmen und unten eine Tab-Leiste mit **Start** (`/`), **Putzplan** (`/putzplan`), **Kontrolle** (`/kontrolle`) und **Mehr** (`/mehr`). Der aktive Tab ist hervorgehoben (`aria-current="page"`). Objektbetreuung und Sachbearbeitung behalten die Kopfnavigation.
 
 - Die Tabs stehen in `frontend/src/app/navigation.ts` (`studentTabs`). Ein Tab kann ein `privilege` tragen und wird dann nur Berechtigten angezeigt.
-- Weitere Funktionen kommen nicht als fünfter Tab dazu, sondern unter **Mehr** (`frontend/src/features/more/menu.ts`). Dort stehen nur freigegebene Funktionen, gruppiert wie im Wireframe. Aktuell: *Konto und Datenschutz → Einstellungen*.
-- `/putzplan` zeigt einen Platzhalter („Kommt bald“). Das Putzplan-Feature (US-06/US-07) ersetzt den Eintrag `{ path: 'putzplan', Component: ComingSoonPage }` in `app/router.ts` durch seine eigene Route.
+- Weitere Funktionen kommen nicht als fünfter Tab dazu, sondern unter **Mehr** (`frontend/src/features/more/menu.ts`). Dort stehen nur freigegebene Funktionen, gruppiert wie im Wireframe. Aktuell: *Wohnen → Meine WG* und *Konto und Datenschutz → Einstellungen*.
+- `/putzplan` zeigt den Putzplan der eigenen WG (US-06/US-07, siehe [Feature-Doku](../putzplan/README.md)).
 - `/kontrolle` leitet vorerst auf `/kontrolle/checkliste` weiter. Termin, Ergebnis und Verlauf (US-15, US-38) kommen als weitere Unterseiten unter `/kontrolle` dazu.
 
 ## Sprache (US-26)

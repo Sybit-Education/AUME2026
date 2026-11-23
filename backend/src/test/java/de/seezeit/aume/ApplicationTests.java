@@ -170,7 +170,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(8));
+            .andExpect(jsonPath("$.privileges.length()").value(9));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -197,7 +197,7 @@ class ApplicationTests {
         assertThat(flats.count()).isEqualTo(9);
         assertThat(staffAssignments.count()).isEqualTo(8);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(8);
+        assertThat(privileges.count()).isEqualTo(9);
     }
 
     private MockHttpSession login(String key) throws Exception {

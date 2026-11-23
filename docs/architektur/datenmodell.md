@@ -117,7 +117,7 @@ erDiagram
     }
 ```
 
-`memberships.valid_to` leer heißt aktuell eingezogen. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig; eine Person hat pro Anlage also höchstens eine Zuständigkeit. `kind` ist `CARETAKER` (Objektbetreuung), `DEPUTY` (Vertretung, ebenfalls eine Objektbetreuung) oder `CLERK` (Sachbearbeitung). Pro Anlage gibt es höchstens eine Betreuung und eine Vertretung; das sichert der Service, nicht die Datenbank. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
+`memberships.valid_to` leer heißt aktuell eingezogen; sonst ist es der erste Tag ohne Zugriff. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig; eine Person hat pro Anlage also höchstens eine Zuständigkeit. `kind` ist `CARETAKER` (Objektbetreuung), `DEPUTY` (Vertretung, ebenfalls eine Objektbetreuung) oder `CLERK` (Sachbearbeitung). Pro Anlage gibt es höchstens eine Betreuung und eine Vertretung; das sichert der Service, nicht die Datenbank. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
 
 ## Anhänge
 
@@ -340,6 +340,9 @@ erDiagram
         varchar title
         bigint criterion_id FK
         int position
+        bigint assignee_id FK
+        varchar rhythm
+        date start_week
         timestamptz archived_at
     }
     wg_task_assignments {
