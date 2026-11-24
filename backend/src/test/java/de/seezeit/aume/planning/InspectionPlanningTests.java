@@ -21,6 +21,7 @@ import de.seezeit.aume.residence.StaffAssignmentRepository;
 import de.seezeit.aume.residence.StaffKind;
 import de.seezeit.aume.user.UserRepository;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -48,6 +49,17 @@ class InspectionPlanningTests {
     @Autowired private InspectionPeriodRepository periods;
     @Autowired private StaffAssignmentRepository staff;
     @Autowired private EntityManager entities;
+
+    /** Die Testdaten der Checkliste belegen alle WGs in Sonne mit offenen Kontrollen. Hier wird Sonne frei geplant. */
+    @BeforeEach
+    void freeSonne() {
+        entities.createQuery("""
+                update InspectionEntity i set i.status = :published
+                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Wohnanlage Sonne')
+                """)
+            .setParameter("published", InspectionEntity.Status.PUBLISHED)
+            .executeUpdate();
+    }
 
     @Test
     void optionsShowOwnResidencesWithFlatCountAndDefaultCaretaker() throws Exception {

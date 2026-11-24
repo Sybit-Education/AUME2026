@@ -167,7 +167,8 @@ class InspectionTests {
     void sampleDataIsIdempotent() {
         sampleData.run();
         assertThat(versions.count()).isEqualTo(1);
-        assertThat(inspections.count()).isEqualTo(5);
+        // 5 aus InspectionSampleData, 2 aus dem Beispiel-Gegenvorschlag in InspectionPlanningSampleData
+        assertThat(inspections.count()).isEqualTo(7);
     }
 
     private Integer startAndFirstCriterion(MockHttpSession session, Long id) throws Exception {
