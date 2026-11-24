@@ -130,7 +130,9 @@ public class InspectionSampleData implements CommandLineRunner {
         inspection.setInspector(inspector);
         inspection.setInspectedAt(inspectedAt);
         inspection.setOverallResult(result);
-        inspection.setStatus(InspectionEntity.Status.FINALIZED);
+        inspection.setStatus(InspectionEntity.Status.PUBLISHED);
+        inspection.setPublishedBy(inspector);
+        inspection.setPublishedAt(inspectedAt);
         return inspections.save(inspection);
     }
 

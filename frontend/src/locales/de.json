@@ -237,17 +237,17 @@
     "openCriteria_other": "{{count}} Kriterien offen",
     "inOrder": "In Ordnung",
     "overallResult": "Gesamtergebnis",
-    "resultHint": "Das Gesamtergebnis legst du fest. Der Vorschlag richtet sich nach den Mängeln.",
+    "resultHint": "Das Gesamtergebnis legst du fest. Der Vorschlag richtet sich nach den Mängeln. Mit dem Abschließen sieht die WG das Ergebnis sofort.",
     "result": "Ergebnis",
     "rateAllFirst_one": "Noch {{count}} Kriterium ist nicht bewertet. Nutze „Bereich in Ordnung“ oder „Alles in Ordnung“.",
     "rateAllFirst_other": "Noch {{count}} Kriterien sind nicht bewertet. Nutze „Bereich in Ordnung“ oder „Alles in Ordnung“.",
     "finalize": "Kontrolle abschließen",
-    "finalized": "Kontrolle abgeschlossen.",
+    "finalized": "Kontrolle abgeschlossen. Die WG sieht das Ergebnis jetzt.",
     "status": {
       "PLANNED": "Geplant",
       "DRAFT": "In Bearbeitung",
       "FINALIZED": "Abgeschlossen",
-      "PUBLISHED": "Veröffentlicht"
+      "PUBLISHED": "Abgeschlossen"
     },
     "rating": {
       "OK": "In Ordnung",
