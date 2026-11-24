@@ -23,7 +23,7 @@ Studierende ohne Personalrolle sehen die App-Ansicht aus dem Wireframe mit den u
 
 Studierende wählen die Sprache unter **Mehr → Einstellungen → Sprache**. In der Studierenden-Ansicht gibt es deshalb keine Sprachauswahl im Kopfbereich mehr. Die Schaltflächen nutzen die gemeinsame i18next-Instanz (`lib/i18n.ts`): Die Auswahl wird unter `aume.language` gespeichert, gilt sofort für alle Texte und bleibt nach dem Neuladen erhalten. Das Layout lädt nach dem Wechsel die Daten der Seite neu, damit auch Texte aus dem Backend wechseln.
 
-Die wiederverwendbare Komponente `components/LanguageSwitch.tsx` wird auch auf der Checkliste angezeigt (Wireframe: „Sprache: Deutsch | English“).
+Die Sprachauswahl gibt es nur an dieser einen Stelle (`components/LanguageSwitch.tsx`). Die Checkliste zeigt keinen eigenen Umschalter mehr, sondern folgt der gewählten Sprache.
 
 ## Checkliste (US-21, US-22)
 

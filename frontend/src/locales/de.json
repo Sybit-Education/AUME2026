@@ -128,8 +128,6 @@
     "languageHint": "Die Auswahl gilt für die ganze App und bleibt nach dem Neuladen erhalten."
   },
   "checklist": {
-    "title": "Checkliste",
-    "language": "Sprache",
     "sameCriteria": "Diese Kriterien nutzt auch die Objektbetreuung bei der Kontrolle.",
     "details": "Details",
     "less": "Weniger",

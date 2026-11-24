@@ -128,8 +128,6 @@
     "languageHint": "Your choice applies to the whole app and is kept after reloading."
   },
   "checklist": {
-    "title": "Checklist",
-    "language": "Language",
     "sameCriteria": "The caretakers use the same criteria during the inspection.",
     "details": "Details",
     "less": "Less",

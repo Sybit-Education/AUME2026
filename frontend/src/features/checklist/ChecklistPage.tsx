@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLoaderData } from 'react-router'
-import LanguageSwitch from '@/components/LanguageSwitch'
 import LoadingPage from '@/components/LoadingPage'
 import type { Checklist, Criterion } from './api'
 
 export type ChecklistData = { checklist: Checklist | null }
 
-/** Checkliste je Bereich (US-21) mit aufklappbarer Erklärung je Kriterium (US-22). */
+/**
+ * Checkliste je Bereich (US-21) mit aufklappbarer Erklärung je Kriterium (US-22). Die Seite steht
+ * unter dem Reiter „Checkliste“ der Kontroll-Ansicht; die Sprache wählen Studierende unter Mehr → Einstellungen.
+ */
 export default function ChecklistPage() {
   const { t } = useTranslation()
   const data = useLoaderData<ChecklistData | null>()
@@ -15,11 +17,6 @@ export default function ChecklistPage() {
 
   return (
     <>
-      <div className="ch"><h2>{t('checklist.title')}</h2></div>
-      <div className="checklist-language">
-        <span className="mut sm2">{t('checklist.language')}:</span>
-        <LanguageSwitch label={t('checklist.language')} />
-      </div>
       {data.checklist === null ? (
         <section className="card empty">
           <h4>{t('checklist.empty')}</h4>
@@ -27,13 +24,13 @@ export default function ChecklistPage() {
         </section>
       ) : (
         <>
-          <p className="note">{t('checklist.sameCriteria')}</p>
           {data.checklist.areas.map((area, index) => (
             <section className="card" key={area.name} aria-labelledby={`checklist-area-${index}`}>
               <h3 id={`checklist-area-${index}`}>{area.name}</h3>
               {area.criteria.map((criterion) => <CriterionRow key={criterion.id} criterion={criterion} />)}
             </section>
           ))}
+          <p className="mut xs checklist-hint">{t('checklist.sameCriteria')}</p>
         </>
       )}
     </>

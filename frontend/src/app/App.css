@@ -42,28 +42,44 @@ a.btn {
   }
 }
 
+/* Reiter innerhalb von „Kontrolle“: vier gleich breite Segmente in einer Reihe. */
 .student-control-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border: 1px solid #d7e3e4;
+  border-radius: 12px;
+  background: #eef4f4;
 }
 
 .student-control-tabs a {
-  border: 1px solid #cad9da;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 6px 4px;
   border-radius: 9px;
   color: #466166;
-  background: #fff;
-  padding: 8px 12px;
   font-size: 13px;
   font-weight: 650;
+  text-align: center;
   text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-control-tabs a:hover {
+  color: var(--td);
+  background: rgba(255, 255, 255, .6);
 }
 
 .student-control-tabs a[aria-current="page"] {
-  border-color: var(--t);
   background: var(--t);
   color: #fff;
+  box-shadow: 0 1px 3px rgba(15, 79, 89, .18);
 }
 
 .student-control-tabs a:focus-visible {
