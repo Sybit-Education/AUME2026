@@ -45,7 +45,7 @@ export default function InspectionAppointment({
             <p>{t('studentInspections.exactDay', { date: format.format(new Date(appointment.exactDay)) })}</p>
           )}
           <div className="acts">
-            {summary ? <Link className="btn" to="/student/inspections">{t('studentInspections.details')}</Link> : (
+            {summary ? <Link className="btn" to="/kontrolle/termin">{t('studentInspections.details')}</Link> : (
               <button type="button" className="btn" onClick={downloadCalendar}>
                 {t('studentInspections.download')}
               </button>

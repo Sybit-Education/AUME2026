@@ -83,7 +83,7 @@ it('shows the backend appointment without adding an exact date or change notice'
   expect(screen.queryByText(/Genauer Kontrolltag/)).toBeNull()
   expect(screen.queryByText('Termin geändert')).toBeNull()
   expect(screen.queryByText('Beispieltermin für die lokale Entwicklung')).toBeNull()
-  expect(screen.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/student/inspections')
+  expect(screen.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/kontrolle/termin')
   fireEvent.click(screen.getByRole('link', { name: 'Details' }))
   await screen.findByRole('heading', { name: 'Kontrolle' })
   expect(screen.getByText(period).textContent).toBe(period)
@@ -212,26 +212,26 @@ it.each(['CLERK', 'CARETAKER'])('does not request or show an appointment on the 
 it('shows the English inspection heading on direct access as a student', async () => {
   signedIn = student
   await i18n.changeLanguage('en')
-  mount('/student/inspections')
+  mount('/kontrolle/termin')
 
   await screen.findByRole('heading', { name: /^Inspection$/ })
 })
 
 it('returns to the control details after signing in and shows the empty state', async () => {
-  const router = mount('/student/inspections')
+  const router = mount('/kontrolle/termin')
   const loginButton = await screen.findByRole('button', { name: 'Studierende' })
   expect(vi.mocked(api).mock.calls.every(([path]) => path === '/api/me')).toBe(true)
   fireEvent.click(loginButton)
 
   await screen.findByRole('heading', { name: 'Kontrolle' })
   expect(screen.getByText('Keine Kontrolle angekündigt.')).toBeTruthy()
-  expect(login).toHaveBeenCalledWith('student', '/student/inspections')
-  expect(router.state.location.pathname).toBe('/student/inspections')
+  expect(login).toHaveBeenCalledWith('student', '/kontrolle/termin')
+  expect(router.state.location.pathname).toBe('/kontrolle/termin')
 })
 
 it('redirects staff away from the control details without requesting an appointment', async () => {
   signedIn = clerk
-  const router = mount('/student/inspections')
+  const router = mount('/kontrolle/termin')
 
   await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
   expect(router.state.location.pathname).toBe('/forbidden')
@@ -241,7 +241,7 @@ it('redirects staff away from the control details without requesting an appointm
 it('shows a translated error when the control details cannot be loaded', async () => {
   signedIn = student
   studentInspectionFailure = 500
-  mount('/student/inspections')
+  mount('/kontrolle/termin')
 
   await screen.findByRole('heading', { name: 'Die Seite konnte nicht geladen werden.' })
   expect(screen.getByRole('alert').textContent).toBe('Der Kontrolltermin konnte nicht geladen werden.')

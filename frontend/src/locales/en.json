@@ -83,6 +83,13 @@
     "saving": "Saving …",
     "cancel": "Cancel"
   },
+  "studentControl": {
+    "navigation": "Inspection sections",
+    "appointment": "Appointment",
+    "checklist": "Checklist",
+    "result": "Result",
+    "history": "History"
+  },
   "studentInspections": {
     "title": "Next inspection",
     "detailsTitle": "Inspection",

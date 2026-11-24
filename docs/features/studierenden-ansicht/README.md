@@ -12,12 +12,12 @@ Feature-Team 2, Sprint 1. Umgesetzte Stories:
 
 ## Navigation (US-X)
 
-Nutzer, die nur die Rolle `STUDENT` haben, sehen die App-Ansicht aus dem Wireframe: Inhalt im Smartphone-Rahmen und unten eine Tab-Leiste mit **Start** (`/`), **Putzplan** (`/putzplan`), **Kontrolle** (`/kontrolle`) und **Mehr** (`/mehr`). Der aktive Tab ist hervorgehoben (`aria-current="page"`). Objektbetreuung und Sachbearbeitung behalten die Kopfnavigation.
+Studierende ohne Personalrolle sehen die App-Ansicht aus dem Wireframe mit den unteren Tabs **Start** (`/`), **Putzplan** (`/putzplan`), **Kontrolle** (`/kontrolle/termin`) und **Mehr** (`/mehr`). Der aktive Tab ist hervorgehoben (`aria-current="page"`). Objektbetreuung und Sachbearbeitung behalten die Kopfnavigation.
 
 - Die Tabs stehen in `frontend/src/app/navigation.ts` (`studentTabs`). Ein Tab kann ein `privilege` tragen und wird dann nur Berechtigten angezeigt.
 - Weitere Funktionen kommen nicht als fünfter Tab dazu, sondern unter **Mehr** (`frontend/src/features/more/menu.ts`). Dort stehen nur freigegebene Funktionen, gruppiert wie im Wireframe. Aktuell: *Konto und Datenschutz → Einstellungen*.
 - `/putzplan` zeigt einen Platzhalter („Kommt bald“). Das Putzplan-Feature (US-06/US-07) ersetzt den Eintrag `{ path: 'putzplan', Component: ComingSoonPage }` in `app/router.ts` durch seine eigene Route.
-- `/kontrolle` leitet vorerst auf `/kontrolle/checkliste` weiter. Termin, Ergebnis und Verlauf (US-15, US-38) kommen als weitere Unterseiten unter `/kontrolle` dazu.
+- `/kontrolle` öffnet den Untertab **Termin**. Die oberen Untertabs **Termin**, **Checkliste**, **Ergebnis** und **Verlauf** gehören zum selben Bereich. Der untere Tab **Kontrolle** bleibt auf allen vier Seiten aktiv. **Checkliste** setzt `CHECKLIST_READ` voraus. **Ergebnis** und **Verlauf** zeigen Platzhalter.
 
 ## Sprache (US-26)
 

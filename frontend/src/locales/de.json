@@ -83,6 +83,13 @@
     "saving": "Wird gespeichert …",
     "cancel": "Abbrechen"
   },
+  "studentControl": {
+    "navigation": "Kontrollbereich",
+    "appointment": "Termin",
+    "checklist": "Checkliste",
+    "result": "Ergebnis",
+    "history": "Verlauf"
+  },
   "studentInspections": {
     "title": "Nächste Kontrolle",
     "detailsTitle": "Kontrolle",

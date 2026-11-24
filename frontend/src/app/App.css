@@ -42,6 +42,35 @@ a.btn {
   }
 }
 
+.student-control-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.student-control-tabs a {
+  border: 1px solid #cad9da;
+  border-radius: 9px;
+  color: #466166;
+  background: #fff;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.student-control-tabs a[aria-current="page"] {
+  border-color: var(--t);
+  background: var(--t);
+  color: #fff;
+}
+
+.student-control-tabs a:focus-visible {
+  outline: 2px solid var(--t);
+  outline-offset: 2px;
+}
+
 /* Tab-Leiste der Studierenden-Ansicht (Wireframe). Die Basisstile für .tabbar stehen in index.css. */
 .tabbar a {
   padding: 9px 4px 11px;

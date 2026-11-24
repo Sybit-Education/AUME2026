@@ -1,11 +1,12 @@
 import { createElement } from 'react'
-import type { RouteObject } from 'react-router'
+import { Navigate, type RouteObject } from 'react-router'
 import AppLayout from './AppLayout'
 import RequireAuth from './RequireAuth'
 import RouteErrorLayout from './RouteErrorLayout'
 import ForbiddenPage from './routes/ForbiddenPage'
 import NotFoundPage from './routes/NotFoundPage'
 import ComingSoonPage from './routes/ComingSoonPage'
+import StudentControlLayout from './routes/StudentControlLayout'
 import LoadingPage from '@/components/LoadingPage'
 import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
@@ -39,11 +40,20 @@ export function createAppRoutes(): RouteObject[] {
           ...dashboardRoutes.map((route) => route.index
             ? { ...route, Component: DashboardWithStudentInspection }
             : route),
-          ...studentInspectionRoutes,
+          {
+            path: 'kontrolle',
+            Component: StudentControlLayout,
+            children: [
+              { index: true, element: createElement(Navigate, { to: 'termin', replace: true }) },
+              ...studentInspectionRoutes,
+              ...checklistRoutes,
+              { path: 'ergebnis', Component: ComingSoonPage },
+              { path: 'verlauf', Component: ComingSoonPage },
+            ],
+          },
           ...residenceRoutes,
           ...standardsRoutes,
           ...inspectionRoutes,
-          ...checklistRoutes,
           ...moreRoutes,
           // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
           { path: 'putzplan', Component: ComingSoonPage },

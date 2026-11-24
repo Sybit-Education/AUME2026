@@ -16,7 +16,7 @@ export const navigation: NavigationItem[] = [
   standardsNavigation,
 ]
 
-type StudentTab = NavigationItem & { icon: string }
+type StudentTab = NavigationItem & { icon: string; activeWithin?: string }
 
 /**
  * Mobile Hauptnavigation der Studierenden (Wireframe: Start, Putzplan, Kontrolle, Mehr).
@@ -25,7 +25,7 @@ type StudentTab = NavigationItem & { icon: string }
 export const studentTabs: StudentTab[] = [
   { to: '/', label: 'navigation.start', icon: '🏠' },
   { to: '/putzplan', label: 'navigation.cleaningPlan', icon: '🧽' },
-  { to: '/kontrolle', label: 'navigation.inspection', icon: '📋' },
+  { to: '/kontrolle/termin', label: 'navigation.inspection', icon: '📋', activeWithin: '/kontrolle/*' },
   { to: '/mehr', label: 'navigation.more', icon: '☰' },
 ]
 

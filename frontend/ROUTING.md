@@ -9,11 +9,13 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
 | `/` | Angemeldet | Übersicht; Gruß mit `GREETING_READ`, Link zu Wohnanlagen mit `RESIDENCE_READ` |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
-| `/student/inspections` | Angemeldet, Rolle `STUDENT` | Kontrolltermin der eigenen WG mit Kalenderexport |
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
-| `/kontrolle` | Angemeldet | Leitet auf `/kontrolle/checkliste` weiter |
-| `/kontrolle/checkliste` | Angemeldet, `CHECKLIST_READ` | Checkliste je Bereich mit Erklärungen (US-21, US-22) |
+| `/kontrolle` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout mit Index-Weiterleitung zu `/kontrolle/termin` |
+| `/kontrolle/termin` | Angemeldet, Rolle `STUDENT` | Kontrolltermin der eigenen WG mit Kalenderexport |
+| `/kontrolle/checkliste` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Checkliste je Bereich mit Erklärungen (US-21, US-22) |
+| `/kontrolle/ergebnis` | Angemeldet, Rolle `STUDENT` | Platzhalter für das eigene Kontrollergebnis |
+| `/kontrolle/verlauf` | Angemeldet, Rolle `STUDENT` | Platzhalter für den eigenen Kontrollverlauf |
 | `/putzplan` | Angemeldet | Platzhalter, bis das Putzplan-Feature die Route übernimmt |
 | `/mehr` | Angemeldet | Weitere Studierenden-Funktionen, gruppiert |
 | `/mehr/einstellungen` | Angemeldet | Sprache wählen (US-26) |

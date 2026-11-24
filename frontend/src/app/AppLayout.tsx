@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet, useNavigation, useRevalidator } from 'react-router'
+import { Link, matchPath, NavLink, Outlet, useLocation, useNavigation, useRevalidator } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { supportedLanguage } from '@/lib/i18n'
@@ -11,6 +11,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const language = i18n.resolvedLanguage ?? 'de'
   const previousLanguage = useRef(language)
   const auth = useAuth()
+  const { pathname } = useLocation()
   const transition = useNavigation()
   const revalidator = useRevalidator()
   const busy = auth.busy || transition.state !== 'idle' || revalidator.state !== 'idle'
@@ -72,12 +73,22 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <main>{children ?? <Outlet />}</main>
           </div>
           <nav className="tabbar" aria-label={t('navigation.studentTabs')}>
-            {studentTabs.filter((item) => allowed(item.privilege)).map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'on' : undefined}>
-                <span className="i" aria-hidden="true">{item.icon}</span>
-                {t(item.label)}
-              </NavLink>
-            ))}
+            {studentTabs.filter((item) => allowed(item.privilege)).map((item) => {
+              const content = <><span className="i" aria-hidden="true">{item.icon}</span>{t(item.label)}</>
+              if (item.activeWithin) {
+                const active = matchPath(item.activeWithin, pathname) !== null
+                return (
+                  <Link key={item.to} to={item.to} className={active ? 'on' : undefined} aria-current={active ? 'page' : undefined}>
+                    {content}
+                  </Link>
+                )
+              }
+              return (
+                <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'on' : undefined}>
+                  {content}
+                </NavLink>
+              )
+            })}
           </nav>
         </div>
       ) : (

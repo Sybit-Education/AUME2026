@@ -158,6 +158,10 @@ it('keeps the header navigation for staff and shows no student tab bar', async (
 it('shows the checklist by area, opens explanations and reloads it in English', async () => {
   signedIn = student
   const router = mount('/kontrolle')
+  await screen.findByRole('heading', { name: 'Kontrolle' })
+  expect(router.state.location.pathname).toBe('/kontrolle/termin')
+  const sections = within(screen.getByRole('navigation', { name: 'Kontrollbereich' }))
+  fireEvent.click(sections.getByRole('link', { name: 'Checkliste' }))
   await screen.findByRole('heading', { name: 'Küche' })
   expect(router.state.location.pathname).toBe('/kontrolle/checkliste')
   expect(screen.getByRole('link', { name: 'Kontrolle' }).getAttribute('aria-current')).toBe('page')
@@ -171,6 +175,70 @@ it('shows the checklist by area, opens explanations and reloads it in English', 
   fireEvent.click(screen.getByRole('button', { name: 'English' }))
   await screen.findByRole('heading', { name: 'Kitchen' })
   expect(screen.getByRole('button', { name: 'Details: Work surfaces' })).toBeDefined()
+  const englishSections = within(screen.getByRole('navigation', { name: 'Inspection sections' }))
+  for (const name of ['Appointment', 'Checklist', 'Result', 'History']) {
+    expect(englishSections.getByRole('link', { name }).getAttribute('href')).toMatch(/^\/kontrolle\//)
+  }
+})
+
+it('keeps both control navigation levels active across all four sections', async () => {
+  signedIn = student
+  const router = mount()
+  const bottom = within(await screen.findByRole('navigation', { name: 'Navigation der Studierenden' }))
+  const control = bottom.getByRole('link', { name: 'Kontrolle' })
+  expect(control.getAttribute('href')).toBe('/kontrolle/termin')
+  fireEvent.click(control)
+
+  const top = within(await screen.findByRole('navigation', { name: 'Kontrollbereich' }))
+  for (const [name, path] of [
+    ['Termin', '/kontrolle/termin'],
+    ['Checkliste', '/kontrolle/checkliste'],
+    ['Ergebnis', '/kontrolle/ergebnis'],
+    ['Verlauf', '/kontrolle/verlauf'],
+  ]) {
+    fireEvent.click(top.getByRole('link', { name }))
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(path)
+      expect(top.getByRole('link', { name }).getAttribute('aria-current')).toBe('page')
+      expect(control.getAttribute('aria-current')).toBe('page')
+    })
+    if (name === 'Ergebnis' || name === 'Verlauf') {
+      await screen.findByRole('heading', { name: 'Kommt bald' })
+    }
+  }
+  expect(vi.mocked(api).mock.calls.some(([path]) => path.startsWith('/api/inspections'))).toBe(false)
+})
+
+it('keeps the control index as the login destination and redirects to the appointment after sign-in', async () => {
+  const warning = vi.spyOn(console, 'warn')
+  try {
+    const router = mount('/kontrolle')
+    fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
+    await screen.findByRole('heading', { name: 'Kontrolle' })
+    expect(login).toHaveBeenCalledWith('student', '/kontrolle')
+    expect(router.state.location.pathname).toBe('/kontrolle/termin')
+    expect(warning).not.toHaveBeenCalledWith(expect.stringContaining('Matched leaf route at location "/kontrolle"'))
+  } finally {
+    warning.mockRestore()
+  }
+})
+
+it('hides the checklist section without CHECKLIST_READ', async () => {
+  signedIn = { ...student, privileges: ['GREETING_READ'] }
+  mount('/kontrolle/ergebnis')
+  const top = within(await screen.findByRole('navigation', { name: 'Kontrollbereich' }))
+  expect(top.queryByRole('link', { name: 'Checkliste' })).toBeNull()
+  expect(top.getByRole('link', { name: 'Ergebnis' }).getAttribute('aria-current')).toBe('page')
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/checklist')).toBe(false)
+})
+
+it.each(['CLERK', 'CARETAKER'])('keeps the student checklist closed to %s even with CHECKLIST_READ', async (role) => {
+  signedIn = { ...clerk, roles: [role], privileges: ['CHECKLIST_READ'] }
+  const router = mount('/kontrolle/checkliste')
+
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/checklist')).toBe(false)
 })
 
 it('shows an empty state when no checklist is published and hides it without the privilege', async () => {
