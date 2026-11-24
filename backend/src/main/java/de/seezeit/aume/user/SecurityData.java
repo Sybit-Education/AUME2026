@@ -28,9 +28,12 @@ public class SecurityData implements CommandLineRunner {
         var standards = privilege("STANDARDS_VIEW");
         var assignStaff = privilege("RESIDENCE_ASSIGN_STAFF");
         var checklist = privilege("CHECKLIST_READ");
+        var plan = privilege("INSPECTION_PLAN");
+        var respond = privilege("INSPECTION_PERIOD_RESPOND");
         role("STUDENT", Set.of(greeting, infoRead, checklist));
-        role("CARETAKER", Set.of(residence, inspection));
-        role("CLERK", Set.of(residence, infoRead, infoEdit, standards, assignStaff));
+        role("CARETAKER", Set.of(residence, inspection, respond));
+        role("CLERK", Set.of(residence, infoRead, infoEdit, standards, assignStaff, plan));
+
     }
 
     private PrivilegeEntity privilege(String name) {

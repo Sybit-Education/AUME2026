@@ -202,6 +202,7 @@ erDiagram
     residences ||--o{ inspection_periods : plant
     users ||--o{ inspection_periods : legt_an
     users |o--o{ inspection_periods : kuendigt_an
+    users |o--o{ inspection_periods : stimmt_ab
 
     inspection_periods {
         bigint id PK
@@ -213,8 +214,21 @@ erDiagram
         timestamptz created_at
         bigint announced_by FK
         timestamptz announced_at
+        varchar status
+        varchar kind
+        bigint caretaker_id FK
+        time window_start
+        time window_end
+        date counter_starts_on
+        date counter_ends_on
+        time counter_window_start
+        time counter_window_end
+        varchar counter_reason
+        bigint version
     }
 ```
+
+`inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR`. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
 
 ## Kontrollen
 
