@@ -1,4 +1,21 @@
+.checklist-area {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Bereichsüberschrift als farbiger Kopf der Karte */
+.checklist-area > h3 {
+  margin: 0;
+  padding: 12px 16px;
+  background: #e2f2ef;
+  color: var(--td);
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: .1px;
+}
+
 .checklist-criterion {
+  margin: 0 16px;
   border-bottom: 1px solid #edf1f1;
 }
 
@@ -6,12 +23,40 @@
   border-bottom: 0;
 }
 
-.checklist-criterion .row {
-  border-bottom: 0;
+.checklist-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checklist-toggle:focus-visible {
+  outline: 2px solid var(--t);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.checklist-chevron {
+  flex: none;
+  color: var(--t);
+  transition: transform .18s ease;
+}
+
+.checklist-criterion.open .checklist-chevron {
+  transform: rotate(180deg);
 }
 
 .checklist-explanation {
-  margin: 0 0 12px;
+  margin: -2px 0 14px;
   font-size: 13.5px;
 }
 

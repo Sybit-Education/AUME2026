@@ -87,30 +87,65 @@ a.btn {
   outline-offset: 2px;
 }
 
-/* Tab-Leiste der Studierenden-Ansicht (Wireframe). Die Basisstile für .tabbar stehen in index.css. */
+/* Tab-Leiste der Studierenden-App: Linien-Icons, aktiver Tab mit Farbe und hellem Hintergrund
+   hinter dem Icon. Die Basisstile für .tabbar stehen in index.css. */
+.tabbar {
+  padding: 6px 6px max(8px, env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 18px rgba(15, 79, 89, .06);
+  border-top-color: #e4ecec;
+}
+
 .tabbar a {
-  padding: 9px 4px 11px;
-  font-size: 11.5px;
-  color: #6a7f85;
+  padding: 4px 2px 2px;
+  font-size: 11px;
+  color: #7b8d91;
   display: grid;
-  gap: 2px;
+  gap: 3px;
   justify-items: center;
   font-weight: 600;
   text-decoration: none;
-  min-height: 48px;
+  min-height: 52px;
+  border-radius: 14px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tabbar a .i {
-  font-size: 20px;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 30px;
+  border-radius: 999px;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.tabbar a .nav-icon {
+  width: 23px;
+  height: 23px;
+}
+
+.tabbar a:hover {
+  color: var(--td);
 }
 
 .tabbar a.on,
 .tabbar a[aria-current="page"] {
   color: var(--t);
+  font-weight: 750;
 }
 
-.tabbar a.on .i {
-  transform: scale(1.08);
+.tabbar a.on .i,
+.tabbar a[aria-current="page"] .i {
+  background: #e2f2ef;
+}
+
+.tabbar a.on .nav-icon,
+.tabbar a[aria-current="page"] .nav-icon {
+  stroke-width: 2.2;
+}
+
+.tabbar a:focus-visible {
+  outline: 2px solid var(--t);
+  outline-offset: 1px;
 }
 
 .st-body main > .ch:first-child h2 {

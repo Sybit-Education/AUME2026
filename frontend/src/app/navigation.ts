@@ -1,4 +1,5 @@
 import type de from '@/locales/de.json'
+import type { NavIconName } from '@/components/NavIcon'
 import { residenceNavigation } from '@/features/residences/routes'
 import { inspectionNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
@@ -16,17 +17,17 @@ export const navigation: NavigationItem[] = [
   standardsNavigation,
 ]
 
-type StudentTab = NavigationItem & { icon: string; activeWithin?: string }
+type StudentTab = NavigationItem & { icon: NavIconName; activeWithin?: string }
 
 /**
  * Mobile Hauptnavigation der Studierenden (Wireframe: Start, Putzplan, Kontrolle, Mehr).
  * Weitere Studierenden-Funktionen kommen unter „Mehr“ dazu, nicht als fünfter Tab.
  */
 export const studentTabs: StudentTab[] = [
-  { to: '/', label: 'navigation.start', icon: '🏠' },
-  { to: '/putzplan', label: 'navigation.cleaningPlan', icon: '🧽' },
-  { to: '/kontrolle/termin', label: 'navigation.inspection', icon: '📋', activeWithin: '/kontrolle/*' },
-  { to: '/mehr', label: 'navigation.more', icon: '☰' },
+  { to: '/', label: 'navigation.start', icon: 'home' },
+  { to: '/putzplan', label: 'navigation.cleaningPlan', icon: 'plan' },
+  { to: '/kontrolle/termin', label: 'navigation.inspection', icon: 'inspection', activeWithin: '/kontrolle/*' },
+  { to: '/mehr', label: 'navigation.more', icon: 'more' },
 ]
 
 const staffRoles = ['CARETAKER', 'CLERK']

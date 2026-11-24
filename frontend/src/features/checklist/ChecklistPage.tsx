@@ -25,7 +25,7 @@ export default function ChecklistPage() {
       ) : (
         <>
           {data.checklist.areas.map((area, index) => (
-            <section className="card" key={area.name} aria-labelledby={`checklist-area-${index}`}>
+            <section className="card checklist-area" key={area.name} aria-labelledby={`checklist-area-${index}`}>
               <h3 id={`checklist-area-${index}`}>{area.name}</h3>
               {area.criteria.map((criterion) => <CriterionRow key={criterion.id} criterion={criterion} />)}
             </section>
@@ -44,20 +44,21 @@ function CriterionRow({ criterion }: { criterion: Criterion }) {
   const action = open ? t('checklist.less') : t('checklist.details')
 
   return (
-    <div className="checklist-criterion">
-      <div className="row">
+    <div className={open ? 'checklist-criterion open' : 'checklist-criterion'}>
+      <button
+        type="button"
+        className="checklist-toggle"
+        aria-expanded={open}
+        aria-controls={detailsId}
+        aria-label={`${action}: ${criterion.title}`}
+        onClick={() => setOpen((value) => !value)}
+      >
         <b>{criterion.title}</b>
-        <button
-          type="button"
-          className="btn sm gh"
-          aria-expanded={open}
-          aria-controls={detailsId}
-          aria-label={`${action}: ${criterion.title}`}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {action}
-        </button>
-      </div>
+        <svg className="checklist-chevron" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+          strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
       <p id={detailsId} className="checklist-explanation" hidden={!open}>
         <b>{t('checklist.explanation')}</b> {criterion.description}
       </p>

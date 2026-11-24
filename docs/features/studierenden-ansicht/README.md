@@ -27,7 +27,7 @@ Die Sprachauswahl gibt es nur an dieser einen Stelle (`components/LanguageSwitch
 
 ## Checkliste (US-21, US-22)
 
-`/kontrolle/checkliste` zeigt die aktuell veröffentlichte Checkliste nach Bereichen. Es sind dieselben Kriterien, mit denen die Objektbetreuung kontrolliert (`ChecklistService.currentPublished()`). Je Kriterium öffnet **Details** die Erklärung und **Weniger** schließt sie wieder (`aria-expanded`). Solange keine Checkliste veröffentlicht ist, erscheint ein Hinweis.
+`/kontrolle/checkliste` zeigt die aktuell veröffentlichte Checkliste nach Bereichen. Es sind dieselben Kriterien, mit denen die Objektbetreuung kontrolliert (`ChecklistService.currentPublished()`). Ein Tipp auf ein Kriterium oder den grünen Pfeil öffnet die Erklärung, ein zweiter Tipp schließt sie wieder (`aria-expanded`). Jeder Bereich hat einen farbigen Kartenkopf. Solange keine Checkliste veröffentlicht ist, erscheint ein Hinweis.
 
 ### Rechte
 
