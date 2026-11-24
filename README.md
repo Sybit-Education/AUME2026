@@ -189,7 +189,7 @@ Die folgenden Befehle funktionieren in PowerShell, Bash und zsh. Aus dem Reposit
 docker compose -f infrastructure/compose.yaml -f infrastructure/compose.dev.yaml up --build
 ```
 
-`--build` baut die Images neu, bevor die Container starten. Das Frontend ist danach unter http://localhost erreichbar, das Backend unter http://localhost:8080.
+`--build` baut die Images neu, bevor die Container starten. Das Frontend ist danach unter http://localhost erreichbar, das Backend unter http://localhost:8080. Die Keycloak-Admin-Oberfläche ist unter http://localhost:8081 erreichbar, Anmeldung `admin` / `admin`. Die Anmeldung in der App bleibt der Mock-Login.
 
 Stoppen mit Strg+C. Container aufräumen:
 
