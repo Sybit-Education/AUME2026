@@ -111,7 +111,7 @@ it.each(['HTTP 500', 'a network error'])('keeps the personalized dashboard usabl
   expect(screen.getByText('Willkommen, Mia.')).toBeTruthy()
   expect(screen.getByText('Hallo Mia, willkommen in Sonne.')).toBeTruthy()
 
-  fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'en' } })
+  await act(async () => { await i18n.changeLanguage('en') })
   await screen.findByText('Hello Mia, welcome to Sonne.')
   expect(screen.getByText('Welcome, Mia.')).toBeTruthy()
   expect(card.getByRole('alert').textContent).toBe('The inspection appointment could not be loaded.')
@@ -162,7 +162,7 @@ it('reformats the loaded inspection when changing language without fetching it a
   mount()
 
   await screen.findByText('Mo 07.12. bis Fr 11.12.2026')
-  fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'en' } })
+  await act(async () => { await i18n.changeLanguage('en') })
   await screen.findByText('Hello Alex, welcome to Sonne.')
   await screen.findByText('Mon 7 Dec to Fri 11 Dec 2026')
   expect(vi.mocked(api).mock.calls.filter(([path]) => path === '/api/student/inspection-appointment')).toHaveLength(1)

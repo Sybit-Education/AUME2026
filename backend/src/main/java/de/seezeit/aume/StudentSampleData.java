@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile("dev")
-@Order(2)
+@Order(4)
 public class StudentSampleData implements CommandLineRunner {
     private final ResidenceRepository residences;
     private final UserRepository users;
@@ -86,7 +86,19 @@ public class StudentSampleData implements CommandLineRunner {
             select count(i) from InspectionEntity i where i.flat = :flat and i.period = :period and i.round = 0
             """, Long.class).setParameter("flat", flat).setParameter("period", period).getSingleResult();
         if (count == 0) {
-            entities.persist(new InspectionEntity(flat, period));
+            var candidates = entities.createQuery("""
+                select i from InspectionEntity i
+                where i.flat = :flat and i.round = 0 and i.status = :status
+                  and i.period is null and i.inspectedAt is null
+                """, InspectionEntity.class)
+                .setParameter("flat", flat)
+                .setParameter("status", InspectionEntity.Status.PLANNED)
+                .setMaxResults(2).getResultList();
+            if (candidates.size() == 1) {
+                candidates.getFirst().setPeriod(period);
+            } else {
+                entities.persist(new InspectionEntity(flat, period));
+            }
         }
     }
 }

@@ -1,32 +1,51 @@
 package de.seezeit.aume.residence;
 
 import java.security.Principal;
-import de.seezeit.aume.auth.AppUserService;
+import de.seezeit.aume.residence.ResidenceView.StaffView;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class ResidenceController {
-    private final ResidenceRepository residences;
-    private final AppUserService users;
+    private final ResidenceService residences;
 
-    public ResidenceController(ResidenceRepository residences, AppUserService users) {
+    public ResidenceController(ResidenceService residences) {
         this.residences = residences;
-        this.users = users;
     }
 
     @GetMapping("/api/residences")
     @PreAuthorize("hasAuthority('RESIDENCE_READ')")
-    @Transactional(readOnly = true)
-    public PagedModel<ResidenceView> list(Principal principal, Pageable pageable) {
-        var user = users.requireUser(principal.getName());
-        return new PagedModel<>(residences.findById(user.getResidence().getId(), pageable)
-            .map(residence -> new ResidenceView(residence.getId(), residence.getName())));
+    public PagedModel<?> list(Principal principal, Pageable pageable) {
+        return new PagedModel<>(residences.list(principal.getName(), pageable));
     }
 
-    public record ResidenceView(Long id, String name) {}
+    @GetMapping("/api/caretakers")
+    @PreAuthorize("hasAuthority('RESIDENCE_ASSIGN_STAFF')")
+    public PagedModel<StaffView> caretakers(Pageable pageable) {
+        return new PagedModel<>(residences.listCaretakers(pageable));
+    }
+
+    @PutMapping("/api/residences/{id}/staff")
+    @PreAuthorize("hasAuthority('RESIDENCE_ASSIGN_STAFF')")
+    public ResidenceView assignStaff(Principal principal, @PathVariable Long id,
+                                     @RequestBody StaffAssignmentRequest request) {
+        return residences.assignStaff(principal.getName(), id, request);
+    }
+
+    /** Fachfehler dieses Controllers mit stabilem Code ({@code code}), den die Oberfläche übersetzt. */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorView> fail(ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(new ErrorView(e.getReason()));
+    }
+
+    public record ErrorView(String code) {}
 }

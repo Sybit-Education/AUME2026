@@ -1,6 +1,7 @@
 package de.seezeit.aume;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -10,8 +11,10 @@ import de.seezeit.aume.inspection.InspectionEntity;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.MembershipEntity;
+import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
+import de.seezeit.aume.residence.StaffAssignmentRepository;
 import de.seezeit.aume.user.*;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
@@ -37,6 +40,8 @@ class ApplicationTests {
     @Autowired private MockMvc mvc;
     @Autowired private UserRepository users;
     @Autowired private ResidenceRepository residences;
+    @Autowired private FlatRepository flats;
+    @Autowired private StaffAssignmentRepository staffAssignments;
     @Autowired private RoleRepository roles;
     @Autowired private PrivilegeRepository privileges;
     @Autowired private SecurityData securityData;
@@ -45,14 +50,15 @@ class ApplicationTests {
     @Autowired private EntityManager entities;
 
     @ParameterizedTest
-    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,RESIDENCE_READ", "clerk,CLERK,RESIDENCE_READ"})
+    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,INSPECTION_PERFORM",
+        "clerk,CLERK,RESIDENCE_ASSIGN_STAFF"})
     void mockUsersReceiveTheirOwnRolesAndPrivileges(String key, String role, String privilege) throws Exception {
         var session = login(key);
         mvc.perform(get("/api/me").session(session))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.userKey").value(key))
             .andExpect(jsonPath("$.roles[0]").value(role))
-            .andExpect(jsonPath("$.privileges[0]").value(privilege))
+            .andExpect(jsonPath("$.privileges", hasItem(privilege)))
             .andExpect(jsonPath("$.identitySubject").doesNotExist());
     }
 
@@ -86,11 +92,10 @@ class ApplicationTests {
             .andExpect(content().string(greeting));
     }
 
-    @ParameterizedTest
-    @CsvSource({"caretaker", "clerk"})
-    void staffCanOnlyReadTheirAssignedResidence(String key) throws Exception {
+    @Test
+    void caretakerCanOnlyReadTheirAssignedResidence() throws Exception {
         residences.save(new ResidenceEntity("Andere Wohnanlage"));
-        var session = login(key);
+        var session = login("caretaker");
         mvc.perform(get("/api/residences").session(session).param("size", "2"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.size").value(2))
@@ -99,6 +104,29 @@ class ApplicationTests {
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isForbidden());
         mvc.perform(get("/api/residences").session(session).param("page", "1").param("size", "1"))
             .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    void clerkReadsOnlyAssignedResidencesSortedByNameWithFlatsAndStaff() throws Exception {
+        residences.save(new ResidenceEntity("Andere Wohnanlage"));
+        var session = login("clerk");
+        mvc.perform(get("/api/residences").session(session))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content[0].name").value("Egg"))
+            .andExpect(jsonPath("$.content[0].flats").value(org.hamcrest.Matchers.contains("E-12", "E-14")))
+            .andExpect(jsonPath("$.content[0].caretaker.name").value("Objektbetreuung Egg"))
+            .andExpect(jsonPath("$.content[0].deputy").value(org.hamcrest.Matchers.nullValue()))
+            .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[1].flats").value(org.hamcrest.Matchers.contains("S-01", "S-02")))
+            .andExpect(jsonPath("$.content[1].caretaker.name").value("Objektbetreuung"))
+            .andExpect(jsonPath("$.content[1].deputy.name").value("Objektbetreuung Petershausen"))
+            .andExpect(jsonPath("$.content[*].name").value(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.hasItem("Petershausen"))));
+        mvc.perform(get("/api/residences").session(session).param("page", "1").param("size", "1"))
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"));
     }
 
     @Test
@@ -152,7 +180,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(2));
+            .andExpect(jsonPath("$.privileges.length()").value(8));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -174,20 +202,25 @@ class ApplicationTests {
     void seedersAreIdempotent() {
         securityData.run();
         sampleData.run();
-        assertThat(users.count()).isEqualTo(3);
-        assertThat(residences.count()).isEqualTo(1);
+        assertThat(users.count()).isEqualTo(6);
+        assertThat(residences.count()).isEqualTo(3);
+        assertThat(flats.count()).isEqualTo(9);
+        assertThat(staffAssignments.count()).isEqualTo(8);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(2);
+        assertThat(privileges.count()).isEqualTo(8);
     }
 
     @Test
     void sampleInspectionIsPersistedForTheStudentWithoutDuplicates() {
-        assertThat(entities.createQuery("select count(i) from InspectionEntity i", Long.class)
-            .getSingleResult()).isEqualTo(1L);
+        var originalId = sampleInspection().getId();
+        var inspectionCount = entities.createQuery("select count(i) from InspectionEntity i", Long.class)
+            .getSingleResult();
         studentSampleData.run();
         studentSampleData.run();
         entities.flush();
         entities.clear();
+        assertThat(entities.createQuery("select count(i) from InspectionEntity i", Long.class)
+            .getSingleResult()).isEqualTo(inspectionCount);
 
         var memberships = entities.createQuery("""
             select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
@@ -198,10 +231,11 @@ class ApplicationTests {
         assertThat(flat.getResidence().getName()).isEqualTo("Wohnanlage Sonne");
 
         var inspections = entities.createQuery("""
-            select i from InspectionEntity i where i.flat = :flat
+            select i from InspectionEntity i where i.flat = :flat and i.period is not null and i.round = 0
             """, InspectionEntity.class).setParameter("flat", flat).getResultList();
         assertThat(inspections).hasSize(1);
         var inspection = inspections.getFirst();
+        assertThat(inspection.getId()).isEqualTo(originalId);
         assertThat(inspection.getStatus()).isEqualTo(InspectionEntity.Status.PLANNED);
         assertThat(inspection.getInspectedAt()).isNull();
         var period = inspection.getPeriod();
@@ -220,8 +254,8 @@ class ApplicationTests {
         var own = sampleInspection();
         own.getPeriod().setStartsOn(today.plusDays(2));
         own.getPeriod().setEndsOn(today.plusDays(4));
-        var otherFlat = new FlatEntity(own.getFlat().getResidence(), "S-02", 1);
-        entities.persist(otherFlat);
+        var otherFlat = flats.findByResidenceIdAndLabel(own.getFlat().getResidence().getId(), "S-02")
+            .orElseThrow();
         var foreign = inspection(otherFlat, today, true);
         inspection(own.getFlat(), today, false);
         inspection(own.getFlat(), today.minusDays(7), true);
@@ -242,7 +276,9 @@ class ApplicationTests {
     @CsvSource({"ended", "future", "missing", "ambiguous"})
     void studentWithoutOneActiveFlatReceivesNoAppointment(String membershipState) throws Exception {
         var today = LocalDate.now();
-        var membership = entities.createQuery("select m from MembershipEntity m", MembershipEntity.class).getSingleResult();
+        var membership = entities.createQuery("""
+            select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
+            """, MembershipEntity.class).getSingleResult();
         var period = sampleInspection().getPeriod();
         period.setStartsOn(today.plusDays(1));
         period.setEndsOn(today.plusDays(2));
@@ -251,8 +287,8 @@ class ApplicationTests {
             case "future" -> membership.setValidFrom(today.plusDays(1));
             case "missing" -> entities.remove(membership);
             case "ambiguous" -> {
-                var otherFlat = new FlatEntity(membership.getFlat().getResidence(), "S-02", 1);
-                entities.persist(otherFlat);
+                var otherFlat = flats.findByResidenceIdAndLabel(membership.getFlat().getResidence().getId(), "S-02")
+                    .orElseThrow();
                 entities.persist(new MembershipEntity(otherFlat, membership.getUser(), today));
             }
             default -> throw new IllegalArgumentException(membershipState);
@@ -281,7 +317,14 @@ class ApplicationTests {
     }
 
     private InspectionEntity sampleInspection() {
-        return entities.createQuery("select i from InspectionEntity i", InspectionEntity.class).getSingleResult();
+        return entities.createQuery("""
+            select i from InspectionEntity i join i.period p
+            where i.flat.label = 'S-01' and i.flat.residence.name = 'Wohnanlage Sonne'
+              and i.round = 0 and p.startsOn = :startsOn and p.endsOn = :endsOn
+            """, InspectionEntity.class)
+            .setParameter("startsOn", LocalDate.of(2026, 12, 7))
+            .setParameter("endsOn", LocalDate.of(2026, 12, 11))
+            .getSingleResult();
     }
 
     private InspectionEntity inspection(FlatEntity flat, LocalDate start, boolean announced) {

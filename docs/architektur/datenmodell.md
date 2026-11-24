@@ -4,7 +4,7 @@ Die JPA-Entities im Backend sind das Schema. Hibernate legt die Tabellen im Prof
 
 Jedes Modul schreibt nur in die eigenen Tabellen ([ADR-0003](adr/0003-structure-the-backend-as-a-modular-monolith.md)). Fremdschlüssel über Modulgrenzen sind die gemeinsamen Verträge. Dateien selbst liegen im privaten Dateispeicher, in der Datenbank steht nur `attachments` ([ADR-0005](adr/0005-use-postgresql-and-private-attachment-storage.md)).
 
-`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal. `users.user_type` ist die Sicht und einer von `STUDENT`, `CARETAKER` oder `CLERK`. Die Tabelle bleibt eine.
+`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal. Für die Sachbearbeitung gilt bereits `staff_assignments`. `users.user_type` ist die Sicht und einer von `STUDENT`, `CARETAKER` oder `CLERK`. Die Tabelle bleibt eine.
 
 ## Überblick
 
@@ -20,6 +20,7 @@ erDiagram
 
     checklist_versions ||--o{ checklist_criteria : enthaelt
     checklist_criteria ||--o{ criterion_images : bebildert
+    checklist_criteria ||--o{ checklist_criterion_translations : uebersetzt
     attachments ||--o| criterion_images : datei
 
     residences ||--o{ inspection_periods : plant
@@ -94,6 +95,7 @@ erDiagram
         bigint id PK
         bigint user_id FK
         bigint residence_id FK
+        varchar kind
     }
     memberships {
         bigint id PK
@@ -115,7 +117,7 @@ erDiagram
     }
 ```
 
-`memberships.valid_to` leer heißt aktuell eingezogen. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
+`memberships.valid_to` leer heißt aktuell eingezogen. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig; eine Person hat pro Anlage also höchstens eine Zuständigkeit. `kind` ist `CARETAKER` (Objektbetreuung), `DEPUTY` (Vertretung, ebenfalls eine Objektbetreuung) oder `CLERK` (Sachbearbeitung). Pro Anlage gibt es höchstens eine Betreuung und eine Vertretung; das sichert der Service, nicht die Datenbank. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
 
 ## Anhänge
 
@@ -143,6 +145,7 @@ erDiagram
     users ||--o{ checklist_versions : legt_an
     checklist_versions ||--o{ checklist_criteria : enthaelt
     checklist_criteria ||--o{ criterion_images : bebildert
+    checklist_criteria ||--o{ checklist_criterion_translations : uebersetzt
     attachments ||--o| criterion_images : datei
     users ||--o{ info_pages : pflegt
 
@@ -162,6 +165,14 @@ erDiagram
         varchar description
         int position
     }
+    checklist_criterion_translations {
+        bigint id PK
+        bigint criterion_id FK
+        varchar language
+        varchar area
+        varchar title
+        varchar description
+    }
     criterion_images {
         bigint id PK
         bigint criterion_id FK
@@ -179,6 +190,8 @@ erDiagram
 ```
 
 `checklist_versions.status`: `DRAFT`, `PUBLISHED`, `RETIRED`. `criterion_images.kind`: `GOOD`, `BAD`.
+
+`checklist_criteria` enthält die deutsche Fassung. `checklist_criterion_translations` ergänzt je Kriterium und Sprache (`language`, aktuell `en`) Bereich, Titel und Erklärung; `(criterion_id, language)` ist eindeutig. Fehlt eine Übersetzung, liefert die API den deutschen Text.
 
 ## Kontrollplanung
 

@@ -1,0 +1,32 @@
+.flat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Beide Felder oben ausrichten, auch wenn eine Spalte höher wird (z. B. bei einer Fehlermeldung
+   oder schmalem Fenster). Sonst streckt das Grid die Zeilen der niedrigeren Spalte. */
+.staff-fields {
+  align-items: start;
+}
+
+.staff-fields .fld {
+  align-content: start;
+  margin-bottom: 0;
+}
+
+.tbl th[scope="row"] {
+  text-align: left;
+  font-size: 13px;
+  color: inherit;
+  background: transparent;
+  position: static;
+  border-bottom: 1px solid #edf1f1;
+}
+
+.tbl tr:last-child th[scope="row"] {
+  border-bottom: 0;
+}

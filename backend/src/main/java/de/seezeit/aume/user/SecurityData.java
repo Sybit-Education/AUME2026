@@ -22,9 +22,15 @@ public class SecurityData implements CommandLineRunner {
     public void run(String... args) {
         var greeting = privilege("GREETING_READ");
         var residence = privilege("RESIDENCE_READ");
-        role("STUDENT", Set.of(greeting));
-        role("CARETAKER", Set.of(residence));
-        role("CLERK", Set.of(residence));
+        var inspection = privilege("INSPECTION_PERFORM");
+        var infoRead = privilege("INFO_PAGE_READ");
+        var infoEdit = privilege("INFO_PAGE_EDIT");
+        var standards = privilege("STANDARDS_VIEW");
+        var assignStaff = privilege("RESIDENCE_ASSIGN_STAFF");
+        var checklist = privilege("CHECKLIST_READ");
+        role("STUDENT", Set.of(greeting, infoRead, checklist));
+        role("CARETAKER", Set.of(residence, inspection));
+        role("CLERK", Set.of(residence, infoRead, infoEdit, standards, assignStaff));
     }
 
     private PrivilegeEntity privilege(String name) {
