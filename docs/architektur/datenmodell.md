@@ -121,7 +121,7 @@ erDiagram
 
 ## Anhänge
 
-Paket `de.seezeit.aume.attachment`. `storage_key` verweist auf die Datei im privaten Speicher.
+Paket `de.seezeit.aume.attachment`. `storage_key` verweist auf die Datei im privaten Speicher. Im Profil `dev` liegen die Bytes unter `devdata/uploads`. `POST /api/attachments` und `GET /api/attachments/{id}` sind nur dort registriert; gelesen wird nur die eigene Datei.
 
 ```mermaid
 erDiagram

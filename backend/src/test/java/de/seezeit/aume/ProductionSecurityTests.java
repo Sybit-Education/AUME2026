@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.util.Set;
+import de.seezeit.aume.attachment.AttachmentController;
+import de.seezeit.aume.attachment.FileAttachmentStorage;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
 import de.seezeit.aume.user.*;
@@ -41,6 +43,8 @@ class ProductionSecurityTests {
     void mockLoginAndDemoDataAreAbsentOutsideDevelopment() throws Exception {
         assertThat(context.getBeansOfType(SampleData.class)).isEmpty();
         assertThat(context.getBeansOfType(de.seezeit.aume.auth.DevAuthController.class)).isEmpty();
+        assertThat(context.getBeansOfType(AttachmentController.class)).isEmpty();
+        assertThat(context.getBeansOfType(FileAttachmentStorage.class)).isEmpty();
         assertThat(users.count()).isZero();
         assertThat(residences.count()).isZero();
         mvc.perform(get("/api/auth/config")).andExpect(status().isOk())
@@ -70,6 +74,8 @@ class ProductionSecurityTests {
             .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"clerk\"}"))
             .andExpect(status().isForbidden());
         mvc.perform(get("/api/me")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/attachments").header("Authorization", "Bearer valid-token"))
+            .andExpect(status().isNotFound());
     }
 
     @Test
