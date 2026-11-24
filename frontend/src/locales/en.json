@@ -237,17 +237,17 @@
     "openCriteria_other": "{{count}} criteria open",
     "inOrder": "In order",
     "overallResult": "Overall result",
-    "resultHint": "You decide the overall result. The suggestion is based on the defects.",
+    "resultHint": "You decide the overall result. The suggestion is based on the defects. Once completed, the flat sees the result immediately.",
     "result": "Result",
     "rateAllFirst_one": "{{count}} criterion has not been rated yet. Use “Area in order” or “All in order”.",
     "rateAllFirst_other": "{{count}} criteria have not been rated yet. Use “Area in order” or “All in order”.",
     "finalize": "Complete inspection",
-    "finalized": "Inspection completed.",
+    "finalized": "Inspection completed. The flat can now see the result.",
     "status": {
       "PLANNED": "Planned",
       "DRAFT": "In progress",
       "FINALIZED": "Completed",
-      "PUBLISHED": "Published"
+      "PUBLISHED": "Completed"
     },
     "rating": {
       "OK": "In order",

@@ -55,7 +55,7 @@ class InspectionHistoryTests {
             .andExpect(jsonPath("$.content[2].overallResult").value("FAILED"))
             .andExpect(jsonPath("$.content[2].deficiencies").value(2))
             .andExpect(jsonPath("$.content[2].inspectorName").isNotEmpty())
-            .andExpect(jsonPath("$.content[2].status").value("FINALIZED"));
+            .andExpect(jsonPath("$.content[2].status").value("PUBLISHED"));
     }
 
     @Test
@@ -91,7 +91,7 @@ class InspectionHistoryTests {
     private void inspectedAt(String flat, int round, String berlinLocalTime) {
         var inspection = inspections.findAll().stream()
             .filter(i -> i.getFlat().getLabel().equals(flat) && i.getRound() == round
-                && i.getStatus() == InspectionEntity.Status.FINALIZED)
+                && i.getStatus() == InspectionEntity.Status.PUBLISHED)
             .findFirst().orElseThrow();
         inspection.setInspectedAt(LocalDateTime.parse(berlinLocalTime).atZone(ZoneId.of("Europe/Berlin")).toInstant());
     }
@@ -135,12 +135,12 @@ class InspectionHistoryTests {
     @Test
     void detailShowsTheRecordedInspection() throws Exception {
         Long id = inspections.findAll().stream()
-            .filter(i -> i.getStatus() == InspectionEntity.Status.FINALIZED
+            .filter(i -> i.getStatus() == InspectionEntity.Status.PUBLISHED
                 && i.getOverallResult() == InspectionEntity.Result.FAILED)
             .findFirst().orElseThrow().getId();
         mvc.perform(get("/api/inspections/" + id).session(login("caretaker")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("FINALIZED"))
+            .andExpect(jsonPath("$.status").value("PUBLISHED"))
             .andExpect(jsonPath("$.inspectedAt").isNotEmpty())
             .andExpect(jsonPath("$.inspectorName").isNotEmpty())
             .andExpect(jsonPath("$.criteria.length()").value(10))

@@ -286,7 +286,7 @@ erDiagram
     }
 ```
 
-`inspections.status`: `PLANNED`, `DRAFT`, `FINALIZED`, `PUBLISHED`. `overall_result`: `PASSED`, `FAILED`. `inspection_findings` ist je Kontrolle und Kriterium eindeutig. `rating`: `OK`, `DEFICIENT`, `RESOLVED_ON_SITE`. `severity` nur bei `DEFICIENT`: `LIGHT`, `SEVERE`. `version` ist das Optimistic-Lock-Feld.
+`inspections.status`: `PLANNED`, `DRAFT`, `FINALIZED`, `PUBLISHED`. „Kontrolle abschließen“ durch die Objektbetreuung setzt direkt `PUBLISHED` mit `published_by` = prüfende Person; die WG sieht das Ergebnis sofort (Teamentscheidung 24.11.2026). `FINALIZED` wird derzeit nicht gesetzt. `overall_result`: `PASSED`, `FAILED`. `inspection_findings` ist je Kontrolle und Kriterium eindeutig. `rating`: `OK`, `DEFICIENT`, `RESOLVED_ON_SITE`. `severity` nur bei `DEFICIENT`: `LIGHT`, `SEVERE`. `version` ist das Optimistic-Lock-Feld.
 
 ## Ergebnisse und Nachkontrollen
 
