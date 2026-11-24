@@ -1,0 +1,80 @@
+{
+  "realm": "seezeit",
+  "enabled": true,
+  "sslRequired": "none",
+  "users": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "username": "student",
+      "enabled": true,
+      "firstName": "Studierende",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "student",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "username": "clerk",
+      "enabled": true,
+      "firstName": "Sachbearbeitung",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "clerk",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "username": "caretaker",
+      "enabled": true,
+      "firstName": "Objektbetreuung",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "caretaker",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "seezeit-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost/login*",
+        "http://localhost:5173/login*"
+      ],
+      "webOrigins": [
+        "http://localhost",
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost##http://localhost:5173"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-seezeit-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "seezeit-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ]
+}

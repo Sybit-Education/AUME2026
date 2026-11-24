@@ -19,9 +19,11 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.2
-    command: start-dev
+    command: ["start-dev", "--import-realm"]
     ports:
       - "8081:8080"
+    volumes:
+      - ./keycloak/seezeit-realm.json:/opt/keycloak/data/import/seezeit-realm.json:ro
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
