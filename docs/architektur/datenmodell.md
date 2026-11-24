@@ -20,6 +20,7 @@ erDiagram
 
     checklist_versions ||--o{ checklist_criteria : enthaelt
     checklist_criteria ||--o{ criterion_images : bebildert
+    checklist_criteria ||--o{ checklist_criterion_translations : uebersetzt
     attachments ||--o| criterion_images : datei
 
     residences ||--o{ inspection_periods : plant
@@ -144,6 +145,7 @@ erDiagram
     users ||--o{ checklist_versions : legt_an
     checklist_versions ||--o{ checklist_criteria : enthaelt
     checklist_criteria ||--o{ criterion_images : bebildert
+    checklist_criteria ||--o{ checklist_criterion_translations : uebersetzt
     attachments ||--o| criterion_images : datei
     users ||--o{ info_pages : pflegt
 
@@ -163,6 +165,14 @@ erDiagram
         varchar description
         int position
     }
+    checklist_criterion_translations {
+        bigint id PK
+        bigint criterion_id FK
+        varchar language
+        varchar area
+        varchar title
+        varchar description
+    }
     criterion_images {
         bigint id PK
         bigint criterion_id FK
@@ -180,6 +190,8 @@ erDiagram
 ```
 
 `checklist_versions.status`: `DRAFT`, `PUBLISHED`, `RETIRED`. `criterion_images.kind`: `GOOD`, `BAD`.
+
+`checklist_criteria` enthält die deutsche Fassung. `checklist_criterion_translations` ergänzt je Kriterium und Sprache (`language`, aktuell `en`) Bereich, Titel und Erklärung; `(criterion_id, language)` ist eindeutig. Fehlt eine Übersetzung, liefert die API den deutschen Text.
 
 ## Kontrollplanung
 
