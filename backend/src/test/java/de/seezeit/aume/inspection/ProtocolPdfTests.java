@@ -98,7 +98,7 @@ class ProtocolPdfTests {
 
     private InspectionEntity failed() {
         return inspections.findAll().stream()
-            .filter(i -> i.getStatus() == InspectionEntity.Status.FINALIZED
+            .filter(i -> InspectionHistoryService.DONE.contains(i.getStatus())
                 && i.getOverallResult() == InspectionEntity.Result.FAILED)
             .findFirst().orElseThrow();
     }
