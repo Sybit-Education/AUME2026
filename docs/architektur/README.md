@@ -1,9 +1,8 @@
 # Architektur
 
-Dieser Ordner enthält die vollständige Dokumentation der Anwendung: den umgesetzten Stand und das Architekturziel. Wird Anwendungscode geändert, werden die betroffenen Dateien hier mit angepasst. Die fachlichen und organisatorischen Grundlagen stehen im [Dokumentationsindex](../README.md). Wo neuer Code abgelegt wird, steht in der [Contributing-Anleitung](../../CONTRIBUTING.md).
+Die Unterlagen beschreiben das Architekturziel für die Seezeit-Anwendung. Die fachlichen und organisatorischen Grundlagen stehen im [Dokumentationsindex](../README.md).
 
 - [Architekturübersicht](Seezeit-Architektur.md): Qualitätsziele, Bausteine, Anbindungen, Betrieb und offene Entscheidungen.
-- [Datenmodell](datenmodell.md): ER-Diagramme der Backend-Entities, ein Diagramm je Modul.
 - [Systemarchitektur](SystemArchitektur.drawio): Systemarchitekturdiagramm
 - [Entscheidungsindex](adr/README.md): akzeptierte Entscheidungen und offene Vorschläge.
 - [ADR-Workflow](ADR-Workflow.md): Entscheidungen vorschlagen, prüfen und ablösen.

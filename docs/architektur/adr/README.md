@@ -14,8 +14,6 @@
 | ADR-0009 | [Harden Compose operations and verify recovery](0009-harden-compose-operations-and-verify-recovery.md) | Proposed |
 | ADR-0010 | [Track CRA scope and product security evidence](0010-track-cra-scope-and-product-security-evidence.md) | Proposed |
 | ADR-0011 | [Kontrollerfassung bei Netzabbruch absichern](0011-preserve-inspection-drafts-during-network-loss.md) | Proposed |
-| ADR-0012 | [Caddy als Reverse Proxy und Dateiserver](0012-serve-the-edge-with-caddy.md) | Proposed |
-| ADR-0013 | [Schema mit Flyway migrieren](0013-migrate-the-schema-with-flyway.md) | Proposed |
 
 ADR-0011 schlägt eine Änderung des Offlineumfangs aus ADR-0004 vor. Bis zur Entscheidung bleibt ADR-0004 akzeptiert und der Konflikt mit den Qualitätsszenarien offen.
 
