@@ -47,6 +47,7 @@ beforeEach(async () => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
     if (path === '/api/greeting') return new Response(i18n.resolvedLanguage === 'en' ? 'Hello Alex, welcome to Sonne.' : 'Hallo Alex, willkommen in Sonne.')
     if (path === '/api/student/inspection-appointment') return new Response(null, { status: 204 })
+    if (path === '/api/student/inspection-results/latest') return new Response(null, { status: 204 })
     if (path === '/api/checklist') return Response.json(i18n.resolvedLanguage === 'en' ? checklistEn : checklistDe)
     if (path === '/api/wg/tasks') return Response.json({ code: 'not_member' }, { status: 404 })
     if (path.startsWith('/api/residences?')) {
@@ -243,7 +244,10 @@ it('keeps both control navigation levels active across all four sections', async
       expect(top.getByRole('link', { name }).getAttribute('aria-current')).toBe('page')
       expect(control.getAttribute('aria-current')).toBe('page')
     })
-    if (name === 'Ergebnis' || name === 'Verlauf') {
+    if (name === 'Ergebnis') {
+      await screen.findByRole('heading', { name: 'Noch kein Ergebnis' })
+    }
+    if (name === 'Verlauf') {
       await screen.findByRole('heading', { name: 'Kommt bald' })
     }
   }

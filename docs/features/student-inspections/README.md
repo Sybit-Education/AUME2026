@@ -54,9 +54,43 @@ Auf `/student/inspection/appointment` exportiert „In Kalender übernehmen“ d
 - Im Verzeichnis `backend` führt `./mvnw verify` beziehungsweise `.\mvnw.cmd verify` unter Windows die Backend-Suite aus. `ApplicationTests` prüft mit MockMvc und In-Memory-H2 unter anderem Zugriffsschutz, Terminauswahl und wiederholtes Seeding.
 - `StudentInspectionAppointmentIsolationTests` verwendet eine separate In-Memory-H2-Datenbank (`aume-us15-isolation`). Zwei Studierende in getrennten Sitzungen sehen jeweils nur den Termin ihrer eigenen WG, auch mit fremder WG-ID im Request. Gezielter Aufruf unter Windows: `.\mvnw.cmd "-Dtest=StudentInspectionAppointmentIsolationTests" test`. Unter macOS und Linux lautet der Aufruf `./mvnw -Dtest=StudentInspectionAppointmentIsolationTests test`.
 
+## Ergebnis und Mängel (US-38)
+
+Der Reiter **Ergebnis** (`/student/inspection/result`) zeigt das neueste veröffentlichte Kontrollergebnis der eigenen WG. Rückmeldungen wie „Als erledigt melden“ oder „Rückfrage stellen“ kommen erst in Release 2.
+
+### API
+
+| Methode und Pfad | Recht | Antwort |
+| --- | --- | --- |
+| `GET /api/student/inspection-results/latest` | Rolle `STUDENT` | `200` mit dem neuesten Ergebnis, `204` ohne sichtbares Ergebnis, `404` ohne eindeutige aktive WG-Zuordnung |
+
+Die WG ergibt sich wie beim Termin aus der aktiven Mitgliedschaft der angemeldeten Person. Maßgeblich ist das Kalenderdatum in `Europe/Berlin`. `validFrom` liegt am heutigen Tag oder früher. `validTo` liegt in der Zukunft oder ist leer. Am Tag `validTo` endet der Zugriff. Ohne aktive Zuordnung oder bei gleichzeitig aktiven Zuordnungen zu verschiedenen WGs liefert die API `404`. Die Daten kommen aus `InspectionResultService.resultsForFlat(flatId, Einzug)` von Team 3 (#77). Sichtbar sind nur Ergebnisse, die ab dem Einzugstag (00:00 Uhr in `Europe/Berlin`) veröffentlicht wurden.
+
+```json
+{
+  "inspectionId": 7, "kind": "INITIAL", "round": 0, "inspectedAt": "2026-11-18T09:30:00Z", "overallResult": "FAILED",
+  "deficiencies": [{ "area": "Küche", "criterion": "Herd & Backofen", "note": "…", "buildingCauseSuspected": false }],
+  "resolvedOnSite": [{ "area": "Bad", "criterion": "Dusche & WC", "note": "…" }],
+  "passed": [{ "area": "Küche", "criterion": "Arbeitsflächen" }]
+}
+```
+
+`kind` ist `INITIAL` bei `round` 0, sonst `FOLLOW_UP`. Mängel haben die Bewertung `DEFICIENT`, „Vor Ort geklärt“ `RESOLVED_ON_SITE`; als bestanden zählen `OK` und Kriterien ohne Bewertung. Die Reihenfolge entspricht der Checkliste. Angaben zur prüfenden Person enthält die Antwort bewusst nicht. Bereichs- und Kriteriennamen kommen von Team 3 immer auf Deutsch, auch in der englischen Oberfläche.
+
+### Oberfläche
+
+- Ohne Ergebnis: „Noch kein Ergebnis“. Liefert der Termin-Endpunkt eine angekündigte Kontrolle, steht dort der Hinweis auf die Übermittlung innerhalb von 24 Stunden, sonst „Nach der nächsten Kontrolle erscheint hier euer Ergebnis.“ Der Termin wird nur in diesem Fall geladen.
+- Ergebniskarte mit Kontrollart und Datum, Chip „Ergebnis verfügbar“, „Bestanden!“ als grüner Hinweis oder „Nicht bestanden“ in `--warn-text`.
+- Nur bei „Nicht bestanden“: Karte „Euer nächster Schritt“.
+- Karten „Mängel (n)“ (Chip „Mangel“, bei vermuteter Gebäudeursache stattdessen „Gebäudeursache wird geprüft“ mit Hinweis), „Vor Ort geklärt (n)“ (nur wenn vorhanden) und „Bestandene Kriterien (n)“.
+
+### Entwicklungsdaten
+
+`StudentSampleData` legt für die WG S-01 der Mock-Person `student` eine veröffentlichte Erstkontrolle nach dem Einzug an (nicht bestanden, Mängel bei „Herd & Backofen“ und bei „Dusche & WC“ mit vermuteter Gebäudeursache), sofern das Mock-Konto genau eine aktive Mitgliedschaft in `S-01` der Wohnanlage Sonne hat und seit dem Einzug noch kein veröffentlichtes Ergebnis vorliegt. Die Kontrollen aus `InspectionSampleData` liegen vor dem Einzug und bleiben für Studierende unsichtbar. Weil die Objektbetreuung diese Kontrolle in ihrem Verlauf sieht, sind die erwarteten Zahlen in `InspectionHistoryTests` und `InspectionTests.sampleDataIsIdempotent` angepasst (mit Team 3 abgestimmt).
+
 ## Offen
 
 - Der produktive Schreibpfad für `rescheduledAt` gehört zur Anbindung über US-18. Die US-15-Tests setzen gezielt vorbereitete Daten ein. Ein vollständiger End-to-End-Nachweis über Änderung und erneute Ankündigung steht aus.
-- Der Kontrollbereich enthält Platzhalter für Ergebnis und Verlauf. Die zugehörigen Studierenden-Funktionen stehen noch aus.
-- Die durchgängige Integrationsprüfung mit US-01 (WG-Beitritt und Austritt) steht aus. Die Terminabfrage verwendet bereits dasselbe Mitgliedschaftsmodell und dieselbe Gültigkeitssemantik. In der lokalen Demo liefert der Dev-Seed die Mitgliedschaft.
+- Der Reiter „Verlauf“ ist ein Platzhalter.
+- Die durchgängige Integrationsprüfung mit US-01 (WG-Beitritt und Austritt) steht aus. Termin- und Ergebnisabfrage verwenden bereits dasselbe Mitgliedschaftsmodell und dieselbe Gültigkeitssemantik. In der lokalen Demo liefert der Dev-Seed die Mitgliedschaft.
 - **Kontrollplanung.** Die fachliche Priorisierung gleichrangiger Termine ist noch abzustimmen.
