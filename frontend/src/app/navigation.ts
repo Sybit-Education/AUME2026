@@ -4,6 +4,7 @@ import { residenceNavigation } from '@/features/residences/routes'
 import { inspectionPlanningNavigation } from '@/features/inspection-planning/routes'
 import { inspectionNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
+import { wgNavigation } from '@/features/wg/routes'
 
 type NavigationItem = {
   to: string
@@ -17,6 +18,7 @@ export const navigation: NavigationItem[] = [
   inspectionPlanningNavigation,
   inspectionNavigation,
   standardsNavigation,
+  wgNavigation,
 ]
 
 /** `activeWithin`: Adressmuster, unter denen der Tab markiert bleibt (z. B. alle Kontroll-Reiter). */
@@ -30,7 +32,7 @@ export const studentTabs: StudentTab[] = [
   { to: '/', label: 'navigation.start', icon: 'home' },
   { to: '/student/cleaning-plan', label: 'navigation.cleaningPlan', icon: 'plan' },
   { to: '/student/inspection/appointment', label: 'navigation.inspection', icon: 'inspection', activeWithin: ['/student/inspection/*'] },
-  { to: '/student/more', label: 'navigation.more', icon: 'more', activeWithin: ['/student/more', '/student/settings'] },
+  { to: '/student/more', label: 'navigation.more', icon: 'more', activeWithin: ['/student/more', '/student/settings', '/student/flat'] },
 ]
 
 const staffRoles = ['CARETAKER', 'CLERK']

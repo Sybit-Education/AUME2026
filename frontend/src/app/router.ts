@@ -21,6 +21,8 @@ import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
 import { inspectionProcessRoutes } from '@/features/inspection-process/routes'
 import { moreRoutes } from '@/features/more/routes'
+import { wgRoutes } from '@/features/wg/routes'
+import { planRoutes } from '@/features/putzplan/routes'
 
 /** Alte deutsche Adressen (vor dem Präfix „student/“) leiten weiter, damit Lesezeichen funktionieren. */
 const legacyStudentRedirects: RouteObject[] = Object.entries({
@@ -71,8 +73,8 @@ export function createAppRoutes(): RouteObject[] {
                   { path: 'history', Component: ComingSoonPage },
                 ],
               },
-              // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
-              { path: 'cleaning-plan', Component: ComingSoonPage },
+              ...planRoutes,
+              ...wgRoutes,
               ...moreRoutes,
             ],
           },

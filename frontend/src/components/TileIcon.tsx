@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
  * Zweifarbige Icons für `.icon-tile` (24 × 24). Flächen übernehmen `fill` aus der CSS-Klasse
  * (var(--icon-fill)), reine Linien tragen `fill="none"`. Rein dekorativ, daher `aria-hidden`.
  */
-export type TileIconName = 'kitchen' | 'bath' | 'floor' | 'stairs' | 'list' | 'settings'
+export type TileIconName = 'kitchen' | 'bath' | 'floor' | 'stairs' | 'list' | 'settings' | 'flat'
 
 const none = 'none'
 
@@ -39,6 +39,12 @@ const shapes: Record<TileIconName, ReactNode> = {
     <>
       <rect x="5" y="4" width="14" height="16.5" rx="3" />
       <path d="M8.5 9.5h7M8.5 13h7M8.5 16.5h4" fill={none} />
+    </>
+  ),
+  flat: (
+    <>
+      <path d="M4.5 11 12 4.5l7.5 6.5v8a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19v-8Z" />
+      <path d="M10 20.5v-5h4v5" fill={none} />
     </>
   ),
   settings: (

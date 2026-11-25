@@ -61,7 +61,20 @@
     "periodChanged": "This period has changed in the meantime. Please check the current state.",
     "periodInvalidStatus": "This step is not possible in the current status.",
     "periodStarted": "At least one inspection has already started. The proposal can no longer be withdrawn.",
-    "studentInspectionResult": "The inspection result could not be loaded."
+    "studentInspectionResult": "The inspection result could not be loaded.",
+    "wg": "Your shared flat could not be loaded.",
+    "wgJoin": "Joining failed. Please try again.",
+    "wgLeave": "Leaving failed. Please try again.",
+    "wgInvalidCode": "This code is invalid or no longer valid.",
+    "wgAlreadyMember": "You are already a member of a shared flat.",
+    "wgFlatFull": "This shared flat is already full.",
+    "plan": "The cleaning plan could not be loaded.",
+    "planSave": "The change could not be saved. Please try again.",
+    "planTitle": "Please enter a task with at most 120 characters.",
+    "planAssignee": "Please choose a person from your flat.",
+    "planNotAssignee": "Only the assigned person can tick off this task.",
+    "planNotDue": "This task is not due this week.",
+    "planCriterion": "This suggestion is no longer in the current checklist."
   },
   "navigation": {
     "main": "Main navigation",
@@ -74,7 +87,8 @@
     "inspection": "Inspection",
     "more": "More",
     "studentTabs": "Student navigation",
-    "inspectionPlanning": "Plan inspections"
+    "inspectionPlanning": "Plan inspections",
+    "wg": "My flat"
   },
   "inspectionPlanning": {
     "title": "Plan inspections",
@@ -225,6 +239,9 @@
     "account": "Account and privacy",
     "settings": "Settings",
     "settingsHint": "Language",
+    "living": "Living",
+    "wg": "My flat",
+    "wgHint": "Join, flatmates, leave",
     "back": "More"
   },
   "settings": {
@@ -349,5 +366,59 @@
       "inspectedBy": "by {{name}}",
       "backToHistory": "← Back to inspection history"
     }
+  },
+  "wg": {
+    "title": "My shared flat",
+    "joinIntro": "Enter your flat's invitation code.",
+    "code": "Invitation code",
+    "join": "Join flat",
+    "joining": "Checking …",
+    "flat": "Flat",
+    "residence": "Residence",
+    "since": "Member since",
+    "members": "Flatmates",
+    "leave": "Leave flat",
+    "leaving": "Leaving …",
+    "leaveYes": "Yes, leave flat",
+    "leaveNo": "Cancel",
+    "leaveConfirm": "Do you really want to leave this flat? You will lose access immediately and need a new code to return."
+  },
+  "plan": {
+    "noFlat": "Join your flat first to see the cleaning plan.",
+    "week": "Week {{week}} · {{from}} to {{to}}",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "add": "+ Task",
+    "closeSheet": "Close",
+    "addTask": "Add task",
+    "editTask": "Edit task",
+    "editFor": "Edit {{title}}",
+    "deleteFor": "Delete {{title}}",
+    "deleteTitle": "Delete task?",
+    "delete": "Delete",
+    "tasks": "Tasks",
+    "task": "Task",
+    "taskPlaceholder": "e.g. Clean the kitchen",
+    "person": "Person",
+    "rhythm": "Frequency",
+    "startWeek": "From week",
+    "rhythms": {
+      "WEEKLY": "weekly",
+      "BIWEEKLY": "every 2 weeks",
+      "MONTHLY": "every 4 weeks"
+    },
+    "save": "Save",
+    "saving": "Saving …",
+    "cancel": "Cancel",
+    "empty": "No tasks yet.",
+    "addFirst": "Add first task",
+    "noneThisWeek": "No tasks are due this week.",
+    "unassigned": "Unassigned",
+    "done": "done",
+    "doneBy": "done by {{name}}",
+    "progressLabel": "Progress this week",
+    "progress": "{{done}} of {{total}} tasks done",
+    "onlyCurrentWeek": "Only the current week can be ticked off.",
+    "fromChecklist": "From the checklist"
   }
 }

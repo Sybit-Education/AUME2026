@@ -16,7 +16,7 @@ vi.mock('@/lib/auth/client', () => ({
   logout: vi.fn(),
 }))
 
-const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ', 'CHECKLIST_READ'] }
+const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ', 'CHECKLIST_READ', 'WG_MEMBERSHIP'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
 const checklistDe = { version: 1, areas: [
   { name: 'Küche', criteria: [{ id: 1, title: 'Arbeitsflächen', description: 'Frei von Essensresten.' }] },
@@ -49,6 +49,7 @@ beforeEach(async () => {
     if (path === '/api/student/inspection-appointment') return new Response(null, { status: 204 })
     if (path === '/api/student/inspection-results/latest') return new Response(null, { status: 204 })
     if (path === '/api/checklist') return Response.json(i18n.resolvedLanguage === 'en' ? checklistEn : checklistDe)
+    if (path === '/api/wg/tasks') return Response.json({ code: 'not_member' }, { status: 404 })
     if (path.startsWith('/api/residences?')) {
       const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
       return Response.json({
@@ -180,7 +181,7 @@ it('shows students the mobile tab bar with Start, Cleaning plan, Inspection and 
   expect(within(tabs).getByRole('link', { name: 'Start' }).getAttribute('aria-current')).toBe('page')
   expect(screen.queryByRole('navigation', { name: 'Hauptnavigation' })).toBeNull()
   fireEvent.click(within(tabs).getByRole('link', { name: 'Putzplan' }))
-  await screen.findByRole('heading', { name: 'Kommt bald' })
+  await screen.findByRole('heading', { name: 'Putzplan' })
   expect(router.state.location.pathname).toBe('/student/cleaning-plan')
   expect(within(tabs).getByRole('link', { name: 'Putzplan' }).getAttribute('aria-current')).toBe('page')
   fireEvent.click(within(tabs).getByRole('link', { name: 'Mehr' }))

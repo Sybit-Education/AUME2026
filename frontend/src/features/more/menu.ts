@@ -23,6 +23,12 @@ export interface MoreGroup {
  */
 export const moreGroups: MoreGroup[] = [
   {
+    title: 'more.living',
+    items: [
+      { to: '/student/flat', icon: 'flat', label: 'more.wg', hint: 'more.wgHint', privilege: 'WG_MEMBERSHIP' },
+    ],
+  },
+  {
     title: 'more.account',
     items: [
       { to: '/student/settings', icon: 'settings', label: 'more.settings', hint: 'more.settingsHint' },
