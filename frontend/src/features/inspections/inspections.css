@@ -1,0 +1,194 @@
+/* Kontrolle der Objektbetreuung, Aufbau nach dem Wireframe (Seezeit_Wireframe_Feedback_klickbar-2). */
+
+.ins-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+.ins-head h2 {
+  font-size:22px;
+}
+.ins-meta {
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  font-size:12.5px;
+  font-weight:700;
+  color:#4a6168;
+  margin:0 0 12px 8px;
+}
+.tabs .badge {
+  display:inline-block;
+  margin-left:6px;
+  min-width:20px;
+  border-radius:10px;
+  font-size:11px;
+  padding:1px 6px;
+  font-weight:800;
+  background:var(--badb);
+  color:var(--bad);
+}
+.acc summary .chip {
+  margin-left:auto;
+}
+
+/* Kontroll-Historie */
+.tabs a {
+  border:1px solid #cad9da;
+  background:#fff;
+  color:#466166;
+  padding:8px 12px;
+  border-radius:9px;
+  font-size:13px;
+  font-weight:650;
+  text-decoration:none;
+}
+.tabs a.on {
+  background:var(--t);
+  color:#fff;
+  border-color:var(--t);
+}
+.protocol-item {
+  margin-top:6px;
+}
+.protocol-item .chip {
+  margin-left:6px;
+}
+.ins-sr {
+  position:absolute;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+}
+
+/* Vorgeschichte der WG (US-51) */
+.ins-previous > summary {
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  flex-wrap:wrap;
+  cursor:pointer;
+  list-style-position:inside;
+}
+.ins-previous > summary h3 {
+  display:inline;
+}
+.ins-previous-list {
+  margin:4px 0 0;
+  padding-left:18px;
+}
+.ins-previous-list li {
+  margin-top:4px;
+}
+.ins-previous-list .chip {
+  margin-left:6px;
+}
+/* Mehrere Chips in einer Zeile: nur der erste rückt nach rechts. */
+.acc summary .chip + .chip {
+  margin-left:6px;
+}
+
+/* Kontroll-Historie: Sortierung und Filter in der Kopfzeile */
+.ins-history {
+  position:relative;
+}
+.ins-th {
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+}
+.ins-th-sort,.ins-th-filter {
+  border:0;
+  background:none;
+  color:inherit;
+  font:inherit;
+  font-weight:700;
+  padding:3px 4px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.ins-th-sort:hover,.ins-th-filter:hover,.ins-th-filter[aria-expanded=true] {
+  background:#e2eeee;
+}
+.ins-th-sort.on,.ins-th-filter.on {
+  color:var(--t);
+}
+.ins-th-arrow {
+  opacity:.55;
+}
+.ins-th-sort.on .ins-th-arrow {
+  opacity:1;
+}
+.ins-th-filter {
+  display:inline-flex;
+  line-height:0;
+}
+.ins-pop {
+  position:absolute;
+  z-index:20;
+  max-width:calc(100% - 16px);
+  background:#fff;
+  border:1px solid var(--ln);
+  border-radius:12px;
+  box-shadow:0 8px 24px rgba(20,50,55,.16);
+  padding:12px;
+}
+.ins-active {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  margin:8px 0 10px;
+}
+.ins-active-chip {
+  border:0;
+  cursor:pointer;
+  font:inherit;
+}
+/* Datumsfeld Tag/Monat/Jahr mit Kalender-Knopf im Filter der Historie */
+.ins-date {
+  position:relative;
+}
+.ins-date input:not(.ins-date-picker) {
+  padding-right:38px;
+}
+.ins-date input[aria-invalid=true] {
+  border-color:#c0392b;
+}
+.ins-date-btn {
+  position:absolute;
+  top:50%;
+  right:4px;
+  transform:translateY(-50%);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:#34484f;
+  cursor:pointer;
+}
+.ins-date-btn:hover,.ins-date-btn:focus-visible {
+  background:#edf4f4;
+}
+/* Unsichtbares natives Feld, nur als Anker für die Datumsauswahl des Browsers */
+.ins-date-picker {
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  height:0;
+  min-height:0;
+  padding:0;
+  border:0;
+  opacity:0;
+  pointer-events:none;
+}

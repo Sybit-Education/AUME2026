@@ -1,0 +1,161 @@
+import { api } from '@/lib/auth/client'
+import { requireOk } from '@/lib/auth/response'
+import { UiError } from '@/lib/errors'
+
+export type InspectionStatus = 'PLANNED' | 'DRAFT' | 'FINALIZED' | 'PUBLISHED'
+export type OverallResult = 'PASSED' | 'FAILED'
+export type Rating = 'OK' | 'DEFICIENT' | 'RESOLVED_ON_SITE'
+export type Severity = 'LIGHT' | 'SEVERE'
+
+export interface InspectionSummary {
+  id: number
+  flatLabel: string
+  status: InspectionStatus
+  round: number
+}
+
+export interface InspectionPage {
+  content: InspectionSummary[]
+  page: { number: number; size: number; totalElements: number; totalPages: number }
+}
+
+export interface Criterion {
+  id: number
+  area: string
+  title: string
+  description: string
+  position: number
+}
+
+export interface Finding {
+  criterionId: number
+  rating: Rating
+  severity: Severity | null
+  note: string | null
+  buildingCauseSuspected: boolean
+}
+
+export interface Inspection {
+  id: number
+  flatLabel: string
+  residenceName: string
+  capacity: number
+  round: number
+  status: InspectionStatus
+  overallResult: OverallResult | null
+  inspectedAt: string | null
+  inspectorName: string | null
+  criteria: Criterion[]
+  findings: Finding[]
+}
+
+export interface HistoryEntry {
+  id: number
+  flatLabel: string
+  inspectedAt: string | null
+  round: number
+  status: InspectionStatus
+  overallResult: OverallResult | null
+  deficiencies: number
+  inspectorName: string | null
+}
+
+export interface HistoryPage {
+  content: HistoryEntry[]
+  page: { number: number; size: number; totalElements: number; totalPages: number }
+}
+
+/** Mangel oder vor Ort geklärter Befund aus einer früheren Kontrolle derselben WG (US-51). */
+export interface PreviousDefect {
+  area: string
+  criterionTitle: string
+  rating: Exclude<Rating, 'OK'>
+  severity: Severity | null
+  note: string | null
+  buildingCauseSuspected: boolean
+}
+
+export interface PreviousInspection {
+  id: number
+  inspectedAt: string | null
+  round: number
+  overallResult: OverallResult | null
+  defects: PreviousDefect[]
+}
+
+export interface FindingInput {
+  rating: Rating
+  severity?: Severity | null
+  note?: string | null
+  buildingCauseSuspected?: boolean
+}
+
+const json = { 'Content-Type': 'application/json' }
+
+export async function listInspections(page: number, signal: AbortSignal): Promise<InspectionPage> {
+  const response = requireOk(await api(`/api/inspections?page=${page}&size=20`, { signal }), 'errors.inspections')
+  return (await response.json()) as InspectionPage
+}
+
+/** `query` ist bereits geprüft, siehe `historyQuery` in history.ts. */
+export async function listHistory(query: URLSearchParams, signal: AbortSignal): Promise<HistoryPage> {
+  const response = requireOk(await api(`/api/inspections/history?${query}`, { signal }), 'errors.history')
+  return (await response.json()) as HistoryPage
+}
+
+export async function getInspection(id: number, signal: AbortSignal): Promise<Inspection> {
+  const response = requireOk(await api(`/api/inspections/${id}`, { signal }), 'errors.inspection')
+  return (await response.json()) as Inspection
+}
+
+/**
+ * Lädt das Protokoll einer abgeschlossenen Kontrolle als PDF und speichert es über den Browser. Läuft über
+ * `api`, damit Sprache, Anmeldung und Fehlerbehandlung wie bei allen anderen Aufrufen gelten.
+ */
+export async function downloadProtocol(id: number): Promise<void> {
+  const response = requireOk(await api(`/api/inspections/${id}/protocol.pdf`), 'errors.protocolDownload')
+  const fileName = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1]
+    ?? `Kontrollprotokoll_${id}.pdf`
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.append(link)
+  link.click()
+  link.remove()
+  // Erst nach dem Klick freigeben, sonst bricht der Download in manchen Browsern ab.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+/** Höchstens drei abgeschlossene frühere Kontrollen der WG, neueste zuerst. */
+export async function getPreviousFindings(id: number, signal: AbortSignal): Promise<PreviousInspection[]> {
+  const response = requireOk(await api(`/api/inspections/${id}/previous-findings`, { signal }), 'errors.inspection')
+  return (await response.json()) as PreviousInspection[]
+}
+
+async function change(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<Inspection> {
+  const raw = await api(path, {
+    method,
+    headers: body === undefined ? undefined : json,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  // 409: Die Kontrolle wurde inzwischen anderweitig geändert (gestartet, abgeschlossen, …).
+  if (raw.status === 409) throw new UiError('errors.inspectionConflict')
+  const response = requireOk(raw, 'errors.inspectionSave')
+  return (await response.json()) as Inspection
+}
+
+export const startInspection = (id: number) => change(`/api/inspections/${id}/start`, 'POST')
+
+export const rateCriterion = (id: number, criterionId: number, input: FindingInput) =>
+  change(`/api/inspections/${id}/findings/${criterionId}`, 'PUT', input)
+
+export const clearFinding = (id: number, criterionId: number) =>
+  change(`/api/inspections/${id}/findings/${criterionId}`, 'DELETE')
+
+/** Ohne Bereich setzt das Backend alle noch unbewerteten Kriterien auf OK. */
+export const markOk = (id: number, area?: string) =>
+  change(`/api/inspections/${id}/mark-ok`, 'POST', area === undefined ? undefined : { area })
+
+export const finalizeInspection = (id: number, overallResult: OverallResult) =>
+  change(`/api/inspections/${id}/finalize`, 'POST', { overallResult })

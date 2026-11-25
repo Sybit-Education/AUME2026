@@ -1,0 +1,5 @@
+.idea/AUME2026.iml
+/.idea
+/.vscode
+/devdata/*
+!/devdata/.gitkeep
