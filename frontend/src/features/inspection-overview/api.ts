@@ -1,11 +1,12 @@
 import { api } from '@/lib/auth/client'
 import { requireOk } from '@/lib/auth/response'
 
-export const OVERVIEW_STATES = ['NONE', 'NO_UPCOMING', 'WAITING_FOR_CARETAKER', 'COUNTER_PROPOSED', 'AGREED', 'ANNOUNCED'] as const
+export const OVERVIEW_STATES = [
+  'NONE', 'NO_UPCOMING', 'WAITING_FOR_CARETAKER', 'COUNTER_PROPOSED', 'AGREED', 'ANNOUNCED', 'RUNNING', 'COMPLETED',
+] as const
 export const PERIOD_KINDS = ['REGULAR'] as const
 
 export type OverviewState = typeof OVERVIEW_STATES[number]
-type InspectionStatus = 'PLANNED' | 'DRAFT' | 'FINALIZED' | 'PUBLISHED'
 type Kind = typeof PERIOD_KINDS[number] | 'FOLLOW_UP'
 
 interface Page<T> {
@@ -13,20 +14,39 @@ interface Page<T> {
   page: { number: number; size: number; totalElements: number; totalPages: number }
 }
 
+export interface RoundView {
+  id: number
+  startsOn: string
+  endsOn: string
+  kind: Kind
+  state: OverviewState
+  controlled: number
+  total: number
+  passed: number
+  failed: number
+}
+
 export interface ResidenceRow {
   id: number
   name: string
-  lastInspection: { on: string; kind: Kind } | null
-  upcoming: { id: number; startsOn: string; endsOn: string; kind: Kind } | null
+  lastCompleted: RoundView | null
+  current: RoundView | null
   state: OverviewState
 }
 
-export interface InspectionRow {
-  flat: string | null
+export interface OpenInspection {
+  flat: string
   kind: Kind
   startsOn: string | null
   endsOn: string | null
-  status: OverviewState | InspectionStatus
+  outcome: 'OPEN' | 'PASSED' | 'FAILED'
+}
+
+export interface ResidenceDetail {
+  id: number
+  name: string
+  rounds: RoundView[]
+  openInspections: OpenInspection[]
 }
 
 export interface OverviewData {
@@ -59,10 +79,9 @@ export async function loadOverview(request: Request): Promise<OverviewData> {
   }
 }
 
-export async function loadResidenceInspections(request: Request, residenceId: string): Promise<Page<InspectionRow>> {
-  const params = new URL(request.url).searchParams
-  const response = await api(`/api/inspection-overview/${encodeURIComponent(residenceId)}?${query(params)}`, { signal: request.signal })
-  return await requireOk(response, 'errors.inspectionOverview').json() as Page<InspectionRow>
+export async function loadResidenceDetail(request: Request, residenceId: string): Promise<ResidenceDetail> {
+  const response = await api(`/api/inspection-overview/${encodeURIComponent(residenceId)}`, { signal: request.signal })
+  return await requireOk(response, 'errors.inspectionOverview').json() as ResidenceDetail
 }
 
 const DAY: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }
@@ -73,7 +92,18 @@ export function formatPeriod(from: string | null, to: string | null, language: s
   return from === to ? format.format(new Date(from)) : format.formatRange(new Date(from), new Date(to))
 }
 
-export const stateChip: Record<InspectionRow['status'], string> = {
-  NONE: 'wr', NO_UPCOMING: '', WAITING_FOR_CARETAKER: 'wr', COUNTER_PROPOSED: 'wr', AGREED: 'inf', ANNOUNCED: 't',
-  PLANNED: '', DRAFT: 'inf', FINALIZED: 'inf', PUBLISHED: 'ok',
+export function formatResult(round: Pick<RoundView, 'passed' | 'failed'>, t: (key: string, values?: object) => string): string {
+  return t('inspectionOverview.resultSummary', { passed: round.passed, failed: round.failed })
+}
+
+export function formatRoundState(round: RoundView, t: (key: string, values?: object) => string): string {
+  if (round.state === 'RUNNING') {
+    return t('inspectionOverview.runningProgress', { controlled: round.controlled, total: round.total })
+  }
+  return t(`inspectionOverview.states.${round.state}`)
+}
+
+export const stateChip: Record<OverviewState | OpenInspection['outcome'], string> = {
+  NONE: 'wr', NO_UPCOMING: '', WAITING_FOR_CARETAKER: 'wr', COUNTER_PROPOSED: 'wr', AGREED: 'inf',
+  ANNOUNCED: 't', RUNNING: 'inf', COMPLETED: 'ok', OPEN: '', PASSED: 'ok', FAILED: 'wr',
 }

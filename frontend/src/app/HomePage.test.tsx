@@ -7,7 +7,7 @@ import AuthProvider from '@/lib/auth/AuthProvider'
 import { api, type LoggedInUser } from '@/lib/auth/client'
 import { ensureSession, invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
-import type { InspectionRow, ResidenceRow } from '@/features/inspection-overview/api'
+import type { ResidenceDetail, ResidenceRow } from '@/features/inspection-overview/api'
 import { inspectionOverviewRoutes } from '@/features/inspection-overview/routes'
 import { homeRoutes } from './homeRoute'
 
@@ -23,7 +23,7 @@ const student: LoggedInUser = { userKey: 'student', name: 'Lea', roles: ['STUDEN
 const page = (content: unknown[]) => ({ content, page: { number: 0, size: 20, totalElements: content.length, totalPages: 1 } })
 let signedIn: LoggedInUser
 let rows: ResidenceRow[]
-let inspections: InspectionRow[]
+let detail: ResidenceDetail
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
 function mount(path = '/') {
@@ -45,18 +45,25 @@ beforeEach(async () => {
   vi.resetAllMocks()
   invalidateSession()
   signedIn = clerk
-  inspections = []
+  detail = { id: 3, name: 'Sonne', rounds: [], openInspections: [] }
   rows = [
-    { id: 1, name: 'Egg', lastInspection: null, upcoming: { id: 7, startsOn: '2026-12-01', endsOn: '2026-12-03', kind: 'REGULAR' }, state: 'COUNTER_PROPOSED' },
-    { id: 2, name: 'Mond', lastInspection: null, upcoming: null, state: 'NONE' },
-    { id: 3, name: 'Sonne', lastInspection: { on: '2026-10-30', kind: 'FOLLOW_UP' }, upcoming: { id: 8, startsOn: '2026-12-10', endsOn: '2026-12-10', kind: 'REGULAR' }, state: 'AGREED' },
+    {
+      id: 1, name: 'Egg', lastCompleted: null, state: 'COUNTER_PROPOSED',
+      current: { id: 7, startsOn: '2026-12-01', endsOn: '2026-12-03', kind: 'REGULAR', state: 'COUNTER_PROPOSED', controlled: 0, total: 2, passed: 0, failed: 0 },
+    },
+    { id: 2, name: 'Mond', lastCompleted: null, current: null, state: 'NONE' },
+    {
+      id: 3, name: 'Sonne', state: 'AGREED',
+      lastCompleted: { id: 5, startsOn: '2026-05-10', endsOn: '2026-05-12', kind: 'REGULAR', state: 'COMPLETED', controlled: 100, total: 100, passed: 88, failed: 12 },
+      current: { id: 8, startsOn: '2026-12-10', endsOn: '2026-12-12', kind: 'REGULAR', state: 'AGREED', controlled: 0, total: 100, passed: 0, failed: 0 },
+    },
   ]
   await i18n.changeLanguage('de')
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return Response.json(signedIn)
     if (path === '/api/inspection-overview/counts') return Response.json({ counterProposed: 1, agreedNotAnnounced: 1 })
     if (String(path).startsWith('/api/inspection-overview?')) return Response.json(page(rows))
-    if (String(path).startsWith('/api/inspection-overview/3?')) return Response.json(page(inspections))
+    if (String(path) === '/api/inspection-overview/3') return Response.json(detail)
     throw new Error(`Unexpected API call: ${path}`)
   })
 })
@@ -67,7 +74,7 @@ afterEach(() => {
   routers = []
 })
 
-it('shows one row per residence with last and upcoming inspection, status and next step', async () => {
+it('shows one row per residence with last completed round, current round and next step', async () => {
   mount()
   const table = within(await screen.findByRole('table'))
   const [, egg, mond, sonne] = table.getAllByRole('row')
@@ -75,8 +82,7 @@ it('shows one row per residence with last and upcoming inspection, status and ne
   expect(within(egg).getByRole('link', { name: 'Gegenvorschlag prüfen' }).getAttribute('href')).toBe('/inspection-planning?review=7')
   expect(within(mond).getByText('Noch keine Kontrolle erfasst')).toBeDefined()
   expect(within(mond).getByRole('link', { name: 'Kontrolle planen' }).getAttribute('href')).toBe('/inspection-planning?residence=2')
-  expect(within(sonne).getByText('30.10.2026 · Nachkontrolle')).toBeDefined()
-  expect(within(sonne).getByText('10.12.2026 · Reguläre Kontrolle')).toBeDefined()
+  expect(within(sonne).getByText('88 bestanden · 12 Nachkontrolle')).toBeDefined()
   expect(within(sonne).getByText('Abgestimmt, nicht angekündigt')).toBeDefined()
   expect(within(sonne).getByRole('button', { name: 'Ankündigen' })).toBeDefined()
   expect(screen.queryByText(/Sam/)).toBeNull()
@@ -110,20 +116,26 @@ it('reloads the overview when the tab becomes visible again', async () => {
   await vi.waitFor(() => expect(overviewCalls().length).toBe(2))
 })
 
-it('opens the inspections of a residence including single-flat inspections', async () => {
-  inspections = [
-    { flat: null, kind: 'REGULAR', startsOn: '2026-12-10', endsOn: '2026-12-12', status: 'AGREED' },
-    { flat: 'S-01', kind: 'FOLLOW_UP', startsOn: '2026-10-30', endsOn: '2026-10-30', status: 'PUBLISHED' },
-  ]
+it('opens rounds and only open single-flat inspections of a residence', async () => {
+  detail = {
+    id: 3,
+    name: 'Sonne',
+    rounds: [
+      { id: 8, startsOn: '2026-11-18', endsOn: '2026-11-20', kind: 'REGULAR', state: 'RUNNING', controlled: 37, total: 100, passed: 33, failed: 4 },
+      { id: 5, startsOn: '2026-05-10', endsOn: '2026-05-12', kind: 'REGULAR', state: 'COMPLETED', controlled: 100, total: 100, passed: 88, failed: 12 },
+    ],
+    openInspections: [
+      { flat: '3.08', kind: 'FOLLOW_UP', startsOn: '2026-11-23', endsOn: '2026-11-24', outcome: 'OPEN' },
+    ],
+  }
   mount()
   fireEvent.click(await screen.findByRole('link', { name: 'Sonne' }))
-  expect(await screen.findByRole('heading', { name: 'Kontrollen · Sonne' })).toBeDefined()
-  const [, whole, single] = screen.getAllByRole('row')
-  expect(within(whole).getByText('Ganze Anlage')).toBeDefined()
-  expect(within(whole).getByText('10.–12.12.2026')).toBeDefined()
-  expect(within(single).getByText('WG S-01')).toBeDefined()
-  expect(within(single).getByText('Nachkontrolle')).toBeDefined()
-  expect(within(single).getByText('Ergebnis zugestellt')).toBeDefined()
+  expect(await screen.findByRole('heading', { name: 'Kontrollrunden · Sonne' })).toBeDefined()
+  expect(screen.getByText('Läuft · 37 von 100')).toBeDefined()
+  expect(screen.getByText('88 bestanden · 12 Nachkontrolle')).toBeDefined()
+  expect(screen.getByText('WG 3.08')).toBeDefined()
+  expect(screen.getByText('Noch offen')).toBeDefined()
+  expect(screen.queryByText('Protokoll liegt vor')).toBeNull()
 })
 
 it('keeps the dashboard for users without the overview privilege', async () => {

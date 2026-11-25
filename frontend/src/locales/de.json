@@ -78,25 +78,35 @@
     "reset": "Filter zurücksetzen",
     "noMatches": "Keine Wohnanlagen für diese Auswahl.",
     "residence": "Wohnanlage",
-    "last": "Letzte Kontrolle",
-    "upcoming": "Anstehende Kontrolle",
-    "status": "Bearbeitungsstatus",
+    "lastCompleted": "Letzte abgeschlossene Runde",
+    "current": "Aktuelle oder nächste Runde",
     "nextStep": "Nächster Schritt",
-    "rowHint": "Zeile anklicken für die Kontrollen der Wohnanlage.",
+    "rowHint": "Zeile anklicken für die Kontrollrunden der Wohnanlage.",
     "plan": "Kontrolle planen",
     "review": "Gegenvorschlag prüfen",
     "announce": "Ankündigen",
     "announceLater": "Das Ankündigen folgt mit US-18.",
+    "details": "Details",
     "back": "Zurück zur Übersicht",
-    "inspections": "Kontrollen der Wohnanlage",
-    "inspectionsOf": "Kontrollen · {{name}}",
-    "noInspections": "Für diese Wohnanlage sind noch keine Kontrollen erfasst.",
+    "roundsOf": "Kontrollrunden · {{name}}",
+    "noRounds": "Für diese Wohnanlage sind noch keine Kontrollrunden erfasst.",
+    "openSingles": "Offene Einzel-WG-Kontrollen",
+    "noOpenSingles": "Keine offenen Nachkontrollen oder individuellen Kontrollen.",
+    "openSinglesHint": "Abgeschlossene Nachkontrollen stehen hier nicht mehr. Sie kommen später in die Historie (US-48).",
     "flat": "WG",
     "period": "Zeitraum",
-    "wholeResidence": "Ganze Anlage",
+    "status": "Status",
+    "result": "Ergebnis",
+    "resultSummary": "{{passed}} bestanden · {{failed}} Nachkontrolle",
+    "runningProgress": "Läuft · {{controlled}} von {{total}}",
     "kinds": {
       "REGULAR": "Reguläre Kontrolle",
       "FOLLOW_UP": "Nachkontrolle"
+    },
+    "outcomes": {
+      "OPEN": "Noch offen",
+      "PASSED": "Bestanden",
+      "FAILED": "Nachkontrolle erforderlich"
     },
     "states": {
       "NONE": "Noch keine Kontrolle erfasst",
@@ -105,10 +115,8 @@
       "COUNTER_PROPOSED": "Gegenvorschlag der Objektbetreuung",
       "AGREED": "Abgestimmt, nicht angekündigt",
       "ANNOUNCED": "Angekündigt",
-      "PLANNED": "Geplant",
-      "DRAFT": "In Durchführung",
-      "FINALIZED": "Protokoll liegt vor",
-      "PUBLISHED": "Ergebnis zugestellt"
+      "RUNNING": "Läuft",
+      "COMPLETED": "Abgeschlossen"
     }
   },
   "inspectionPlanning": {

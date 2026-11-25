@@ -8,7 +8,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | --- | --- | --- |
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
 | `/` | Angemeldet | Übersicht; Gruß mit `GREETING_READ`, Link zu Wohnanlagen mit `RESIDENCE_READ`; mit `CLERK_INSPECTION_OVERVIEW_READ` Stand der Kontrollen je Wohnanlage, Filter `?state=` und `?kind=` |
-| `/inspection-overview/<id>` | Angemeldet, `CLERK_INSPECTION_OVERVIEW_READ` | Kontrollen einer Wohnanlage mit Kontrollart, Zeitraum und Status |
+| `/inspection-overview/<id>` | Angemeldet, `CLERK_INSPECTION_OVERVIEW_READ` | Kontrollrunden und offene Einzel-WG-Kontrollen einer Wohnanlage |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |

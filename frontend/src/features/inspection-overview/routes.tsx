@@ -1,7 +1,7 @@
 import type { RouteObject } from 'react-router'
 import { protectedLoader } from '@/lib/auth/loaders'
 import RequirePrivilege from '@/lib/auth/RequirePrivilege'
-import { loadResidenceInspections } from './api'
+import { loadResidenceDetail } from './api'
 import ResidenceInspectionsPage from './ResidenceInspectionsPage'
 
 /** Die Übersicht selbst liegt im Tab „Übersicht“ (`/`), siehe `app/homeRoute.ts`. */
@@ -11,5 +11,5 @@ export const inspectionOverviewRoutes: RouteObject[] = [{
   path: 'inspection-overview/:residenceId',
   element: <RequirePrivilege privilege={INSPECTION_OVERVIEW_PRIVILEGE}><ResidenceInspectionsPage /></RequirePrivilege>,
   loader: protectedLoader(INSPECTION_OVERVIEW_PRIVILEGE, ({ request, params }) =>
-    loadResidenceInspections(request, params.residenceId ?? '')),
+    loadResidenceDetail(request, params.residenceId ?? '')),
 }]

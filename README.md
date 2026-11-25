@@ -160,6 +160,8 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei 
 
 Das Frontend unter http://localhost:5173 bietet drei Schaltflächen zur Anmeldung an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak wird in diesem Profil nicht benötigt. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
 
+Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `file` (höchstens 10 MB, derselbe CSRF-Schutz wie andere schreibende Aufrufe). Die Datei liegt unter `devdata/uploads` im Repository-Root, wenn das Backend aus `backend/` startet. Im Repository liegt nur `devdata/.gitkeep`. `GET /api/attachments/{id}` liefert die Datei nur an die Person zurück, die sie hochgeladen hat. Der gespeicherte Name ist ein zufälliger Schlüssel, nicht der ursprüngliche Dateiname.
+
 ## Fehlerbehebung
 
 | Problem | Prüfung / Lösung |

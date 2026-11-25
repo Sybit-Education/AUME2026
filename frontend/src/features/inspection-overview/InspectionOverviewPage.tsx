@@ -2,7 +2,10 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData, useNavigate, useRevalidator, useSearchParams } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
-import { filtersOf, formatPeriod, OVERVIEW_STATES, PERIOD_KINDS, stateChip, type OverviewData, type ResidenceRow } from './api'
+import {
+  filtersOf, formatPeriod, formatResult, formatRoundState, OVERVIEW_STATES, PERIOD_KINDS, stateChip,
+  type OverviewData, type ResidenceRow,
+} from './api'
 import './inspection-overview.css'
 
 const REFRESH_MS = 30_000
@@ -77,27 +80,33 @@ export default function InspectionOverviewPage() {
             <thead>
               <tr>
                 <th>{t('inspectionOverview.residence')}</th>
-                <th>{t('inspectionOverview.last')}</th>
-                <th>{t('inspectionOverview.upcoming')}</th>
-                <th>{t('inspectionOverview.status')}</th>
+                <th>{t('inspectionOverview.lastCompleted')}</th>
+                <th>{t('inspectionOverview.current')}</th>
                 <th>{t('inspectionOverview.nextStep')}</th>
               </tr>
             </thead>
             <tbody>
               {rows.content.map((row) => (
-                <tr key={row.id} className="sel-row" onClick={() => { void navigate(`/inspection-overview/${row.id}`, { state: { name: row.name } }) }}>
-                  <td><Link to={`/inspection-overview/${row.id}`} state={{ name: row.name }} onClick={(event) => event.stopPropagation()}>{row.name}</Link></td>
-                  {row.state === 'NONE' ? <td colSpan={3} className="mut">{t('inspectionOverview.states.NONE')}</td> : (
-                    <>
-                      <td>{row.lastInspection
-                        ? `${formatPeriod(row.lastInspection.on, row.lastInspection.on, i18n.language)} · ${t(`inspectionOverview.kinds.${row.lastInspection.kind}`)}`
-                        : '–'}</td>
-                      <td>{row.upcoming
-                        ? `${formatPeriod(row.upcoming.startsOn, row.upcoming.endsOn, i18n.language)} · ${t(`inspectionOverview.kinds.${row.upcoming.kind}`)}`
-                        : '–'}</td>
-                      <td><span className={`chip ${stateChip[row.state]}`}>{t(`inspectionOverview.states.${row.state}`)}</span></td>
-                    </>
-                  )}
+                <tr key={row.id} className="sel-row" onClick={() => { void navigate(`/inspection-overview/${row.id}`) }}>
+                  <td><Link to={`/inspection-overview/${row.id}`} onClick={(event) => event.stopPropagation()}>{row.name}</Link></td>
+                  <td>
+                    {row.state === 'NONE' || !row.lastCompleted
+                      ? <span className="mut">{t('inspectionOverview.states.NONE')}</span>
+                      : (
+                        <>
+                          <div>{formatPeriod(row.lastCompleted.startsOn, row.lastCompleted.endsOn, i18n.language)}</div>
+                          <div className="mut">{formatResult(row.lastCompleted, t)}</div>
+                        </>
+                      )}
+                  </td>
+                  <td>
+                    {row.current ? (
+                      <>
+                        <div><span className={`chip ${stateChip[row.current.state]}`}>{formatRoundState(row.current, t)}</span></div>
+                        <div className="mut">{formatPeriod(row.current.startsOn, row.current.endsOn, i18n.language)}</div>
+                      </>
+                    ) : '–'}
+                  </td>
                   <td onClick={(event) => event.stopPropagation()}><NextStep row={row} /></td>
                 </tr>
               ))}
@@ -123,10 +132,10 @@ function NextStep({ row }: { row: ResidenceRow }) {
     case 'NO_UPCOMING':
       return <Link className="btn sec" to={`/inspection-planning?residence=${row.id}`}>{t('inspectionOverview.plan')}</Link>
     case 'COUNTER_PROPOSED':
-      return <Link className="btn sec" to={`/inspection-planning?review=${row.upcoming?.id}`}>{t('inspectionOverview.review')}</Link>
+      return <Link className="btn sec" to={`/inspection-planning?review=${row.current?.id}`}>{t('inspectionOverview.review')}</Link>
     case 'AGREED':
       return <button type="button" className="btn sec" disabled title={t('inspectionOverview.announceLater')}>{t('inspectionOverview.announce')}</button>
     default:
-      return null
+      return <Link className="btn sec" to={`/inspection-overview/${row.id}`}>{t('inspectionOverview.details')}</Link>
   }
 }

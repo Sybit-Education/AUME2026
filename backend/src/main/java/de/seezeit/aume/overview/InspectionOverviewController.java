@@ -2,7 +2,7 @@ package de.seezeit.aume.overview;
 
 import java.security.Principal;
 import de.seezeit.aume.overview.InspectionOverviewService.Counts;
-import de.seezeit.aume.overview.InspectionOverviewService.InspectionRow;
+import de.seezeit.aume.overview.InspectionOverviewService.ResidenceDetail;
 import de.seezeit.aume.overview.InspectionOverviewService.ResidenceRow;
 import de.seezeit.aume.overview.InspectionOverviewService.State;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
@@ -37,7 +37,7 @@ public class InspectionOverviewController {
     }
 
     @GetMapping("/{residenceId}")
-    public PagedModel<InspectionRow> inspections(Principal principal, @PathVariable Long residenceId, Pageable pageable) {
-        return new PagedModel<>(overview.inspections(principal.getName(), residenceId, pageable));
+    public ResidenceDetail detail(Principal principal, @PathVariable Long residenceId) {
+        return overview.detail(principal.getName(), residenceId);
     }
 }
