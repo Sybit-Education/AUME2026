@@ -180,7 +180,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(8));
+            .andExpect(jsonPath("$.privileges.length()").value(10));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -207,7 +207,7 @@ class ApplicationTests {
         assertThat(flats.count()).isEqualTo(9);
         assertThat(staffAssignments.count()).isEqualTo(8);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(8);
+        assertThat(privileges.count()).isEqualTo(10);
     }
 
     @Test
@@ -244,7 +244,10 @@ class ApplicationTests {
         assertThat(period.getEndsOn()).isEqualTo(LocalDate.of(2026, 12, 11));
         assertThat(period.getAnnouncedAt()).isNotNull();
         assertThat(period.getAnnouncedBy().getUserKey()).isEqualTo("clerk");
-        assertThat(entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
+        // Nur die Wohnanlage der Studierenden zählen: Die Kontrollplanung legt für „Egg“ eigene Beispieldaten an.
+        assertThat(entities.createQuery(
+                "select count(p) from InspectionPeriodEntity p where p.residence = :residence", Long.class)
+            .setParameter("residence", flat.getResidence())
             .getSingleResult()).isEqualTo(1L);
     }
 

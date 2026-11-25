@@ -121,7 +121,7 @@ erDiagram
 
 ## Anhänge
 
-Paket `de.seezeit.aume.attachment`. `storage_key` verweist auf die Datei im privaten Speicher.
+Paket `de.seezeit.aume.attachment`. `storage_key` verweist auf die Datei im privaten Speicher. Im Profil `dev` liegen die Bytes unter `devdata/uploads`. `POST /api/attachments` und `GET /api/attachments/{id}` sind nur dort registriert; gelesen wird nur die eigene Datei.
 
 ```mermaid
 erDiagram
@@ -202,6 +202,7 @@ erDiagram
     residences ||--o{ inspection_periods : plant
     users ||--o{ inspection_periods : legt_an
     users |o--o{ inspection_periods : kuendigt_an
+    users |o--o{ inspection_periods : stimmt_ab
 
     inspection_periods {
         bigint id PK
@@ -213,8 +214,21 @@ erDiagram
         timestamptz created_at
         bigint announced_by FK
         timestamptz announced_at
+        varchar status
+        varchar kind
+        bigint caretaker_id FK
+        time window_start
+        time window_end
+        date counter_starts_on
+        date counter_ends_on
+        time counter_window_start
+        time counter_window_end
+        varchar counter_reason
+        bigint version
     }
 ```
+
+`inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR`. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
 
 ## Kontrollen
 
@@ -272,7 +286,7 @@ erDiagram
     }
 ```
 
-`inspections.status`: `PLANNED`, `DRAFT`, `FINALIZED`, `PUBLISHED`. `overall_result`: `PASSED`, `FAILED`. `inspection_findings` ist je Kontrolle und Kriterium eindeutig. `rating`: `OK`, `DEFICIENT`, `RESOLVED_ON_SITE`. `severity` nur bei `DEFICIENT`: `LIGHT`, `SEVERE`. `version` ist das Optimistic-Lock-Feld.
+`inspections.status`: `PLANNED`, `DRAFT`, `FINALIZED`, `PUBLISHED`. „Kontrolle abschließen“ durch die Objektbetreuung setzt direkt `PUBLISHED` mit `published_by` = prüfende Person; die WG sieht das Ergebnis sofort (Teamentscheidung 24.11.2026). `FINALIZED` wird derzeit nicht gesetzt. `overall_result`: `PASSED`, `FAILED`. `inspection_findings` ist je Kontrolle und Kriterium eindeutig. `rating`: `OK`, `DEFICIENT`, `RESOLVED_ON_SITE`. `severity` nur bei `DEFICIENT`: `LIGHT`, `SEVERE`. `version` ist das Optimistic-Lock-Feld.
 
 ## Ergebnisse und Nachkontrollen
 

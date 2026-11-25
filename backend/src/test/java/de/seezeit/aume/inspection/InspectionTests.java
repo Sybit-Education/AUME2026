@@ -94,7 +94,7 @@ class InspectionTests {
         mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"overallResult\":\"FAILED\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("FINALIZED"))
+            .andExpect(jsonPath("$.status").value("PUBLISHED"))
             .andExpect(jsonPath("$.overallResult").value("FAILED"));
         mvc.perform(delete("/api/inspections/" + id + "/findings/" + stove).session(session).with(csrf()))
             .andExpect(status().isConflict());
@@ -167,7 +167,8 @@ class InspectionTests {
     void sampleDataIsIdempotent() {
         sampleData.run();
         assertThat(versions.count()).isEqualTo(1);
-        assertThat(inspections.count()).isEqualTo(5);
+        // 5 aus InspectionSampleData, 2 aus dem Beispiel-Gegenvorschlag in InspectionPlanningSampleData
+        assertThat(inspections.count()).isEqualTo(7);
     }
 
     private Integer startAndFirstCriterion(MockHttpSession session, Long id) throws Exception {
