@@ -115,7 +115,7 @@ class PreviousFindingsTests {
 
     private Long finished(String label, int round) {
         return inspections.findAll().stream()
-            .filter(i -> i.getFlat().getLabel().equals(label) && i.getStatus() == InspectionEntity.Status.FINALIZED
+            .filter(i -> i.getFlat().getLabel().equals(label) && InspectionHistoryService.DONE.contains(i.getStatus())
                 && i.getRound() == round)
             .findFirst().orElseThrow().getId();
     }
