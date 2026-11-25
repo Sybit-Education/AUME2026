@@ -12,6 +12,8 @@ Feature-Team 2, Sprint 1. Umgesetzte Stories:
 
 ## Navigation (US-X)
 
+Der geschützte Einstieg `/student` leitet zur gemeinsamen Startseite `/` weiter. Ohne Sitzung erfolgt zuerst die Anmeldung.
+
 Studierende ohne Personalrolle sehen die App-Ansicht aus dem Wireframe mit den unteren Tabs **Start** (`/`), **Putzplan** (`/student/cleaning-plan`), **Kontrolle** (`/student/inspection/appointment`) und **Mehr** (`/student/more`). Der aktive Tab ist hervorgehoben (`aria-current="page"`). Objektbetreuung und Sachbearbeitung behalten die Kopfnavigation.
 
 - Die Tabs stehen in `frontend/src/app/navigation.ts` (`studentTabs`). Ein Tab kann ein `privilege` tragen und wird dann nur Berechtigten angezeigt.
@@ -99,5 +101,5 @@ Schrift **Manrope** (`@fontsource/manrope`, 400–700, eingebunden in `main.tsx`
 
 ## Prüfung
 
-- Backend: `ResidentChecklistTests` (Deutsch, Englisch, Rückfall auf Deutsch, nicht veröffentlicht, ohne Anmeldung, ohne Privileg); Privilegienzahl in `ApplicationTests` auf 8 angepasst (zusammen mit `INSPECTION_PERFORM` aus Team 3).
+- Backend: `ResidentChecklistTests` (Deutsch, Englisch, Rückfall auf Deutsch, nicht veröffentlicht, ohne Anmeldung, ohne Privileg). `ApplicationTests` erwartet im zusammengeführten Stand zehn globale Privilegien, einschließlich `INSPECTION_PLAN` und `INSPECTION_PERIOD_RESPOND`.
 - Frontend: `App.test.tsx` prüft Tab-Leiste und aktiven Tab, Kopfnavigation für Personal, Sprachwechsel unter Mehr → Einstellungen samt Speicherung, Checkliste mit Details und Sprachwechsel, leeren Zustand und fehlendes Privileg.

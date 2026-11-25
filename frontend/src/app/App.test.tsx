@@ -64,6 +64,44 @@ afterEach(() => {
   routers = []
 })
 
+const imprintUrl = 'https://www.htwg-konstanz.de/info/impressum'
+const privacyUrl = 'https://www.htwg-konstanz.de/datenschutzerklaerung'
+
+function expectHtwgLegalLinks() {
+  const imprint = screen.getByRole('link', { name: /Impressum/ })
+  const privacy = screen.getByRole('link', { name: /Datenschutzerklärung/ })
+  expect(imprint.getAttribute('href')).toBe(imprintUrl)
+  expect(privacy.getAttribute('href')).toBe(privacyUrl)
+  expect(imprint.getAttribute('target')).toBe('_blank')
+  expect(privacy.getAttribute('rel')).toContain('noopener')
+  expect(screen.getByText('HTWG Konstanz')).toBeDefined()
+}
+
+it('shows HTWG legal links at the bottom of login and of every dashboard', async () => {
+  const router = mount('/login')
+  await screen.findByRole('button', { name: 'Objektbetreuung' })
+  expectHtwgLegalLinks()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Sachbearbeitung' }))
+  await screen.findByRole('heading', { name: 'Übersicht' })
+  expectHtwgLegalLinks()
+
+  fireEvent.click(screen.getByRole('link', { name: 'Wohnanlagen' }))
+  await screen.findByText('Sonne')
+  expect(screen.queryByRole('link', { name: /Impressum/ })).toBeNull()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
+  const tabs = await screen.findByRole('navigation', { name: 'Navigation der Studierenden' })
+  fireEvent.click(within(tabs).getByRole('link', { name: 'Start' }))
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  expect(router.state.location.pathname).toBe('/')
+  expectHtwgLegalLinks()
+  expect(screen.getByRole('navigation', { name: 'Navigation der Studierenden' })).toBeDefined()
+})
+
 it('restores the requested path, query and fragment after mock login', async () => {
   const router = mount('/residences?page=1#assigned')
   fireEvent.click(await screen.findByRole('button', { name: 'Sachbearbeitung' }))
@@ -224,11 +262,38 @@ it('goes back to the previous control section with the browser back button', asy
   expect(top.getByRole('link', { name: 'Checkliste' }).getAttribute('aria-current')).toBe('page')
 })
 
+it('redirects the student index to the dashboard and highlights Start', async () => {
+  signedIn = student
+  const router = mount('/student')
+
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  expect(router.state.location.pathname).toBe('/')
+  const tabs = within(screen.getByRole('navigation', { name: 'Navigation der Studierenden' }))
+  expect(tabs.getByRole('link', { name: 'Start' }).getAttribute('aria-current')).toBe('page')
+})
+
+it('returns to the student index after sign-in and opens the dashboard', async () => {
+  const router = mount('/student')
+  const signIn = await screen.findByRole('button', { name: 'Studierende' })
+  expect(router.state.location.pathname).toBe('/login')
+  expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/student')
+  fireEvent.click(signIn)
+
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  expect(login).toHaveBeenCalledWith('student', '/student')
+  expect(router.state.location.pathname).toBe('/')
+  const tabs = within(screen.getByRole('navigation', { name: 'Navigation der Studierenden' }))
+  expect(tabs.getByRole('link', { name: 'Start' }).getAttribute('aria-current')).toBe('page')
+})
+
 it.each([
   ['/kontrolle', '/student/inspection/appointment'],
+  ['/kontrolle/termin', '/student/inspection/appointment'],
   ['/kontrolle/checkliste', '/student/inspection/checklist'],
+  ['/kontrolle/ergebnis', '/student/inspection/result'],
   ['/kontrolle/verlauf', '/student/inspection/history'],
   ['/putzplan', '/student/cleaning-plan'],
+  ['/mehr', '/student/more'],
   ['/mehr/einstellungen', '/student/settings'],
 ])('redirects the old student address %s to %s', async (oldPath, newPath) => {
   signedIn = student

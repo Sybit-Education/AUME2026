@@ -12,6 +12,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
 | `/inspection-planning?residence=<id>` | Angemeldet, `INSPECTION_PLAN` | Kontrollzeitraum einer Wohnanlage planen und abstimmen |
+| `/student` | Angemeldet | Leitet zur gemeinsamen Startseite `/` weiter |
 | `/student/inspection` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout der Kontroll-Reiter, Index leitet zu `/student/inspection/appointment` weiter |
 | `/student/inspection/appointment` | Angemeldet, Rolle `STUDENT` | Reiter „Termin“: Kontrolltermin der eigenen WG mit Kalenderexport |
 | `/student/inspection/checklist` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Reiter „Checkliste“: Kriterien je Bereich mit Erklärungen (US-21, US-22) |
@@ -26,9 +27,9 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 
 ### Präfix `student/`
 
-Alle Adressen der Studierenden-App beginnen mit `/student/`, damit sie nicht mit den Seiten der Objektbetreuung (z. B. `/inspections`) kollidieren. Die Routen hängen in `app/router.ts` unter dem gemeinsamen Eintrag `path: 'student'`; Features registrieren nur ihren relativen Pfad (z. B. `checklist`, `appointment`, `more`).
+Die Fachseiten der Studierenden-Ansicht verwenden das Präfix `/student/`, um Pfadkollisionen mit Personalrouten wie `/inspections` zu vermeiden. Sie hängen in `app/router.ts` unter `path: 'student'`. Die Features registrieren relative Pfade wie `checklist`, `appointment` und `more`. Die geschützte Startseite bleibt für alle Rollen unter `/` erreichbar. Wer ohne Sitzung `/student` öffnet, gelangt nach der Anmeldung über diese Indexroute zur Startseite.
 
-Die früheren deutschen Adressen leiten dauerhaft weiter (`legacyStudentRedirects` in `app/router.ts`), damit Lesezeichen funktionieren:
+Die früheren deutschen Adressen leiten im Browser weiter (`legacyStudentRedirects` in `app/router.ts`), damit Lesezeichen funktionieren:
 
 | Alt | Neu |
 |---|---|

@@ -215,6 +215,8 @@ class ApplicationTests {
         var originalId = sampleInspection().getId();
         var inspectionCount = entities.createQuery("select count(i) from InspectionEntity i", Long.class)
             .getSingleResult();
+        var periodCount = entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
+            .getSingleResult();
         studentSampleData.run();
         studentSampleData.run();
         entities.flush();
@@ -244,11 +246,16 @@ class ApplicationTests {
         assertThat(period.getEndsOn()).isEqualTo(LocalDate.of(2026, 12, 11));
         assertThat(period.getAnnouncedAt()).isNotNull();
         assertThat(period.getAnnouncedBy().getUserKey()).isEqualTo("clerk");
-        // Nur die Wohnanlage der Studierenden zählen: Die Kontrollplanung legt für „Egg“ eigene Beispieldaten an.
-        assertThat(entities.createQuery(
-                "select count(p) from InspectionPeriodEntity p where p.residence = :residence", Long.class)
+        assertThat(entities.createQuery("""
+            select count(p) from InspectionPeriodEntity p
+            where p.residence = :residence and p.startsOn = :startsOn and p.endsOn = :endsOn
+            """, Long.class)
             .setParameter("residence", flat.getResidence())
+            .setParameter("startsOn", period.getStartsOn())
+            .setParameter("endsOn", period.getEndsOn())
             .getSingleResult()).isEqualTo(1L);
+        assertThat(entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
+            .getSingleResult()).isEqualTo(periodCount);
     }
 
     @Test

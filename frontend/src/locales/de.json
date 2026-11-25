@@ -10,6 +10,13 @@
     "logout": "Abmelden",
     "retry": "Erneut versuchen"
   },
+  "legal": {
+    "nav": "Rechtliche Hinweise der HTWG Konstanz",
+    "imprint": "Impressum",
+    "privacy": "Datenschutzerklärung",
+    "provider": "HTWG Konstanz",
+    "newTab": "öffnet in neuem Tab"
+  },
   "roles": {
     "student": "Studierende",
     "caretaker": "Objektbetreuung",
