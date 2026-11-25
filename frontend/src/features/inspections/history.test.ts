@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { hasFilter, historyQuery, invalidRange, readHistoryFilter, toggleSort, withFilter } from './history'
+import {
+  dayPlaceholder, formatDate, formatDay, hasFilter, historyQuery, invalidRange, parseDay, readHistoryFilter, toggleSort, withFilter,
+} from './history'
 
 const read = (query: string) => readHistoryFilter(new URLSearchParams(query))
 
@@ -60,5 +62,29 @@ describe('inspection history table header', () => {
     expect(withFilter(params('page=2&sort=flat'), { flat: ' S-01 ' }).toString()).toBe('sort=flat&flat=S-01')
     expect(withFilter(params('flat=S-01&result=FAILED'), { flat: '' }).toString()).toBe('result=FAILED')
     expect(withFilter(params(''), { from: '2026-01-01', to: '' }).toString()).toBe('from=2026-01-01')
+  })
+})
+
+describe('dates as day/month/year', () => {
+  it('reads typed dates regardless of separator and leading zeros', () => {
+    expect(parseDay('28.03.2026')).toBe('2026-03-28')
+    expect(parseDay(' 8/3/2026 ')).toBe('2026-03-08')
+    expect(parseDay('28-03-2026')).toBe('2026-03-28')
+    expect(parseDay('')).toBe('')
+  })
+
+  it('rejects impossible or differently ordered dates', () => {
+    expect(parseDay('30.02.2026')).toBeNull()
+    expect(parseDay('2026-03-28')).toBeNull()
+    expect(parseDay('28.03.26')).toBeNull()
+    expect(parseDay('gestern')).toBeNull()
+  })
+
+  it('shows days in the order day, month, year in both languages', () => {
+    expect(formatDay('2026-03-28', 'de')).toBe('28.03.2026')
+    expect(formatDay('2026-03-28', 'en')).toBe('28/03/2026')
+    expect(dayPlaceholder('de')).toBe('TT.MM.JJJJ')
+    expect(formatDate('2026-03-28T12:00:00Z', 'en')).toBe('28/03/2026')
+    expect(formatDate('2026-03-28T12:00:00Z', 'de')).toBe('28.03.2026')
   })
 })

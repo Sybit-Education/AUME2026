@@ -150,3 +150,45 @@
   cursor:pointer;
   font:inherit;
 }
+/* Datumsfeld Tag/Monat/Jahr mit Kalender-Knopf im Filter der Historie */
+.ins-date {
+  position:relative;
+}
+.ins-date input:not(.ins-date-picker) {
+  padding-right:38px;
+}
+.ins-date input[aria-invalid=true] {
+  border-color:#c0392b;
+}
+.ins-date-btn {
+  position:absolute;
+  top:50%;
+  right:4px;
+  transform:translateY(-50%);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:#34484f;
+  cursor:pointer;
+}
+.ins-date-btn:hover,.ins-date-btn:focus-visible {
+  background:#edf4f4;
+}
+/* Unsichtbares natives Feld, nur als Anker für die Datumsauswahl des Browsers */
+.ins-date-picker {
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  height:0;
+  min-height:0;
+  padding:0;
+  border:0;
+  opacity:0;
+  pointer-events:none;
+}

@@ -108,6 +108,25 @@ export async function getInspection(id: number, signal: AbortSignal): Promise<In
   return (await response.json()) as Inspection
 }
 
+/**
+ * Lädt das Protokoll einer abgeschlossenen Kontrolle als PDF und speichert es über den Browser. Läuft über
+ * `api`, damit Sprache, Anmeldung und Fehlerbehandlung wie bei allen anderen Aufrufen gelten.
+ */
+export async function downloadProtocol(id: number): Promise<void> {
+  const response = requireOk(await api(`/api/inspections/${id}/protocol.pdf`), 'errors.protocolDownload')
+  const fileName = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') ?? '')?.[1]
+    ?? `Kontrollprotokoll_${id}.pdf`
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.append(link)
+  link.click()
+  link.remove()
+  // Erst nach dem Klick freigeben, sonst bricht der Download in manchen Browsern ab.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 /** Höchstens drei abgeschlossene frühere Kontrollen der WG, neueste zuerst. */
 export async function getPreviousFindings(id: number, signal: AbortSignal): Promise<PreviousInspection[]> {
   const response = requireOk(await api(`/api/inspections/${id}/previous-findings`, { signal }), 'errors.inspection')

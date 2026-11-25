@@ -102,7 +102,41 @@ export function withFilter(params: URLSearchParams, values: Partial<Record<'flat
   return next
 }
 
-/** Datum in der Sprache der Oberfläche, z. B. „23.10.2026“. */
+/** Englisch ebenfalls Tag/Monat/Jahr statt der US-Reihenfolge. */
+function dateLocale(language: string | undefined): string {
+  return language?.startsWith('en') ? 'en-GB' : 'de-DE'
+}
+
+/** Datum in der Sprache der Oberfläche, immer Tag/Monat/Jahr, z. B. „23.10.2026“ bzw. „23/10/2026“. */
 export function formatDate(value: string | null, language: string | undefined): string {
-  return value ? new Date(value).toLocaleDateString(language, { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
+  return value ? new Date(value).toLocaleDateString(dateLocale(language), { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
+}
+
+function separator(language: string | undefined): string {
+  return language?.startsWith('en') ? '/' : '.'
+}
+
+/** Kalendertag aus der Adresse (JJJJ-MM-TT) für das Eingabefeld, z. B. „28.03.2026“. */
+export function formatDay(iso: string, language: string | undefined): string {
+  if (!isoDate.test(iso)) return ''
+  const [year, month, day] = iso.split('-')
+  return [day, month, year].join(separator(language))
+}
+
+/** Platzhalter für das Eingabefeld, z. B. „TT.MM.JJJJ“. */
+export function dayPlaceholder(language: string | undefined): string {
+  return language?.startsWith('en') ? 'DD/MM/YYYY' : 'TT.MM.JJJJ'
+}
+
+/**
+ * Liest ein eingegebenes Datum im Format Tag/Monat/Jahr (Trenner „.“, „/“ oder „-“, Tag und Monat auch
+ * einstellig). Ergebnis ist JJJJ-MM-TT, `''` für ein leeres Feld und `null` für ein ungültiges Datum.
+ */
+export function parseDay(text: string): string | null {
+  const value = text.trim()
+  if (!value) return ''
+  const match = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(value)
+  if (!match) return null
+  const iso = `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`
+  return validDate(iso) || null
 }

@@ -7,7 +7,7 @@ import { loginDestination } from '@/lib/auth/returnTo'
 import { forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
 import {
-  clearFinding, finalizeInspection, getInspection, markOk, rateCriterion, startInspection,
+  clearFinding, downloadProtocol, finalizeInspection, getInspection, markOk, rateCriterion, startInspection,
   type Criterion, type Finding, type Inspection, type OverallResult, type PreviousInspection, type Severity,
 } from './api'
 import { areaIcon, areas, suggestedResult, type AreaState } from './summary'
@@ -108,6 +108,12 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
           )}
           {editable && step === 'summary' && (
             <button className="btn gh" disabled={busy} onClick={() => setStep('check')}>{t('inspections.backToChecklist')}</button>
+          )}
+          {done && (
+            <button className="btn" disabled={busy}
+              onClick={() => void run(async () => { await downloadProtocol(inspection.id); return inspection })}>
+              {t(busy ? 'inspections.protocol.downloading' : 'inspections.protocol.download')}
+            </button>
           )}
         </div>
       </div>
@@ -258,7 +264,8 @@ function Summary({ inspection, states, open, busy, onFinalize }: SummaryProps) {
   const [result, setResult] = useState<OverallResult>(inspection.overallResult ?? suggestedResult(inspection.findings))
   return (
     <>
-      <section className="card">
+      {/* Abgeschlossene Kontrollen zeigen die Bereiche im Protokoll, die Übersicht wäre doppelt. */}
+      {inspection.status === 'DRAFT' && <section className="card">
         <h3>{t('inspections.overview')}</h3>
         <div className="tw" style={{ marginTop: 10 }}>
           <table className="tbl">
@@ -279,7 +286,7 @@ function Summary({ inspection, states, open, busy, onFinalize }: SummaryProps) {
             </tbody>
           </table>
         </div>
-      </section>
+      </section>}
       <section className="card">
         <h3>{t('inspections.overallResult')}</h3>
         {inspection.status === 'DRAFT' ? (

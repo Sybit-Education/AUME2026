@@ -4,7 +4,7 @@ import { Link, useLoaderData, useSearchParams } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import type { HistoryPage as HistoryData } from './api'
 import {
-  formatDate, hasFilter, toggleSort, withFilter, type HistoryFilter, type SortColumn,
+  dayPlaceholder, formatDate, formatDay, hasFilter, parseDay, toggleSort, withFilter, type HistoryFilter, type SortColumn,
 } from './history'
 import InspectionTabs from './InspectionTabs'
 
@@ -232,6 +232,7 @@ interface FilterPopoverProps {
 function FilterPopover({ column, filter, left, top, onApply, onClose }: FilterPopoverProps) {
   const { t } = useTranslation()
   const box = useRef<HTMLFormElement>(null)
+  const [invalid, setInvalid] = useState<'from' | 'to' | null>(null)
   // Immer die aktuelle Funktion aufrufen, ohne Fokus und Listener bei jedem Rendern neu zu setzen.
   const close = useRef(onClose)
   useEffect(() => { close.current = onClose })
@@ -256,7 +257,14 @@ function FilterPopover({ column, filter, left, top, onApply, onClose }: FilterPo
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     const value = (name: string) => String(data.get(name) ?? '')
-    if (column === 'date') onApply({ from: value('from'), to: value('to') })
+    if (column === 'date') {
+      const from = parseDay(value('from'))
+      const to = parseDay(value('to'))
+      const invalid = from === null ? 'from' : to === null ? 'to' : null
+      setInvalid(invalid)
+      if (invalid) box.current?.querySelector<HTMLInputElement>(`#history-${invalid}`)?.focus()
+      else onApply({ from: from ?? '', to: to ?? '' })
+    }
     else if (column === 'flat') onApply({ flat: value('flat') })
     else if (column === 'kind') onApply({ followUp: value('followUp') })
     else onApply({ result: value('result') })
@@ -274,14 +282,9 @@ function FilterPopover({ column, filter, left, top, onApply, onClose }: FilterPo
       style={{ left, top, width: POPOVER_WIDTH }} onSubmit={submit}>
       {column === 'date' && (
         <>
-          <div className="fld">
-            <label htmlFor="history-from">{t('inspections.history.from')}</label>
-            <input id="history-from" name="from" type="date" defaultValue={filter.from} />
-          </div>
-          <div className="fld">
-            <label htmlFor="history-to">{t('inspections.history.to')}</label>
-            <input id="history-to" name="to" type="date" defaultValue={filter.to} />
-          </div>
+          <DateField name="from" label={t('inspections.history.from')} initial={filter.from} invalid={invalid === 'from'} />
+          <DateField name="to" label={t('inspections.history.to')} initial={filter.to} invalid={invalid === 'to'} />
+          {invalid && <p className="err xs" role="alert" style={{ margin: '0 0 8px' }}>{t('inspections.history.invalidDate')}</p>}
         </>
       )}
       {column === 'flat' && (
@@ -315,5 +318,60 @@ function FilterPopover({ column, filter, left, top, onApply, onClose }: FilterPo
         <button className="btn sm gh" type="button" onClick={() => onApply(clear)}>{t('inspections.history.clear')}</button>
       </div>
     </form>
+  )
+}
+
+interface DateFieldProps {
+  name: 'from' | 'to'
+  label: string
+  /** Kalendertag als JJJJ-MM-TT oder leer. */
+  initial: string
+  invalid: boolean
+}
+
+/**
+ * Datumsfeld im Format Tag/Monat/Jahr, unabhängig von der Spracheinstellung des Browsers. Der Kalender-Knopf
+ * öffnet die Datumsauswahl des Browsers und schreibt den gewählten Tag ins Textfeld.
+ */
+function DateField({ name, label, initial, invalid }: DateFieldProps) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage
+  const text = useRef<HTMLInputElement>(null)
+  const picker = useRef<HTMLInputElement>(null)
+  const id = `history-${name}`
+
+  function openPicker() {
+    const input = picker.current
+    if (!input) return
+    input.value = parseDay(text.current?.value ?? '') ?? ''
+    try {
+      input.showPicker()
+    } catch {
+      // Ältere Browser ohne showPicker: Eingabe bleibt über das Textfeld möglich.
+      text.current?.focus()
+    }
+  }
+
+  return (
+    <div className="fld">
+      <label htmlFor={id}>{label}</label>
+      <div className="ins-date">
+        <input ref={text} id={id} name={name} inputMode="numeric" autoComplete="off" maxLength={10}
+          placeholder={dayPlaceholder(language)} defaultValue={formatDay(initial, language)}
+          aria-invalid={invalid || undefined} aria-describedby={`${id}-hint`} />
+        <span id={`${id}-hint`} className="ins-sr">{dayPlaceholder(language)}</span>
+        <button type="button" className="ins-date-btn" onClick={openPicker}
+          aria-label={t('inspections.history.pickDate', { field: label })}>
+          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+            <rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </button>
+        <input ref={picker} type="date" className="ins-date-picker" tabIndex={-1} aria-hidden="true"
+          onChange={(event) => {
+            if (text.current && event.target.value) text.current.value = formatDay(event.target.value, language)
+          }} />
+      </div>
+    </div>
   )
 }
