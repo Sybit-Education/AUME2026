@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLoaderData } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
+import { useAuth } from '@/lib/auth/AuthContext'
 import type { Checklist, Criterion } from './api'
 
 export type ChecklistData = { checklist: Checklist | null }
@@ -12,8 +13,15 @@ export type ChecklistData = { checklist: Checklist | null }
  */
 export default function ChecklistPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const data = useLoaderData<ChecklistData | null>()
   if (!data) return <LoadingPage />
+  const processLink = user?.privileges.includes('INFO_PAGE_READ') && (
+    <Link className="card checklist-process-link" to="/student/inspection/process">
+      {t('checklist.processLink')}
+      <span aria-hidden="true">›</span>
+    </Link>
+  )
 
   return (
     <>
@@ -33,6 +41,7 @@ export default function ChecklistPage() {
           <p className="mut xs checklist-hint">{t('checklist.sameCriteria')}</p>
         </>
       )}
+      {processLink}
     </>
   )
 }

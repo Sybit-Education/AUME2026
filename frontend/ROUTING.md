@@ -15,6 +15,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/student/inspection` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout der Kontroll-Reiter, Index leitet zu `/student/inspection/appointment` weiter |
 | `/student/inspection/appointment` | Angemeldet, Rolle `STUDENT` | Reiter „Termin“: Kontrolltermin der eigenen WG mit Kalenderexport |
 | `/student/inspection/checklist` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Reiter „Checkliste“: Kriterien je Bereich mit Erklärungen (US-21, US-22) |
+| `/student/inspection/process` | Angemeldet, Rolle `STUDENT`, `INFO_PAGE_READ` | Ablauf und Konsequenzen (US-23), Link unter der Checkliste; Reiter „Checkliste“ bleibt markiert |
 | `/student/inspection/result` | Angemeldet, Rolle `STUDENT` | Reiter „Ergebnis“: Platzhalter für das eigene Kontrollergebnis |
 | `/student/inspection/history` | Angemeldet, Rolle `STUDENT` | Reiter „Verlauf“: Platzhalter für den eigenen Kontrollverlauf |
 | `/student/cleaning-plan` | Angemeldet | Platzhalter, bis das Putzplan-Feature die Route übernimmt |

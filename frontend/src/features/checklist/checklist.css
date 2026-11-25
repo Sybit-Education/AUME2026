@@ -63,3 +63,14 @@
 .checklist-hint {
   margin: 4px 2px 0;
 }
+
+.checklist-process-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--td);
+  font-weight: 700;
+  text-decoration: none;
+}

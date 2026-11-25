@@ -19,6 +19,7 @@ import { inspectionPlanningRoutes } from '@/features/inspection-planning/routes'
 import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
+import { inspectionProcessRoutes } from '@/features/inspection-process/routes'
 import { moreRoutes } from '@/features/more/routes'
 
 /** Alte deutsche Adressen (vor dem Präfix „student/“) leiten weiter, damit Lesezeichen funktionieren. */
@@ -65,6 +66,7 @@ export function createAppRoutes(): RouteObject[] {
                   { index: true, element: createElement(Navigate, { to: 'appointment', replace: true }) },
                   ...studentInspectionRoutes,
                   ...checklistRoutes,
+                  ...inspectionProcessRoutes,
                   { path: 'result', Component: ComingSoonPage },
                   { path: 'history', Component: ComingSoonPage },
                 ],

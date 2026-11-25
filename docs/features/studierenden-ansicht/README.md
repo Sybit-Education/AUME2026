@@ -1,4 +1,4 @@
-# Studierenden-Ansicht: Navigation, Sprache und Checkliste
+# Studierenden-Ansicht: Navigation, Sprache, Checkliste und Ablauf
 
 Feature-Team 2, Sprint 1. Umgesetzte Stories:
 
@@ -55,6 +55,30 @@ Die Sprachauswahl gibt es nur an dieser einen Stelle (`components/LanguageSwitch
 ### Übersetzungen
 
 Die Kriterien speichern die deutsche Fassung. Englische Texte stehen in `checklist_criterion_translations` (siehe [Datenmodell](../../architektur/datenmodell.md#standards)). Fehlt eine Übersetzung, liefert die API den deutschen Text. Im Profil `dev` legt `ChecklistSampleData` die Kriterien aus dem Wireframe an, falls noch keine Fassung existiert, und ergänzt die englischen Texte.
+
+## Ablauf und Konsequenzen (US-23)
+
+`/student/inspection/process` erklärt Studierenden, wie eine Kontrolle abläuft und was bei Mängeln passiert. Erreichbar ist die Seite über den Link **Ablauf und Konsequenzen** unter der Checkliste. Bewusst gibt es keinen fünften Reiter, weil die Navigation genau vier gleich breite Reiter vorsieht. Auf der Seite bleiben der Reiter **Checkliste** und der untere Tab **Kontrolle** markiert. Ein Zurück-Link führt zur Checkliste.
+
+Die Seite zeigt drei aufklappbare Bereiche im Stil der Checkliste (farbiger Kartenkopf, grüner Pfeil, `aria-expanded`). Einen Zeitstrahl gibt es bewusst nicht.
+
+| Bereich | Feld aus `GET /api/info-pages` | Darstellung |
+| --- | --- | --- |
+| Ablauf einer Kontrolle | `process` | zugeklappt |
+| Konsequenzen und Kosten | `consequences` | hervorgehoben: oranger Kopf, Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
+| Sauberkeitsstandards | `standards` | zugeklappt |
+
+Die Texte pflegt die Sachbearbeitung unter **Informationen** (`/standards/info`). Sie sind reiner Text: Jede Zeile wird ein eigener Absatz. Ist ein Text leer, erscheint „Noch keine Informationen.“ Die Texte gibt es nur auf Deutsch. In der englischen Oberfläche steht deshalb ein kurzer Hinweis darüber.
+
+Das Feature liegt in `frontend/src/features/inspection-process/` und hat einen eigenen Abruf der API, ohne Import aus `features/standards`.
+
+### Rechte
+
+| Privileg | Studierende | Objektbetreuung | Sachbearbeitung | Wofür |
+| --- | :---: | :---: | :---: | --- |
+| `INFO_PAGE_READ` | ✓ | – | ✓ | Texte lesen; die Seite selbst ist zusätzlich auf die Rolle `STUDENT` beschränkt |
+
+Ohne `INFO_PAGE_READ` fehlt der Link unter der Checkliste, und die Adresse führt zu „Zugriff nicht erlaubt“, ohne die API aufzurufen.
 
 ## Abstimmung mit anderen Teams
 
