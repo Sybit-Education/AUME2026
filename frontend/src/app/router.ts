@@ -67,7 +67,6 @@ export function createAppRoutes(): RouteObject[] {
                   ...studentInspectionRoutes,
                   ...checklistRoutes,
                   ...inspectionProcessRoutes,
-                  { path: 'result', Component: ComingSoonPage },
                   { path: 'history', Component: ComingSoonPage },
                 ],
               },
