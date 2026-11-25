@@ -79,7 +79,7 @@ Die WG ergibt sich wie beim Termin aus der aktiven Mitgliedschaft (`validTo` lee
 
 ### Entwicklungsdaten
 
-Es gibt bewusst keine zusätzliche Beispiel-Kontrolle: Sie würde die genauen Zählungen in den Tests von Team 3 verändern. Die vorhandenen Kontrollen aus `InspectionSampleData` liegen vor dem Einzug der Mock-Person `student` und sind deshalb nicht sichtbar. Lokal zeigt der Reiter daher den Leerzustand; Ergebnis und Mängel sind durch `StudentInspectionResultTests` (Backend) und `InspectionResultRoutes.test.tsx` (Frontend) abgesichert.
+`StudentSampleData` legt für die WG S-01 der Mock-Person `student` eine veröffentlichte Erstkontrolle nach dem Einzug an (nicht bestanden, Mängel bei „Herd & Backofen“ und bei „Dusche & WC“ mit vermuteter Gebäudeursache), aber nur, wenn es noch keine gibt. Die Kontrollen aus `InspectionSampleData` liegen vor dem Einzug und bleiben für Studierende unsichtbar. Weil die Objektbetreuung diese Kontrolle in ihrem Verlauf sieht, sind die erwarteten Zahlen in `InspectionHistoryTests` und `InspectionTests.sampleDataIsIdempotent` angepasst (mit Team 3 abgestimmt).
 
 ## Offen
 
