@@ -60,7 +60,8 @@
     "periodAnnounced": "This period has already been announced and can no longer be changed here.",
     "periodChanged": "This period has changed in the meantime. Please check the current state.",
     "periodInvalidStatus": "This step is not possible in the current status.",
-    "periodStarted": "At least one inspection has already started. The proposal can no longer be withdrawn."
+    "periodStarted": "At least one inspection has already started. The proposal can no longer be withdrawn.",
+    "studentInspectionResult": "The inspection result could not be loaded."
   },
   "navigation": {
     "main": "Main navigation",
@@ -178,6 +179,31 @@
     "changed": "Inspection date changed",
     "empty": "No inspection announced.",
     "download": "Add to calendar"
+  },
+  "studentResult": {
+    "emptyTitle": "No result yet",
+    "emptyAnnounced": "Your inspection has been announced. The result will appear here as soon as Seezeit has sent it. This happens no later than 24 hours after the inspection.",
+    "emptyNext": "Your result will appear here after the next inspection.",
+    "title": "Result · {{kind}} on {{date}}",
+    "titleWithoutDate": "Result · {{kind}}",
+    "initial": "Initial inspection",
+    "followUp": "Follow-up inspection",
+    "available": "Result available",
+    "passed": "Passed! Your flat did well in the inspection.",
+    "failed": "Not passed",
+    "assessedBy": "The caretakers carried out the assessment. Only your flat can see this result.",
+    "nextStepTitle": "Your next step",
+    "nextStep": "Fix the deficiencies. Seezeit will set the deadline for the follow-up inspection and send you a message.",
+    "deficienciesTitle": "Deficiencies ({{count}})",
+    "deficient": "Deficiency",
+    "noNote": "No note.",
+    "buildingCause": "Building cause under review",
+    "buildingCauseHint": "The caretakers suspect a cause in the building. Seezeit is looking into it.",
+    "noDeficiencies": "No deficiencies were found.",
+    "resolvedTitle": "Resolved on site ({{count}})",
+    "resolved": "resolved",
+    "passedTitle": "Passed criteria ({{count}})",
+    "ok": "OK"
   },
   "pages": {
     "welcome": "Welcome, {{name}}.",

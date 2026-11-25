@@ -46,27 +46,32 @@ class InspectionHistoryTests {
     void historyListsFinishedInspectionsNewestFirst() throws Exception {
         mvc.perform(get(HISTORY).session(login("caretaker")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.page.totalElements").value(3))
+            .andExpect(jsonPath("$.page.totalElements").value(4))
+            // Erstkontrolle S-01 nach dem Einzug von "student" (heute, StudentSampleData, US-38),
             // Nachkontrolle S-01 (vor 23 Tagen), S-02 (vor 28 Tagen), Erstkontrolle S-01 (vor 30 Tagen)
             .andExpect(jsonPath("$.content[0].flatLabel").value("S-01"))
-            .andExpect(jsonPath("$.content[0].round").value(1))
-            .andExpect(jsonPath("$.content[0].overallResult").value("PASSED"))
-            .andExpect(jsonPath("$.content[1].flatLabel").value("S-02"))
-            .andExpect(jsonPath("$.content[2].overallResult").value("FAILED"))
-            .andExpect(jsonPath("$.content[2].deficiencies").value(2))
-            .andExpect(jsonPath("$.content[2].inspectorName").isNotEmpty())
-            .andExpect(jsonPath("$.content[2].status").value("PUBLISHED"));
+            .andExpect(jsonPath("$.content[0].round").value(0))
+            .andExpect(jsonPath("$.content[0].overallResult").value("FAILED"))
+            .andExpect(jsonPath("$.content[1].flatLabel").value("S-01"))
+            .andExpect(jsonPath("$.content[1].round").value(1))
+            .andExpect(jsonPath("$.content[1].overallResult").value("PASSED"))
+            .andExpect(jsonPath("$.content[2].flatLabel").value("S-02"))
+            .andExpect(jsonPath("$.content[3].overallResult").value("FAILED"))
+            .andExpect(jsonPath("$.content[3].deficiencies").value(2))
+            .andExpect(jsonPath("$.content[3].inspectorName").isNotEmpty())
+            .andExpect(jsonPath("$.content[3].status").value("PUBLISHED"));
     }
 
     @Test
     void historyCanBeFiltered() throws Exception {
         var session = login("caretaker");
-        expectTotal(session, "?flat=S-01", 2);
-        expectTotal(session, "?flat=01", 2);
-        expectTotal(session, "?result=FAILED", 1);
+        // inklusive der Erstkontrolle S-01 aus StudentSampleData (FAILED, US-38)
+        expectTotal(session, "?flat=S-01", 3);
+        expectTotal(session, "?flat=01", 3);
+        expectTotal(session, "?result=FAILED", 2);
         expectTotal(session, "?followUp=true", 1);
-        expectTotal(session, "?followUp=false", 2);
-        expectTotal(session, "?flat=S-01&followUp=false&result=FAILED", 1);
+        expectTotal(session, "?followUp=false", 3);
+        expectTotal(session, "?flat=S-01&followUp=false&result=FAILED", 2);
     }
 
     @Test
@@ -78,7 +83,8 @@ class InspectionHistoryTests {
         inspectedAt("S-01", 1, "2026-04-03T12:00");  // Nachkontrolle
 
         var session = login("caretaker");
-        expectTotal(session, "?from=2026-03-28", 2);
+        // plus die Erstkontrolle aus StudentSampleData (heute, US-38)
+        expectTotal(session, "?from=2026-03-28", 3);
         expectTotal(session, "?to=2026-03-28", 1);
         expectTotal(session, "?from=2026-03-28&to=2026-03-28", 0);
         // beide Tage inklusive, auch für Prüfungen kurz vor bzw. nach Mitternacht
@@ -105,7 +111,7 @@ class InspectionHistoryTests {
                 .andExpect(jsonPath("$.page.totalElements").value(0));
         }
         mvc.perform(get(HISTORY).param("flat", "  s-01 ").session(session))
-            .andExpect(jsonPath("$.page.totalElements").value(2));
+            .andExpect(jsonPath("$.page.totalElements").value(3));
     }
 
     @Test
@@ -128,7 +134,7 @@ class InspectionHistoryTests {
         inspections.save(foreign);
 
         var session = login("caretaker");
-        expectTotal(session, "", 3);
+        expectTotal(session, "", 4);
         mvc.perform(get("/api/inspections/" + foreign.getId()).session(session)).andExpect(status().isNotFound());
     }
 
@@ -156,7 +162,7 @@ class InspectionHistoryTests {
             .findFirst().orElseThrow().getId();
         mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
             .andExpect(status().isOk());
-        expectTotal(session, "", 3);
+        expectTotal(session, "", 4);
         mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
             .andExpect(status().isOk());
         mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
@@ -164,7 +170,7 @@ class InspectionHistoryTests {
             .andExpect(status().isOk());
 
         mvc.perform(get(HISTORY).session(session))
-            .andExpect(jsonPath("$.page.totalElements").value(4))
+            .andExpect(jsonPath("$.page.totalElements").value(5))
             .andExpect(jsonPath("$.content[0].id").value(id))
             .andExpect(jsonPath("$.content[0].deficiencies").value(0));
     }
