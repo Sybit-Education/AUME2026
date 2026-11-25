@@ -42,6 +42,7 @@
     "inspections": "Die Kontrollen konnten nicht geladen werden.",
     "inspection": "Die Kontrolle konnte nicht geladen werden.",
     "inspectionSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "protocolDownload": "Das Protokoll konnte nicht heruntergeladen werden.",
     "inspectionConflict": "Die Kontrolle wurde inzwischen geändert. Der aktuelle Stand wurde neu geladen.",
     "infoPages": "Die Informationen konnten nicht geladen werden.",
     "infoPagesSave": "Die Informationen konnten nicht gespeichert werden.",
@@ -273,7 +274,6 @@
     "tabHistory": "Historie",
     "history": {
       "title": "Kontroll-Historie",
-      "filter": "Historie filtern",
       "flat": "WG",
       "kind": "Kontrolle",
       "all": "Alle",
@@ -289,13 +289,34 @@
       "viewOf": "Kontrolle WG {{label}} vom {{date}} ansehen",
       "empty": "In deiner Wohnanlage gibt es noch keine abgeschlossenen Kontrollen.",
       "noMatch": "Keine Kontrollen für diese Auswahl.",
-      "invalidRange": "Das „Von“-Datum liegt nach dem „Bis“-Datum."
+      "invalidDate": "Bitte das Datum als TT.MM.JJJJ eingeben, z. B. 28.03.2026.",
+      "pickDate": "{{field}}: Datum im Kalender wählen",
+      "invalidRange": "Das „Von“-Datum liegt nach dem „Bis“-Datum.",
+      "hint": "Auf eine Überschrift tippen sortiert die Tabelle, das Trichter-Symbol filtert.",
+      "activeFilters": "Aktive Filter",
+      "removeFilter": "Filter entfernen: {{filter}}",
+      "sortBy": "Nach {{column}} sortieren",
+      "filterBy": "Nach {{column}} filtern",
+      "filterActive": "Filter für {{column}} aktiv, ändern",
+      "flatContains": "WG enthält",
+      "clear": "Entfernen"
     },
     "protocol": {
       "title": "Protokoll",
       "inspectedOn": "Geprüft am {{date}}",
       "inspectedBy": "von {{name}}",
-      "backToHistory": "← Zur Kontroll-Historie"
+      "backToHistory": "← Zur Kontroll-Historie",
+      "download": "Als PDF herunterladen",
+      "downloading": "PDF wird erstellt …"
+    },
+    "previous": {
+      "title": "Vorgeschichte der WG",
+      "none": "Keine früheren Kontrollen dieser WG.",
+      "summary_one": "Letzte abgeschlossene Kontrolle",
+      "summary_other": "Letzte {{count}} abgeschlossene Kontrollen",
+      "noDefects": "Keine Mängel.",
+      "earlier": "früher auffällig · {{date}}",
+      "earlierNote": "Zuletzt notiert: {{note}}"
     }
   }
 }

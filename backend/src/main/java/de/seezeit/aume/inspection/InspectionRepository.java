@@ -1,6 +1,8 @@
 package de.seezeit.aume.inspection;
 
+import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -23,4 +25,13 @@ public interface InspectionRepository extends JpaRepository<InspectionEntity, Lo
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from InspectionEntity i where i.id = :id")
     Optional<InspectionEntity> findLockedById(@Param("id") Long id);
+
+    /** Abgeschlossene Kontrollen einer WG vor {@code before}, neueste zuerst (US-51). */
+    @Query("""
+        select i from InspectionEntity i
+        where i.flat.id = :flatId and i.status in :statuses and i.id <> :excludedId and i.inspectedAt < :before
+        order by i.inspectedAt desc, i.id desc""")
+    List<InspectionEntity> findPrevious(@Param("flatId") Long flatId,
+        @Param("statuses") Collection<InspectionEntity.Status> statuses, @Param("excludedId") Long excludedId,
+        @Param("before") Instant before, Pageable limit);
 }

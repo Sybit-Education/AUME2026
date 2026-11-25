@@ -34,7 +34,6 @@ public class InspectionHistoryService {
     static final Set<Status> DONE = Set.of(Status.FINALIZED, Status.PUBLISHED);
     private static final ZoneId ZONE = ZoneId.of("Europe/Berlin");
     private static final int MAX_FLAT_FILTER = 80;
-    private static final Sort NEWEST_FIRST = Sort.by(Sort.Order.desc("inspectedAt"), Sort.Order.desc("id"));
 
     private final InspectionRepository inspections;
     private final FindingRepository findings;
@@ -47,11 +46,11 @@ public class InspectionHistoryService {
         this.users = users;
     }
 
-    public Page<HistoryEntry> history(String userKey, HistoryFilter filter, Pageable pageable) {
+    public Page<HistoryEntry> history(String userKey, HistoryFilter filter, HistoryOrder order, Pageable pageable) {
         var user = users.requireUser(userKey);
         validate(filter);
-        // Sortierung ist fachlich festgelegt; ein Sortierparameter des Clients wird ignoriert.
-        var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), NEWEST_FIRST);
+        // Nur die Spalten aus HistoryOrder sind sortierbar; ein `sort`-Parameter des Clients wird ignoriert.
+        var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), order.toSort());
         var result = inspections.findAll(matching(user.getResidence().getId(), filter), page);
 
         var ids = result.getContent().stream().map(InspectionEntity::getId).toList();
@@ -111,6 +110,33 @@ public class InspectionHistoryService {
 
     private static String nameOf(InspectionEntity inspection) {
         return inspection.getInspector() == null ? null : inspection.getInspector().getName();
+    }
+
+    /** Sortierbare Spalten der Historie. */
+    public enum OrderBy {
+        DATE("inspectedAt"), FLAT("flat.label"), KIND("round"), RESULT("overallResult"), INSPECTOR("inspector.name");
+
+        private final String property;
+
+        OrderBy(String property) {
+            this.property = property;
+        }
+    }
+
+    /** Standard: neueste zuerst. Bei gleichen Werten entscheidet das Datum (neueste zuerst), dann die ID. */
+    public record HistoryOrder(OrderBy by, Sort.Direction direction) {
+        public HistoryOrder {
+            by = by == null ? OrderBy.DATE : by;
+            direction = direction == null ? (by == OrderBy.DATE ? Sort.Direction.DESC : Sort.Direction.ASC) : direction;
+        }
+
+        Sort toSort() {
+            var primary = Sort.by(new Sort.Order(direction, by.property));
+            var tieBreak = by == OrderBy.DATE
+                ? Sort.by(new Sort.Order(direction, "id"))
+                : Sort.by(Sort.Order.desc("inspectedAt"), Sort.Order.desc("id"));
+            return primary.and(tieBreak);
+        }
     }
 
     /** Alle Felder sind optional. {@code from}/{@code to} sind Kalendertage (Europe/Berlin), beide inklusive. */
