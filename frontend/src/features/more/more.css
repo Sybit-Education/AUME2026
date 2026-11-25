@@ -1,0 +1,42 @@
+.more-group > h3 {
+  font-size: 15px;
+  margin: 14px 2px 8px;
+}
+
+.more-list {
+  padding: 4px 16px;
+}
+
+.more-link {
+  color: inherit;
+  text-decoration: none;
+  justify-content: flex-start;
+  min-height: 48px;
+}
+
+.more-link:hover b,
+.more-link:focus-visible b {
+  color: var(--td);
+}
+
+.more-icon {
+  font-size: 18px;
+  width: 26px;
+  text-align: center;
+}
+
+.more-text {
+  display: grid;
+  gap: 1px;
+  flex: 1;
+}
+
+.more-chevron {
+  color: var(--mut);
+  font-size: 18px;
+}
+
+.settings-hint {
+  margin: 10px 0 0;
+}
+

@@ -1,3 +1,69 @@
+.app:has(.page-stack) {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app:has(.page-stack) > .mn,
+.app:has(.page-stack) > .st-wrap {
+  flex: 1;
+}
+
+.app:has(.page-stack) > .mn,
+.app:has(.page-stack) .st-body,
+.app:has(.page-stack) main,
+.page-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.app:has(.page-stack) main,
+.page-stack {
+  flex: 1;
+  min-width: 0;
+}
+
+.legal-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  text-align: center;
+  position: relative;
+}
+
+.legal-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+}
+
+.legal-footer a {
+  color: var(--mut);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-footer a:hover {
+  color: var(--td);
+}
+
+.legal-footer p {
+  margin: 4px 0 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .hd .language-picker {
   display: flex;
   align-items: center;
@@ -135,5 +201,58 @@ a.btn {
 
   .profile-details > div {
     grid-template-columns: 90px minmax(0, 1fr);
+  }
+}
+
+/* Tab-Leiste der Studierenden-Ansicht (Wireframe). Die Basisstile für .tabbar stehen in index.css. */
+.tabbar a {
+  padding: 9px 4px 11px;
+  font-size: 11.5px;
+  color: #6a7f85;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  font-weight: 600;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.tabbar a .i {
+  font-size: 20px;
+}
+
+.tabbar a.on,
+.tabbar a[aria-current="page"] {
+  color: var(--t);
+}
+
+.tabbar a.on .i {
+  transform: scale(1.08);
+}
+
+.st-body main > .ch:first-child h2 {
+  font-size: 21px;
+}
+
+a.back {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lang-switch .btn.sm {
+  min-height: 36px;
+  padding: 7px 12px;
+}
+
+@media (max-width: 600px) {
+  /* Tab-Leiste bleibt am unteren Bildschirmrand, auch wenn die Seite kurz ist. */
+  .st-wrap {
+    min-height: calc(100dvh - 57px);
   }
 }

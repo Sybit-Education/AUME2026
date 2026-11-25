@@ -4,7 +4,7 @@ import { NavLink, Outlet, useNavigation, useRevalidator } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { supportedLanguage } from '@/lib/i18n'
-import { navigation } from './navigation'
+import { navigation, studentTabs, usesStudentView } from './navigation'
 
 export default function AppLayout({ children }: PropsWithChildren) {
   const { t, i18n } = useTranslation()
@@ -15,6 +15,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const revalidator = useRevalidator()
   const busy = auth.busy || transition.state !== 'idle' || revalidator.state !== 'idle'
   const [error, setError] = useState<ErrorKey | null>(null)
+  const studentView = auth.user ? usesStudentView(auth.user.roles) : false
+  const allowed = (privilege?: string) => !privilege || auth.user!.privileges.includes(privilege)
 
   useEffect(() => {
     if (previousLanguage.current !== language) {
@@ -35,23 +37,26 @@ export default function AppLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div aria-busy={busy}>
+    <div className="app" aria-busy={busy}>
       <header className="hd">
         <h1 className="brand">{t('app.name')}</h1>
-        {auth.user && (
+        {auth.user && !studentView && (
           <nav className="seg" aria-label={t('navigation.main')}>
-            {navigation.filter((item) => !item.privilege || auth.user!.privileges.includes(item.privilege)).map((item) => (
+            {navigation.filter((item) => allowed(item.privilege)).map((item) => (
               <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'on' : undefined}>{t(item.label)}</NavLink>
             ))}
           </nav>
         )}
-        <label className="language-picker">
-          {t('app.language')}
-          <select value={language} disabled={busy} onChange={(event) => void changeLanguage(event.target.value)}>
-            <option value="de" lang="de">Deutsch</option>
-            <option value="en" lang="en">English</option>
-          </select>
-        </label>
+        {/* Studierende wählen die Sprache unter Mehr → Einstellungen (US-26). */}
+        {!studentView && (
+          <label className="language-picker">
+            {t('app.language')}
+            <select value={language} disabled={busy} onChange={(event) => void changeLanguage(event.target.value)}>
+              <option value="de" lang="de">Deutsch</option>
+              <option value="en" lang="en">English</option>
+            </select>
+          </label>
+        )}
         {auth.user && (
           <>
             <span className="who">{auth.user.name}</span>
@@ -59,11 +64,29 @@ export default function AppLayout({ children }: PropsWithChildren) {
           </>
         )}
       </header>
-      <div className="mn">
-        {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
-        {error && <p className="err" role="alert">{t(error)}</p>}
-        <main>{children ?? <Outlet />}</main>
-      </div>
+      {studentView ? (
+        <div className="st-wrap">
+          <div className="st-body">
+            {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
+            {error && <p className="err" role="alert">{t(error)}</p>}
+            <main>{children ?? <Outlet />}</main>
+          </div>
+          <nav className="tabbar" aria-label={t('navigation.studentTabs')}>
+            {studentTabs.filter((item) => allowed(item.privilege)).map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'on' : undefined}>
+                <span className="i" aria-hidden="true">{item.icon}</span>
+                {t(item.label)}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      ) : (
+        <div className="mn">
+          {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
+          {error && <p className="err" role="alert">{t(error)}</p>}
+          <main>{children ?? <Outlet />}</main>
+        </div>
+      )}
     </div>
   )
 }

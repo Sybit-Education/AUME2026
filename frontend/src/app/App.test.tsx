@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import App from './App'
 import { createAppRoutes } from './router'
@@ -16,8 +16,16 @@ vi.mock('@/lib/auth/client', () => ({
   logout: vi.fn(),
 }))
 
-const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
+const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ', 'CHECKLIST_READ'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
+const checklistDe = { version: 1, areas: [
+  { name: 'Küche', criteria: [{ id: 1, title: 'Arbeitsflächen', description: 'Frei von Essensresten.' }] },
+  { name: 'Bad', criteria: [{ id: 2, title: 'Dusche & WC', description: 'Hygienisch sauber.' }] },
+] }
+const checklistEn = { version: 1, areas: [
+  { name: 'Kitchen', criteria: [{ id: 1, title: 'Work surfaces', description: 'Free of food leftovers.' }] },
+  { name: 'Bathroom', criteria: [{ id: 2, title: 'Shower & toilet', description: 'Hygienically clean.' }] },
+] }
 let signedIn: LoggedInUser | null
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
@@ -38,6 +46,7 @@ beforeEach(async () => {
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
     if (path === '/api/greeting') return new Response(i18n.resolvedLanguage === 'en' ? 'Hello Alex, welcome to Sonne.' : 'Hallo Alex, willkommen in Sonne.')
+    if (path === '/api/checklist') return Response.json(i18n.resolvedLanguage === 'en' ? checklistEn : checklistDe)
     if (path.startsWith('/api/residences?')) {
       const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
       return Response.json({
@@ -52,6 +61,41 @@ afterEach(() => {
   cleanup()
   routers.forEach((router) => router.dispose())
   routers = []
+})
+
+const imprintUrl = 'https://www.htwg-konstanz.de/info/impressum'
+const privacyUrl = 'https://www.htwg-konstanz.de/datenschutzerklaerung'
+
+function expectHtwgLegalLinks() {
+  const imprint = screen.getByRole('link', { name: /Impressum/ })
+  const privacy = screen.getByRole('link', { name: /Datenschutzerklärung/ })
+  expect(imprint.getAttribute('href')).toBe(imprintUrl)
+  expect(privacy.getAttribute('href')).toBe(privacyUrl)
+  expect(imprint.getAttribute('target')).toBe('_blank')
+  expect(privacy.getAttribute('rel')).toContain('noopener')
+  expect(screen.getByText('HTWG Konstanz')).toBeDefined()
+}
+
+it('shows HTWG legal links at the bottom of login and of every dashboard', async () => {
+  const router = mount('/login')
+  await screen.findByRole('button', { name: 'Objektbetreuung' })
+  expectHtwgLegalLinks()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Sachbearbeitung' }))
+  await screen.findByRole('heading', { name: 'Übersicht' })
+  expectHtwgLegalLinks()
+
+  fireEvent.click(screen.getByRole('link', { name: 'Wohnanlagen' }))
+  await screen.findByText('Sonne')
+  expect(screen.queryByRole('link', { name: /Impressum/ })).toBeNull()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
+  fireEvent.click(await screen.findByRole('link', { name: 'Übersicht' }))
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  expect(router.state.location.pathname).toBe('/')
+  expectHtwgLegalLinks()
+  expect(screen.getByRole('navigation', { name: 'Navigation der Studierenden' })).toBeDefined()
 })
 
 it('restores the requested path, query and fragment after mock login', async () => {
@@ -94,14 +138,89 @@ it('uses the query string for pagination and supports browser back navigation', 
 })
 
 it('switches UI language and reloads the greeting without signing in again', async () => {
+  signedIn = clerk
   mount()
-  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
-  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  await screen.findByRole('heading', { name: 'Übersicht' })
   fireEvent.change(screen.getByRole('combobox', { name: 'Sprache' }), { target: { value: 'en' } })
-  await screen.findByText('Hello Alex, welcome to Sonne.')
+  await screen.findByRole('heading', { name: 'Dashboard' })
   expect(screen.getByRole('button', { name: 'Sign out' })).toBeDefined()
   expect(document.documentElement.lang).toBe('en')
+})
+
+it('lets students switch the language under More, Settings, Language and keeps it after reloading', async () => {
+  const router = mount()
+  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  expect(screen.queryByRole('combobox', { name: 'Sprache' })).toBeNull()
+  fireEvent.click(screen.getByRole('link', { name: 'Mehr' }))
+  fireEvent.click(await screen.findByRole('link', { name: /Einstellungen/ }))
+  expect(router.state.location.pathname).toBe('/mehr/einstellungen')
+  fireEvent.click(within(screen.getByRole('group', { name: 'Sprache' })).getByRole('button', { name: 'English' }))
+  await screen.findByRole('heading', { name: 'Settings' })
+  expect(screen.getByRole('button', { name: 'English' }).getAttribute('aria-pressed')).toBe('true')
+  expect(screen.getByRole('link', { name: 'Home' })).toBeDefined()
+  expect(document.documentElement.lang).toBe('en')
+  expect(window.localStorage.getItem('aume.language')).toBe('en')
+  fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+  await screen.findByText('Hello Alex, welcome to Sonne.')
   expect(login).toHaveBeenCalledTimes(1)
+})
+
+it('shows students the mobile tab bar with Start, Cleaning plan, Inspection and More and highlights the current tab', async () => {
+  signedIn = student
+  const router = mount()
+  const tabs = await screen.findByRole('navigation', { name: 'Navigation der Studierenden' })
+  expect(within(tabs).getAllByRole('link')).toHaveLength(4)
+  for (const name of ['Start', 'Putzplan', 'Kontrolle', 'Mehr']) expect(within(tabs).getByRole('link', { name })).toBeDefined()
+  expect(within(tabs).getByRole('link', { name: 'Start' }).getAttribute('aria-current')).toBe('page')
+  expect(screen.queryByRole('navigation', { name: 'Hauptnavigation' })).toBeNull()
+  fireEvent.click(within(tabs).getByRole('link', { name: 'Putzplan' }))
+  await screen.findByRole('heading', { name: 'Kommt bald' })
+  expect(router.state.location.pathname).toBe('/putzplan')
+  expect(within(tabs).getByRole('link', { name: 'Putzplan' }).getAttribute('aria-current')).toBe('page')
+  fireEvent.click(within(tabs).getByRole('link', { name: 'Mehr' }))
+  await screen.findByRole('heading', { name: 'Konto und Datenschutz' })
+})
+
+it('keeps the header navigation for staff and shows no student tab bar', async () => {
+  signedIn = clerk
+  mount()
+  await screen.findByRole('navigation', { name: 'Hauptnavigation' })
+  expect(screen.queryByRole('navigation', { name: 'Navigation der Studierenden' })).toBeNull()
+})
+
+it('shows the checklist by area, opens explanations and reloads it in English', async () => {
+  signedIn = student
+  const router = mount('/kontrolle')
+  await screen.findByRole('heading', { name: 'Küche' })
+  expect(router.state.location.pathname).toBe('/kontrolle/checkliste')
+  expect(screen.getByRole('link', { name: 'Kontrolle' }).getAttribute('aria-current')).toBe('page')
+  expect(screen.getByRole('heading', { name: 'Bad' })).toBeDefined()
+  expect(screen.getByText('Frei von Essensresten.', { exact: false }).closest('p')?.hidden).toBe(true)
+  const details = screen.getByRole('button', { name: 'Details: Arbeitsflächen' })
+  expect(details.getAttribute('aria-expanded')).toBe('false')
+  fireEvent.click(details)
+  expect(screen.getByRole('button', { name: 'Weniger: Arbeitsflächen' }).getAttribute('aria-expanded')).toBe('true')
+  expect(screen.getByText('Frei von Essensresten.', { exact: false }).closest('p')?.hidden).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: 'English' }))
+  await screen.findByRole('heading', { name: 'Kitchen' })
+  expect(screen.getByRole('button', { name: 'Details: Work surfaces' })).toBeDefined()
+})
+
+it('shows an empty state when no checklist is published and hides it without the privilege', async () => {
+  signedIn = student
+  vi.mocked(api).mockImplementation(async (path) => path === '/api/me'
+    ? Response.json(student) : path === '/api/checklist' ? new Response(null, { status: 404 }) : new Response('Hallo'))
+  mount('/kontrolle/checkliste')
+  await screen.findByRole('heading', { name: 'Seezeit hat noch keine Checkliste veröffentlicht.' })
+  cleanup()
+  invalidateSession()
+  vi.mocked(api).mockClear()
+  signedIn = { ...student, privileges: ['GREETING_READ'] }
+  vi.mocked(api).mockImplementation(async (path) => path === '/api/me' ? Response.json(signedIn) : new Response('Hallo'))
+  mount('/kontrolle/checkliste')
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/checklist')).toBe(false)
 })
 
 it('logs out on a protected page and requires login before showing its data again', async () => {
