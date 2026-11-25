@@ -61,6 +61,8 @@ class WgTaskTests {
         week = LocalDate.now(ZoneId.of("Europe/Berlin")).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         flat = flat("S-01");
         me = users.findByUserKey("student").orElseThrow();
+        // The dev seed already puts the student into S-01; start without memberships.
+        memberships.deleteAllInBatch();
         flatmate = student("flatmate", "Bea");
         memberships.save(new MembershipEntity(flat, me, week.minusWeeks(1)));
         memberships.save(new MembershipEntity(flat, flatmate, week.minusWeeks(1)));

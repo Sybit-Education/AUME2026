@@ -4,6 +4,7 @@ import { loginDestination } from '@/lib/auth/returnTo'
 import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
 import { deleteTask, rhythms, saveTask, setDone, type Rhythm } from './api'
+import { planPath } from './paths'
 
 export interface PlanActionResult {
   error: ErrorKey
@@ -59,5 +60,5 @@ export async function planAction({ request }: ActionFunctionArgs): Promise<PlanA
 
   // Close the form and stay in the current week.
   const week = url.searchParams.get('week')
-  return redirect(week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? `/putzplan?week=${week}` : '/putzplan')
+  return redirect(week && /^\d{4}-\d{2}-\d{2}$/.test(week) ? `${planPath}?week=${week}` : planPath)
 }

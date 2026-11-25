@@ -10,7 +10,7 @@ export interface WgData {
 }
 
 export const wgRoutes: RouteObject[] = [{
-  path: 'wg',
+  path: 'flat',
   element: <RequirePrivilege privilege="WG_MEMBERSHIP"><WgPage /></RequirePrivilege>,
   loader: protectedLoader('WG_MEMBERSHIP', async ({ request }): Promise<WgData> => ({
     membership: await getMembership(request.signal),
@@ -19,5 +19,5 @@ export const wgRoutes: RouteObject[] = [{
 }]
 
 export const wgNavigation = {
-  to: '/wg', label: 'navigation.wg', privilege: 'WG_MEMBERSHIP',
+  to: '/student/flat', label: 'navigation.wg', privilege: 'WG_MEMBERSHIP',
 } as const

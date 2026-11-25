@@ -1,6 +1,6 @@
 # WG beitreten und verlassen (US-01, US X)
 
-Studierende treten ihrer WG mit einem Einladungscode bei und können sie wieder verlassen. Die Seite liegt unter `/wg`.
+Studierende treten ihrer WG mit einem Einladungscode bei und können sie wieder verlassen. Die Seite liegt unter `/student/flat` (Mehr → Wohnen → Meine WG).
 
 ## Regeln
 
@@ -20,7 +20,7 @@ Studierende treten ihrer WG mit einem Einladungscode bei und können sie wieder 
 
 ## Testdaten
 
-Im Profil `dev` gibt es die Einmal-Codes `WG-SONNE-1` und `WG-SONNE-2` (WG S-01) sowie `WG-SONNE-3` (WG S-02). Ein Neustart des Backends setzt sie zurück.
+Im Profil `dev` ist der Mock-Student bereits Mitglied der WG S-01 (aus `StudentSampleData`). Um den Beitritt zu testen, zuerst austreten. Es gibt die Einmal-Codes `WG-SONNE-1` und `WG-SONNE-2` (WG S-01) sowie `WG-SONNE-3` (WG S-02). Ein Neustart des Backends setzt sie zurück.
 
 ## Offene Punkte
 

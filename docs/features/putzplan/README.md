@@ -1,6 +1,6 @@
 # Putzplan und Abhaken (US-06, US-07)
 
-WG-Mitglieder planen unter `/putzplan` gemeinsam ihre Putzaufgaben und haken Erledigtes ab.
+WG-Mitglieder planen unter `/student/cleaning-plan` gemeinsam ihre Putzaufgaben und haken Erledigtes ab.
 
 ## Regeln
 

@@ -7,6 +7,7 @@ import LoadingPage from '@/components/LoadingPage'
 import BottomSheet from './BottomSheet'
 import type { PlanActionResult } from './actions'
 import { rhythms, type Plan, type PlanSuggestion, type PlanTask } from './api'
+import { planPath } from './paths'
 import type { PlanData } from './routes'
 import './putzplan.css'
 
@@ -27,7 +28,7 @@ function calendarWeek(monday: string) {
 }
 
 function planUrl(week: string, extra: Record<string, string> = {}) {
-  return `/putzplan?${new URLSearchParams({ week, ...extra })}`
+  return `${planPath}?${new URLSearchParams({ week, ...extra })}`
 }
 
 // Filter by typed text, or show only the selected suggestion.
@@ -173,7 +174,7 @@ export default function PlanPage() {
         <div className="ic" aria-hidden="true">🧽</div>
         <h2>{t('navigation.cleaningPlan')}</h2>
         <p className="mut">{t('plan.noFlat')}</p>
-        <Link className="btn" to="/wg">{t('wg.join')}</Link>
+        <Link className="btn" to="/student/flat">{t('wg.join')}</Link>
       </section>
     )
   }

@@ -28,10 +28,10 @@ function mount() {
     path: '/',
     loader: ensureSession,
     HydrateFallback: () => null,
-    children: [...wgRoutes, { path: 'forbidden', element: <h1>forbidden</h1> }],
-  }], { initialEntries: ['/wg'] })
+    children: [{ path: 'student', children: wgRoutes }, { path: 'forbidden', element: <h1>forbidden</h1> }],
+  }], { initialEntries: ['/student/flat'] })
   routers.push(router)
-  render(<AuthProvider getRequestedPath={() => '/wg'}><RouterProvider router={router} /></AuthProvider>)
+  render(<AuthProvider getRequestedPath={() => '/student/flat'}><RouterProvider router={router} /></AuthProvider>)
   return router
 }
 

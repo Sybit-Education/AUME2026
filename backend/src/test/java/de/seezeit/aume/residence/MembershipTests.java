@@ -15,6 +15,7 @@ import de.seezeit.aume.user.RoleRepository;
 import de.seezeit.aume.user.StudentEntity;
 import de.seezeit.aume.user.UserEntity;
 import de.seezeit.aume.user.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +39,12 @@ class MembershipTests {
     @Autowired private FlatRepository flats;
     @Autowired private UserRepository users;
     @Autowired private RoleRepository roles;
+
+    @BeforeEach
+    void startWithoutMemberships() {
+        // The dev seed already puts the student into S-01.
+        memberships.deleteAllInBatch();
+    }
 
     @Test
     void studentJoinsWithCodeAndSeesOnlyTheirOwnFlat() throws Exception {

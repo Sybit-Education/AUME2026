@@ -2,6 +2,7 @@ package de.seezeit.aume.planning;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.user.UserEntity;
 import jakarta.persistence.*;
@@ -11,13 +12,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
-/** Kontrollzeitraum einer Wohnanlage und dessen Ankündigung. */
+/** Kontrollzeitraum einer Wohnanlage, dessen Abstimmung mit der Objektbetreuung und Ankündigung. */
 @Entity
 @Table(name = "inspection_periods")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InspectionPeriodEntity {
+    /** Stand der Abstimmung. Ob angekündigt wurde, zeigt {@code announcedAt}. */
+    public enum Status { WAITING_FOR_CARETAKER, COUNTER_PROPOSED, AGREED }
+
+    public enum Kind { REGULAR }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -48,6 +54,41 @@ public class InspectionPeriodEntity {
     private UserEntity announcedBy;
 
     private Instant announcedAt;
+
+    /** Zeitpunkt der letzten erneuten Ankündigung mit verändertem Start- oder Enddatum. */
+    private Instant rescheduledAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private Status status = Status.WAITING_FOR_CARETAKER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Kind kind = Kind.REGULAR;
+
+    /** Person, die dem Zeitraum zustimmen muss. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "caretaker_id")
+    private UserEntity caretaker;
+
+    private LocalTime windowStart;
+
+    private LocalTime windowEnd;
+
+    private LocalDate counterStartsOn;
+
+    private LocalDate counterEndsOn;
+
+    private LocalTime counterWindowStart;
+
+    private LocalTime counterWindowEnd;
+
+    @Column(length = 2000)
+    private String counterReason;
+
+    /** Verhindert, dass jemand einem inzwischen geänderten Zeitraum zustimmt. */
+    @Version
+    private long version;
 
     public InspectionPeriodEntity(ResidenceEntity residence, LocalDate startsOn, LocalDate endsOn,
             UserEntity createdBy) {

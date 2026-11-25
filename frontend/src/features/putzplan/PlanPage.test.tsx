@@ -32,12 +32,15 @@ let signedIn: LoggedInUser
 let plan: Plan | null
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
-function mount(path = '/putzplan') {
+function mount(path = '/student/cleaning-plan') {
   const router = createMemoryRouter([{
     path: '/',
     loader: ensureSession,
     HydrateFallback: () => null,
-    children: [...planRoutes, { path: 'wg', element: <h1>wg</h1> }, { path: 'forbidden', element: <h1>forbidden</h1> }],
+    children: [
+      { path: 'student', children: [...planRoutes, { path: 'flat', element: <h1>wg</h1> }] },
+      { path: 'forbidden', element: <h1>forbidden</h1> },
+    ],
   }], { initialEntries: [path] })
   routers.push(router)
   render(<AuthProvider getRequestedPath={() => path}><RouterProvider router={router} /></AuthProvider>)
@@ -131,7 +134,7 @@ it('picks a checklist suggestion in the form, links it and closes the form', asy
 })
 
 it('filters suggestions while typing and saves own text without a checklist link', async () => {
-  mount('/putzplan?edit=new')
+  mount('/student/cleaning-plan?edit=new')
   const form = await screen.findByRole('form', { name: 'Aufgabe anlegen' })
   const title = within(form).getByLabelText('Aufgabe')
 
@@ -149,7 +152,7 @@ it('filters suggestions while typing and saves own text without a checklist link
 })
 
 it('removes the link again when a picked suggestion is edited or tapped twice', async () => {
-  mount('/putzplan?edit=new')
+  mount('/student/cleaning-plan?edit=new')
   const form = await screen.findByRole('form', { name: 'Aufgabe anlegen' })
   const title = within(form).getByLabelText('Aufgabe') as HTMLInputElement
 
@@ -198,7 +201,7 @@ it('offers a first-task button only while the flat has no tasks', async () => {
 })
 
 it('keeps the form open with a translated error when saving fails', async () => {
-  mount('/putzplan?edit=new')
+  mount('/student/cleaning-plan?edit=new')
   const form = await screen.findByRole('form', { name: 'Aufgabe anlegen' })
   fireEvent.change(within(form).getByLabelText('Aufgabe'), { target: { value: 'Doppelt' } })
   await act(async () => { fireEvent.click(within(form).getByRole('button', { name: 'Speichern' })) })
@@ -230,7 +233,7 @@ it('asks people without a flat to join first', async () => {
   plan = null
   mount()
   expect(await screen.findByText('Tritt zuerst deiner WG bei, um den Putzplan zu sehen.')).toBeTruthy()
-  expect(screen.getByRole('link', { name: 'WG beitreten' }).getAttribute('href')).toBe('/wg')
+  expect(screen.getByRole('link', { name: 'WG beitreten' }).getAttribute('href')).toBe('/student/flat')
 })
 
 it('sends staff to the forbidden page without loading the plan', async () => {

@@ -33,5 +33,5 @@ export async function wgAction({ request }: ActionFunctionArgs): Promise<WgActio
     }
     return { error: errorKey(cause, leaving ? 'errors.wgLeave' : 'errors.wgJoin') }
   }
-  return redirect('/wg')
+  return redirect('/student/flat')
 }

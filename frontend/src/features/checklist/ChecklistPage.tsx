@@ -1,25 +1,31 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLoaderData } from 'react-router'
-import LanguageSwitch from '@/components/LanguageSwitch'
+import { Link, useLoaderData } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
+import TileIcon, { type TileIconName } from '@/components/TileIcon'
+import { useAuth } from '@/lib/auth/AuthContext'
 import type { Checklist, Criterion } from './api'
 
 export type ChecklistData = { checklist: Checklist | null }
 
-/** Checkliste je Bereich (US-21) mit aufklappbarer Erklärung je Kriterium (US-22). */
+/**
+ * Checkliste je Bereich (US-21) mit aufklappbarer Erklärung je Kriterium (US-22). Die Seite steht
+ * unter dem Reiter „Checkliste“ der Kontroll-Ansicht; die Sprache wählen Studierende unter Mehr → Einstellungen.
+ */
 export default function ChecklistPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const data = useLoaderData<ChecklistData | null>()
   if (!data) return <LoadingPage />
+  const processLink = user?.privileges.includes('INFO_PAGE_READ') && (
+    <Link className="card checklist-process-link" to="/student/inspection/process">
+      {t('checklist.processLink')}
+      <span aria-hidden="true">›</span>
+    </Link>
+  )
 
   return (
     <>
-      <div className="ch"><h2>{t('checklist.title')}</h2></div>
-      <div className="checklist-language">
-        <span className="mut sm2">{t('checklist.language')}:</span>
-        <LanguageSwitch label={t('checklist.language')} />
-      </div>
       {data.checklist === null ? (
         <section className="card empty">
           <h4>{t('checklist.empty')}</h4>
@@ -27,17 +33,33 @@ export default function ChecklistPage() {
         </section>
       ) : (
         <>
-          <p className="note">{t('checklist.sameCriteria')}</p>
           {data.checklist.areas.map((area, index) => (
-            <section className="card" key={area.name} aria-labelledby={`checklist-area-${index}`}>
-              <h3 id={`checklist-area-${index}`}>{area.name}</h3>
+            <section className="card checklist-area" key={area.name} aria-labelledby={`checklist-area-${index}`}>
+              <h3 id={`checklist-area-${index}`}>
+                <span className="icon-tile sm" aria-hidden="true"><TileIcon name={areaIcon(area.name)} size={20} /></span>
+                {area.name}
+              </h3>
               {area.criteria.map((criterion) => <CriterionRow key={criterion.id} criterion={criterion} />)}
             </section>
           ))}
+          <p className="mut xs checklist-hint">{t('checklist.sameCriteria')}</p>
         </>
       )}
+      {processLink}
     </>
   )
+}
+
+/** Passendes Icon zum Bereichsnamen (Deutsch oder Englisch); sonst ein neutrales Listen-Icon. */
+const areaIcons: [RegExp, TileIconName][] = [
+  [/boden|floor/i, 'floor'],
+  [/küche|kitchen/i, 'kitchen'],
+  [/bad|bath|dusche|shower|wc|toilet/i, 'bath'],
+  [/treppe|stair/i, 'stairs'],
+]
+
+function areaIcon(name: string): TileIconName {
+  return areaIcons.find(([pattern]) => pattern.test(name))?.[1] ?? 'list'
 }
 
 function CriterionRow({ criterion }: { criterion: Criterion }) {
@@ -47,20 +69,21 @@ function CriterionRow({ criterion }: { criterion: Criterion }) {
   const action = open ? t('checklist.less') : t('checklist.details')
 
   return (
-    <div className="checklist-criterion">
-      <div className="row">
+    <div className={open ? 'checklist-criterion open' : 'checklist-criterion'}>
+      <button
+        type="button"
+        className="checklist-toggle"
+        aria-expanded={open}
+        aria-controls={detailsId}
+        aria-label={`${action}: ${criterion.title}`}
+        onClick={() => setOpen((value) => !value)}
+      >
         <b>{criterion.title}</b>
-        <button
-          type="button"
-          className="btn sm gh"
-          aria-expanded={open}
-          aria-controls={detailsId}
-          aria-label={`${action}: ${criterion.title}`}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {action}
-        </button>
-      </div>
+        <svg className="checklist-chevron" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"
+          strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
       <p id={detailsId} className="checklist-explanation" hidden={!open}>
         <b>{t('checklist.explanation')}</b> {criterion.description}
       </p>

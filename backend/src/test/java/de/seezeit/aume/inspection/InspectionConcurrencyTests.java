@@ -85,11 +85,33 @@ class InspectionConcurrencyTests {
                 .andReturn().getResponse().getStatus());
 
             var status = inspections.findById(id).orElseThrow().getStatus();
-            if (status == InspectionEntity.Status.FINALIZED) {
+            if (status == InspectionEntity.Status.PUBLISHED) {
                 assertThat(findings.findByInspectionId(id))
                     .as("finalized inspection must have every criterion rated").hasSize(10);
             }
         }
+    }
+
+    @Test
+    void parallelFinalizePublishesExactlyOnce() throws Exception {
+        var session = login("caretaker");
+        Long id = newInspection();
+        start(session, id);
+        mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
+            .andExpect(status().isOk());
+
+        List<Integer> statuses = parallel(THREADS, i -> mvc.perform(post("/api/inspections/" + id + "/finalize")
+                .session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"overallResult\":\"PASSED\"}"))
+            .andReturn().getResponse().getStatus());
+
+        assertThat(statuses).containsOnlyOnce(200).containsOnly(200, 409);
+        List<Object> stored = tx.execute(status -> {
+            var inspection = inspections.findById(id).orElseThrow();
+            return List.of(inspection.getStatus(), inspection.getPublishedBy().getUserKey(),
+                inspection.getPublishedAt() != null);
+        });
+        assertThat(stored).containsExactly(InspectionEntity.Status.PUBLISHED, "caretaker", true);
     }
 
     private interface Request {
