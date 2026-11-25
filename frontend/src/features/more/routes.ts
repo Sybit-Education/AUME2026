@@ -4,6 +4,6 @@ import SettingsPage from './SettingsPage'
 import './more.css'
 
 export const moreRoutes: RouteObject[] = [
-  { path: 'mehr', Component: MorePage },
-  { path: 'mehr/einstellungen', Component: SettingsPage },
+  { path: 'more', Component: MorePage },
+  { path: 'settings', Component: SettingsPage },
 ]

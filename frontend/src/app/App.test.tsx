@@ -120,7 +120,7 @@ it('lets students switch the language under More, Settings, Language and keeps i
   expect(screen.queryByRole('combobox', { name: 'Sprache' })).toBeNull()
   fireEvent.click(screen.getByRole('link', { name: 'Mehr' }))
   fireEvent.click(await screen.findByRole('link', { name: /Einstellungen/ }))
-  expect(router.state.location.pathname).toBe('/mehr/einstellungen')
+  expect(router.state.location.pathname).toBe('/student/settings')
   fireEvent.click(within(screen.getByRole('group', { name: 'Sprache' })).getByRole('button', { name: 'English' }))
   await screen.findByRole('heading', { name: 'Settings' })
   expect(screen.getByRole('button', { name: 'English' }).getAttribute('aria-pressed')).toBe('true')
@@ -142,7 +142,7 @@ it('shows students the mobile tab bar with Start, Cleaning plan, Inspection and 
   expect(screen.queryByRole('navigation', { name: 'Hauptnavigation' })).toBeNull()
   fireEvent.click(within(tabs).getByRole('link', { name: 'Putzplan' }))
   await screen.findByRole('heading', { name: 'Kommt bald' })
-  expect(router.state.location.pathname).toBe('/putzplan')
+  expect(router.state.location.pathname).toBe('/student/cleaning-plan')
   expect(within(tabs).getByRole('link', { name: 'Putzplan' }).getAttribute('aria-current')).toBe('page')
   fireEvent.click(within(tabs).getByRole('link', { name: 'Mehr' }))
   await screen.findByRole('heading', { name: 'Konto und Datenschutz' })
@@ -157,13 +157,13 @@ it('keeps the header navigation for staff and shows no student tab bar', async (
 
 it('shows the checklist by area, opens explanations and reloads it in English', async () => {
   signedIn = student
-  const router = mount('/kontrolle')
+  const router = mount('/student/inspection')
   await screen.findByRole('heading', { name: 'Kontrolle' })
-  expect(router.state.location.pathname).toBe('/kontrolle/termin')
+  expect(router.state.location.pathname).toBe('/student/inspection/appointment')
   const sections = within(screen.getByRole('navigation', { name: 'Kontrollbereich' }))
   fireEvent.click(sections.getByRole('link', { name: 'Checkliste' }))
   await screen.findByRole('heading', { name: 'Küche' })
-  expect(router.state.location.pathname).toBe('/kontrolle/checkliste')
+  expect(router.state.location.pathname).toBe('/student/inspection/checklist')
   expect(screen.getByRole('link', { name: 'Kontrolle' }).getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('heading', { name: 'Bad' })).toBeDefined()
   expect(screen.getByText('Frei von Essensresten.', { exact: false }).closest('p')?.hidden).toBe(true)
@@ -179,7 +179,7 @@ it('shows the checklist by area, opens explanations and reloads it in English', 
   expect(screen.getByRole('button', { name: 'Details: Work surfaces' })).toBeDefined()
   const englishSections = within(screen.getByRole('navigation', { name: 'Inspection sections' }))
   for (const name of ['Appointment', 'Checklist', 'Result', 'History']) {
-    expect(englishSections.getByRole('link', { name }).getAttribute('href')).toMatch(/^\/kontrolle\//)
+    expect(englishSections.getByRole('link', { name }).getAttribute('href')).toMatch(/^\/student\/inspection\//)
   }
 })
 
@@ -188,15 +188,15 @@ it('keeps both control navigation levels active across all four sections', async
   const router = mount()
   const bottom = within(await screen.findByRole('navigation', { name: 'Navigation der Studierenden' }))
   const control = bottom.getByRole('link', { name: 'Kontrolle' })
-  expect(control.getAttribute('href')).toBe('/kontrolle/termin')
+  expect(control.getAttribute('href')).toBe('/student/inspection/appointment')
   fireEvent.click(control)
 
   const top = within(await screen.findByRole('navigation', { name: 'Kontrollbereich' }))
   for (const [name, path] of [
-    ['Termin', '/kontrolle/termin'],
-    ['Checkliste', '/kontrolle/checkliste'],
-    ['Ergebnis', '/kontrolle/ergebnis'],
-    ['Verlauf', '/kontrolle/verlauf'],
+    ['Termin', '/student/inspection/appointment'],
+    ['Checkliste', '/student/inspection/checklist'],
+    ['Ergebnis', '/student/inspection/result'],
+    ['Verlauf', '/student/inspection/history'],
   ]) {
     fireEvent.click(top.getByRole('link', { name }))
     await waitFor(() => {
@@ -211,15 +211,48 @@ it('keeps both control navigation levels active across all four sections', async
   expect(vi.mocked(api).mock.calls.some(([path]) => path.startsWith('/api/inspections'))).toBe(false)
 })
 
+it('goes back to the previous control section with the browser back button', async () => {
+  signedIn = student
+  const router = mount('/student/inspection/appointment')
+  const top = within(await screen.findByRole('navigation', { name: 'Kontrollbereich' }))
+  fireEvent.click(top.getByRole('link', { name: 'Checkliste' }))
+  await screen.findByRole('heading', { name: 'Küche' })
+  fireEvent.click(top.getByRole('link', { name: 'Verlauf' }))
+  await waitFor(() => expect(router.state.location.pathname).toBe('/student/inspection/history'))
+  await act(async () => { await router.navigate(-1) })
+  await screen.findByRole('heading', { name: 'Küche' })
+  expect(top.getByRole('link', { name: 'Checkliste' }).getAttribute('aria-current')).toBe('page')
+})
+
+it.each([
+  ['/kontrolle', '/student/inspection/appointment'],
+  ['/kontrolle/checkliste', '/student/inspection/checklist'],
+  ['/kontrolle/verlauf', '/student/inspection/history'],
+  ['/putzplan', '/student/cleaning-plan'],
+  ['/mehr/einstellungen', '/student/settings'],
+])('redirects the old student address %s to %s', async (oldPath, newPath) => {
+  signedIn = student
+  const router = mount(oldPath)
+  await waitFor(() => expect(router.state.location.pathname).toBe(newPath))
+})
+
+it('keeps the bottom tab More highlighted on the settings page', async () => {
+  signedIn = student
+  mount('/student/settings')
+  const bottom = within(await screen.findByRole('navigation', { name: 'Navigation der Studierenden' }))
+  await screen.findByRole('heading', { name: 'Einstellungen' })
+  expect(bottom.getByRole('link', { name: 'Mehr' }).getAttribute('aria-current')).toBe('page')
+})
+
 it('keeps the control index as the login destination and redirects to the appointment after sign-in', async () => {
   const warning = vi.spyOn(console, 'warn')
   try {
-    const router = mount('/kontrolle')
+    const router = mount('/student/inspection')
     fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
     await screen.findByRole('heading', { name: 'Kontrolle' })
-    expect(login).toHaveBeenCalledWith('student', '/kontrolle')
-    expect(router.state.location.pathname).toBe('/kontrolle/termin')
-    expect(warning).not.toHaveBeenCalledWith(expect.stringContaining('Matched leaf route at location "/kontrolle"'))
+    expect(login).toHaveBeenCalledWith('student', '/student/inspection')
+    expect(router.state.location.pathname).toBe('/student/inspection/appointment')
+    expect(warning).not.toHaveBeenCalledWith(expect.stringContaining('Matched leaf route at location "/student/inspection"'))
   } finally {
     warning.mockRestore()
   }
@@ -227,7 +260,7 @@ it('keeps the control index as the login destination and redirects to the appoin
 
 it('hides the checklist section without CHECKLIST_READ', async () => {
   signedIn = { ...student, privileges: ['GREETING_READ'] }
-  mount('/kontrolle/ergebnis')
+  mount('/student/inspection/result')
   const top = within(await screen.findByRole('navigation', { name: 'Kontrollbereich' }))
   expect(top.queryByRole('link', { name: 'Checkliste' })).toBeNull()
   expect(top.getByRole('link', { name: 'Ergebnis' }).getAttribute('aria-current')).toBe('page')
@@ -236,7 +269,7 @@ it('hides the checklist section without CHECKLIST_READ', async () => {
 
 it.each(['CLERK', 'CARETAKER'])('keeps the student checklist closed to %s even with CHECKLIST_READ', async (role) => {
   signedIn = { ...clerk, roles: [role], privileges: ['CHECKLIST_READ'] }
-  const router = mount('/kontrolle/checkliste')
+  const router = mount('/student/inspection/checklist')
 
   await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
   expect(router.state.location.pathname).toBe('/forbidden')
@@ -247,14 +280,14 @@ it('shows an empty state when no checklist is published and hides it without the
   signedIn = student
   vi.mocked(api).mockImplementation(async (path) => path === '/api/me'
     ? Response.json(student) : path === '/api/checklist' ? new Response(null, { status: 404 }) : new Response('Hallo'))
-  mount('/kontrolle/checkliste')
+  mount('/student/inspection/checklist')
   await screen.findByRole('heading', { name: 'Seezeit hat noch keine Checkliste veröffentlicht.' })
   cleanup()
   invalidateSession()
   vi.mocked(api).mockClear()
   signedIn = { ...student, privileges: ['GREETING_READ'] }
   vi.mocked(api).mockImplementation(async (path) => path === '/api/me' ? Response.json(signedIn) : new Response('Hallo'))
-  mount('/kontrolle/checkliste')
+  mount('/student/inspection/checklist')
   await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
   expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/checklist')).toBe(false)
 })

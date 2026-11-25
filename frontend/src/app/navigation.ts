@@ -19,7 +19,8 @@ export const navigation: NavigationItem[] = [
   standardsNavigation,
 ]
 
-type StudentTab = NavigationItem & { icon: NavIconName; activeWithin?: string }
+/** `activeWithin`: Adressmuster, unter denen der Tab markiert bleibt (z. B. alle Kontroll-Reiter). */
+type StudentTab = NavigationItem & { icon: NavIconName; activeWithin?: string[] }
 
 /**
  * Mobile Hauptnavigation der Studierenden (Wireframe: Start, Putzplan, Kontrolle, Mehr).
@@ -27,9 +28,9 @@ type StudentTab = NavigationItem & { icon: NavIconName; activeWithin?: string }
  */
 export const studentTabs: StudentTab[] = [
   { to: '/', label: 'navigation.start', icon: 'home' },
-  { to: '/putzplan', label: 'navigation.cleaningPlan', icon: 'plan' },
-  { to: '/kontrolle/termin', label: 'navigation.inspection', icon: 'inspection', activeWithin: '/kontrolle/*' },
-  { to: '/mehr', label: 'navigation.more', icon: 'more' },
+  { to: '/student/cleaning-plan', label: 'navigation.cleaningPlan', icon: 'plan' },
+  { to: '/student/inspection/appointment', label: 'navigation.inspection', icon: 'inspection', activeWithin: ['/student/inspection/*'] },
+  { to: '/student/more', label: 'navigation.more', icon: 'more', activeWithin: ['/student/more', '/student/settings'] },
 ]
 
 const staffRoles = ['CARETAKER', 'CLERK']

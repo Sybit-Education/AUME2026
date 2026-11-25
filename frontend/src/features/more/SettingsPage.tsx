@@ -7,7 +7,7 @@ export default function SettingsPage() {
   const { t } = useTranslation()
   return (
     <>
-      <Link className="back" to="/mehr">‹ {t('more.back')}</Link>
+      <Link className="back" to="/student/more">‹ {t('more.back')}</Link>
       <div className="ch"><h2>{t('settings.title')}</h2></div>
       <section className="card" aria-labelledby="settings-language">
         <h3 id="settings-language">{t('settings.language')}</h3>

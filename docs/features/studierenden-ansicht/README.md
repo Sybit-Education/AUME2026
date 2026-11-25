@@ -12,22 +12,22 @@ Feature-Team 2, Sprint 1. Umgesetzte Stories:
 
 ## Navigation (US-X)
 
-Studierende ohne Personalrolle sehen die App-Ansicht aus dem Wireframe mit den unteren Tabs **Start** (`/`), **Putzplan** (`/putzplan`), **Kontrolle** (`/kontrolle/termin`) und **Mehr** (`/mehr`). Der aktive Tab ist hervorgehoben (`aria-current="page"`). Objektbetreuung und Sachbearbeitung behalten die Kopfnavigation.
+Studierende ohne Personalrolle sehen die App-Ansicht aus dem Wireframe mit den unteren Tabs **Start** (`/`), **Putzplan** (`/student/cleaning-plan`), **Kontrolle** (`/student/inspection/appointment`) und **Mehr** (`/student/more`). Der aktive Tab ist hervorgehoben (`aria-current="page"`). Objektbetreuung und Sachbearbeitung behalten die Kopfnavigation.
 
 - Die Tabs stehen in `frontend/src/app/navigation.ts` (`studentTabs`). Ein Tab kann ein `privilege` tragen und wird dann nur Berechtigten angezeigt.
 - Weitere Funktionen kommen nicht als fünfter Tab dazu, sondern unter **Mehr** (`frontend/src/features/more/menu.ts`). Dort stehen nur freigegebene Funktionen, gruppiert wie im Wireframe. Aktuell: *Konto und Datenschutz → Einstellungen*.
-- `/putzplan` zeigt einen Platzhalter („Kommt bald“). Das Putzplan-Feature (US-06/US-07) ersetzt den Eintrag `{ path: 'putzplan', Component: ComingSoonPage }` in `app/router.ts` durch seine eigene Route.
-- `/kontrolle` öffnet den Untertab **Termin**. Die oberen Untertabs **Termin**, **Checkliste**, **Ergebnis** und **Verlauf** gehören zum selben Bereich. Der untere Tab **Kontrolle** bleibt auf allen vier Seiten aktiv. **Checkliste** setzt `CHECKLIST_READ` voraus. **Ergebnis** und **Verlauf** zeigen Platzhalter.
+- `/student/cleaning-plan` zeigt einen Platzhalter („Kommt bald“). Das Putzplan-Feature (US-06/US-07) ersetzt den Eintrag `{ path: 'cleaning-plan', Component: ComingSoonPage }` in `app/router.ts` durch seine eigene Route.
+- `/student/inspection` öffnet den Untertab **Termin**. Die oberen Untertabs **Termin**, **Checkliste**, **Ergebnis** und **Verlauf** stehen als gleich breite Segmente in einer Reihe und gehören zum selben Bereich; jeder hat eine eigene Adresse, sodass Neuladen und „Zurück“ im Browser funktionieren. Alte Adressen wie `/kontrolle` leiten weiter (siehe `frontend/ROUTING.md`). Der untere Tab **Kontrolle** bleibt auf allen vier Seiten aktiv. **Checkliste** setzt `CHECKLIST_READ` voraus. **Ergebnis** und **Verlauf** zeigen Platzhalter.
 
 ## Sprache (US-26)
 
-Studierende wählen die Sprache unter **Mehr → Einstellungen → Sprache**. In der Studierenden-Ansicht gibt es deshalb keine Sprachauswahl im Kopfbereich mehr. Die Schaltflächen nutzen die gemeinsame i18next-Instanz (`lib/i18n.ts`): Die Auswahl wird unter `aume.language` gespeichert, gilt sofort für alle Texte und bleibt nach dem Neuladen erhalten. Das Layout lädt nach dem Wechsel die Daten der Seite neu, damit auch Texte aus dem Backend wechseln.
+Studierende wählen die Sprache unter **Mehr → Einstellungen → Sprache** (`/student/settings`). In der Studierenden-Ansicht gibt es deshalb keine Sprachauswahl im Kopfbereich mehr. Die Schaltflächen nutzen die gemeinsame i18next-Instanz (`lib/i18n.ts`): Die Auswahl wird unter `aume.language` gespeichert, gilt sofort für alle Texte und bleibt nach dem Neuladen erhalten. Das Layout lädt nach dem Wechsel die Daten der Seite neu, damit auch Texte aus dem Backend wechseln.
 
 Die Sprachauswahl gibt es nur an dieser einen Stelle (`components/LanguageSwitch.tsx`). Die Checkliste zeigt keinen eigenen Umschalter mehr, sondern folgt der gewählten Sprache.
 
 ## Checkliste (US-21, US-22)
 
-`/kontrolle/checkliste` zeigt die aktuell veröffentlichte Checkliste nach Bereichen. Es sind dieselben Kriterien, mit denen die Objektbetreuung kontrolliert (`ChecklistService.currentPublished()`). Ein Tipp auf ein Kriterium oder den grünen Pfeil öffnet die Erklärung, ein zweiter Tipp schließt sie wieder (`aria-expanded`). Jeder Bereich hat einen farbigen Kartenkopf. Solange keine Checkliste veröffentlicht ist, erscheint ein Hinweis.
+`/student/inspection/checklist` zeigt die aktuell veröffentlichte Checkliste nach Bereichen. Es sind dieselben Kriterien, mit denen die Objektbetreuung kontrolliert (`ChecklistService.currentPublished()`). Ein Tipp auf ein Kriterium oder den grünen Pfeil öffnet die Erklärung, ein zweiter Tipp schließt sie wieder (`aria-expanded`). Jeder Bereich hat einen farbigen Kartenkopf. Solange keine Checkliste veröffentlicht ist, erscheint ein Hinweis.
 
 ### Rechte
 

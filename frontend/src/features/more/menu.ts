@@ -24,7 +24,7 @@ export const moreGroups: MoreGroup[] = [
   {
     title: 'more.account',
     items: [
-      { to: '/mehr/einstellungen', icon: '⚙️', label: 'more.settings', hint: 'more.settingsHint' },
+      { to: '/student/settings', icon: '⚙️', label: 'more.settings', hint: 'more.settingsHint' },
     ],
   },
 ]

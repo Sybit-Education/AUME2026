@@ -4,7 +4,7 @@ import InspectionDetailsPage from './InspectionDetailsPage'
 import { loadAppointment } from './api'
 
 export const studentInspectionRoutes: RouteObject[] = [{
-  path: 'termin',
+  path: 'appointment',
   Component: InspectionDetailsPage,
   loader: protectedLoader(undefined, async ({ request }, user) => {
     if (!user.roles.includes('STUDENT')) throw redirect('/forbidden')

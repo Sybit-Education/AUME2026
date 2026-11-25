@@ -77,7 +77,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
             {studentTabs.filter((item) => allowed(item.privilege)).map((item) => {
               const content = <><span className="i"><NavIcon name={item.icon} /></span>{t(item.label)}</>
               if (item.activeWithin) {
-                const active = matchPath(item.activeWithin, pathname) !== null
+                const active = item.activeWithin.some((pattern) => matchPath(pattern, pathname) !== null)
                 return (
                   <Link key={item.to} to={item.to} className={active ? 'on' : undefined} aria-current={active ? 'page' : undefined}>
                     {content}

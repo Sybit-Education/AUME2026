@@ -1,6 +1,6 @@
 # Kontrolltermin meiner WG sehen (US-15)
 
-Studierende sehen den angekündigten Kontrollzeitraum ihrer WG auf der Startseite. Bei einem vorhandenen Termin führt „Details“ zur direkt aufrufbaren Detailseite `/kontrolle/termin`.
+Studierende sehen den angekündigten Kontrollzeitraum ihrer WG auf der Startseite. Bei einem vorhandenen Termin führt „Details“ zur direkt aufrufbaren Detailseite `/student/inspection/appointment`.
 
 **Stand: Teilumsetzung.** Issue #18 ist noch nicht vollständig abgeschlossen.
 
@@ -15,7 +15,7 @@ Die Kontrollkarte steht unter der Begrüßung. Die Willkommenszeile verwendet de
 
 ## Rechte
 
-Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabruf auf der Startseite sind auf Personen mit der Rolle `STUDENT` beschränkt. Für `/kontrolle/termin` prüft der Routen-Loader dieselbe Rolle. Der Backend-Endpunkt prüft `STUDENT` und beschränkt die Daten unabhängig vom Frontend auf die eigene WG.
+Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabruf auf der Startseite sind auf Personen mit der Rolle `STUDENT` beschränkt. Für `/student/inspection/appointment` prüft der Routen-Loader dieselbe Rolle. Der Backend-Endpunkt prüft `STUDENT` und beschränkt die Daten unabhängig vom Frontend auf die eigene WG.
 
 ## API
 
@@ -27,7 +27,7 @@ Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabru
 | `204 No Content` | Die Karte zeigt „Keine Kontrolle angekündigt“. |
 | `401 Unauthorized` | Die bestehende Sitzungsbehandlung führt zum Login und erhält das Rückkehrziel. |
 | `403 Forbidden` | Die Rolle `STUDENT` fehlt. Das Frontend führt zu `/forbidden`. |
-| HTTP `500` oder Netzwerkfehler | Auf der Startseite zeigt nur die Kontrollkarte eine übersetzte Fehlermeldung. Begrüßung und Wohnanlage bleiben sichtbar. Auf `/kontrolle/termin` greift das gemeinsame Routenfehlerlayout. |
+| HTTP `500` oder Netzwerkfehler | Auf der Startseite zeigt nur die Kontrollkarte eine übersetzte Fehlermeldung. Begrüßung und Wohnanlage bleiben sichtbar. Auf `/student/inspection/appointment` greift das gemeinsame Routenfehlerlayout. |
 
 ## Entwicklungsdaten
 
@@ -35,11 +35,11 @@ Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabru
 
 1. Das Backend mit dem Spring-Profil `dev` und das Frontend mit Vite starten. Die Befehle für beide Terminals stehen im [Projekt-README](../../../README.md#lokaler-start).
 2. Unter `http://localhost:5173/` über „Studierende“ als Dev-Konto `student` anmelden.
-3. Den Termin auf der Startseite prüfen, „Details“ öffnen und auf der Detailseite „In Kalender übernehmen“ wählen. `http://localhost:5173/kontrolle/termin` lässt sich auch direkt öffnen.
+3. Den Termin auf der Startseite prüfen, „Details“ öffnen und auf der Detailseite „In Kalender übernehmen“ wählen. `http://localhost:5173/student/inspection/appointment` lässt sich auch direkt öffnen.
 
 ## Kalenderexport
 
-Auf `/kontrolle/termin` exportiert „In Kalender übernehmen“ den gesamten Kontrollzeitraum als ganztägiges `.ics`-Ereignis einschließlich des letzten Tages.
+Auf `/student/inspection/appointment` exportiert „In Kalender übernehmen“ den gesamten Kontrollzeitraum als ganztägiges `.ics`-Ereignis einschließlich des letzten Tages.
 
 ## Tests
 

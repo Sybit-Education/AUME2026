@@ -45,7 +45,8 @@ a.btn {
 /* Reiter innerhalb von „Kontrolle“: vier gleich breite Segmente in einer Reihe. */
 .student-control-tabs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 4px;
   padding: 4px;
   margin-bottom: 14px;
