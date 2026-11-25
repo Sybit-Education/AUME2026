@@ -211,14 +211,8 @@
     "signedInAs": "Angemeldet als",
     "responsibility": "Zuständigkeit",
     "residences": "Anlagen",
-    "representative": "Vertretung",
-    "active": "Aktiv",
-    "takeOverRepresentation": "Vertretung übernehmen",
-    "representColleague": "Ich vertrete gerade eine Kollegin oder einen Kollegen",
-    "representDescription": "Dann siehst du auch deren Anlage.",
-    "device": "Gerät",
-    "offlineMode": "Offline-Modus",
-    "offlineDescription": "Im Offline-Modus führst du Kontrollen ohne Internet durch. Sie werden gesendet, sobald du wieder online bist."
+    "summary": "Profilübersicht",
+    "noAssignments": "Dir sind keine Wohnanlagen zugewiesen."
   },
   "inspections": {
     "title": "Kontrolle · WG {{label}}",

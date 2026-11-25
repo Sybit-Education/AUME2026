@@ -48,6 +48,30 @@ class StaffAssignmentTests {
     }
 
     @Test
+    void caretakerCanSeeAssignedResidencesWithRoleAndFlats() throws Exception {
+        var petershausen = residences.findFirstByName("Petershausen").orElseThrow();
+        staff.delete(staff.findByResidenceIdAndKind(petershausen.getId(), StaffKind.DEPUTY).orElseThrow());
+        staff.save(new StaffAssignmentEntity(users.findByUserKey("caretaker").orElseThrow(),
+            petershausen, StaffKind.DEPUTY));
+
+        mvc.perform(get("/api/residences/my-assignments").session(login("caretaker")).param("size", "100"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content[0].name").value("Petershausen"))
+            .andExpect(jsonPath("$.content[0].kind").value("DEPUTY"))
+            .andExpect(jsonPath("$.content[0].flats").value(contains("3.08", "3.09", "3.10", "4.12", "4.13")))
+            .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[1].kind").value("CARETAKER"))
+            .andExpect(jsonPath("$.content[1].flats").value(contains("S-01", "S-02")));
+    }
+
+    @Test
+    void clerkCannotReadCaretakerAssignments() throws Exception {
+        mvc.perform(get("/api/residences/my-assignments").session(login("clerk")))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void caretakerAndDeputyCanBeSwapped() throws Exception {
         var session = login("clerk");
         // Sonne: bisher caretaker + caretaker2, jetzt vertauscht

@@ -211,14 +211,8 @@
     "signedInAs": "Signed in as",
     "responsibility": "Responsibility",
     "residences": "Residences",
-    "representative": "Representation",
-    "active": "Active",
-    "takeOverRepresentation": "Take over representation",
-    "representColleague": "I am currently representing a colleague",
-    "representDescription": "You will then also see their residence.",
-    "device": "Device",
-    "offlineMode": "Offline mode",
-    "offlineDescription": "In offline mode, you perform inspections without internet access. They are sent once you are online again."
+    "summary": "Profile summary",
+    "noAssignments": "No residences are assigned to you."
   },
   "inspections": {
     "title": "Inspection · Flat {{label}}",
