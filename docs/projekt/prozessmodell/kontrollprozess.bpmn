@@ -5,7 +5,9 @@
     <bpmn:participant id="Part_Seezeit" name="Seezeit" processRef="Process_Seezeit" />
     <bpmn:messageFlow id="m_1" name="Ankündigung" sourceRef="s_t_ank" targetRef="w_start" />
     <bpmn:messageFlow id="m_3" name="Absage" sourceRef="s_end_del" targetRef="w_c_cancel" />
-    <bpmn:messageFlow id="m_4" name="Protokoll" sourceRef="s_t_uebermit" targetRef="w_c_result" />
+    <bpmn:messageFlow id="m_4" name="Protokoll" sourceRef="o_t_prot" targetRef="w_c_result" />
+    <bpmn:messageFlow id="m_5" name="Antwort an Sachbearbeiter" sourceRef="w_t_antw1" targetRef="Part_Seezeit" />
+    <bpmn:messageFlow id="m_6" name="Antwort zum Ergebnis (an Objektbetreuung, CC Sachbearbeitung)" sourceRef="w_t_antw2" targetRef="Part_Seezeit" />
     <bpmn:textAnnotation id="a_1">
       <bpmn:text>Erinnerung 7 Tage und 1 Tag vor Beginn (US-16)</bpmn:text>
     </bpmn:textAnnotation>
@@ -29,7 +31,7 @@
       <bpmn:outgoing>f_3</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="w_t_prep" name="Checkliste, Erklärungen, Ablauf lesen (US-21, US-22, US-23)">
-      <bpmn:incoming>f_3</bpmn:incoming>
+      <bpmn:incoming>f_63</bpmn:incoming>
       <bpmn:outgoing>f_4</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:userTask id="w_t_self" name="Selbstcheck mit der Checkliste (US-84)">
@@ -59,17 +61,53 @@
       <bpmn:outgoing>f_12</bpmn:outgoing>
     </bpmn:userTask>
     <bpmn:endEvent id="w_end" name="Ergebnis bekannt">
-      <bpmn:incoming>f_12</bpmn:incoming>
+      <bpmn:incoming>f_67</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="f_1" sourceRef="w_start" targetRef="w_t_termin" />
-    <bpmn:sequenceFlow id="f_3" sourceRef="w_t_termin" targetRef="w_t_prep" />
+    <bpmn:sequenceFlow id="f_3" sourceRef="w_t_termin" targetRef="w_g_frage1" />
     <bpmn:sequenceFlow id="f_4" sourceRef="w_t_prep" targetRef="w_t_self" />
     <bpmn:sequenceFlow id="f_5" sourceRef="w_t_self" targetRef="w_eg" />
     <bpmn:sequenceFlow id="f_8" sourceRef="w_eg" targetRef="w_c_cancel" />
     <bpmn:sequenceFlow id="f_9" sourceRef="w_c_cancel" targetRef="w_end_cancel" />
     <bpmn:sequenceFlow id="f_10" sourceRef="w_eg" targetRef="w_c_result" />
     <bpmn:sequenceFlow id="f_11" sourceRef="w_c_result" targetRef="w_t_result" />
-    <bpmn:sequenceFlow id="f_12" sourceRef="w_t_result" targetRef="w_end" />
+    <bpmn:sequenceFlow id="f_12" sourceRef="w_t_result" targetRef="w_g_frage2" />
+    <bpmn:exclusiveGateway id="w_g_frage1" name="Frage oder abwesend?">
+      <bpmn:incoming>f_3</bpmn:incoming>
+      <bpmn:outgoing>f_60</bpmn:outgoing>
+      <bpmn:outgoing>f_61</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="w_t_antw1" name="Auf Ankündigung antworten (#85)">
+      <bpmn:incoming>f_60</bpmn:incoming>
+      <bpmn:outgoing>f_62</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:exclusiveGateway id="w_m_frage1" name="">
+      <bpmn:incoming>f_61</bpmn:incoming>
+      <bpmn:incoming>f_62</bpmn:incoming>
+      <bpmn:outgoing>f_63</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="f_60" name="ja" sourceRef="w_g_frage1" targetRef="w_t_antw1" />
+    <bpmn:sequenceFlow id="f_61" name="nein" sourceRef="w_g_frage1" targetRef="w_m_frage1" />
+    <bpmn:sequenceFlow id="f_62" sourceRef="w_t_antw1" targetRef="w_m_frage1" />
+    <bpmn:sequenceFlow id="f_63" sourceRef="w_m_frage1" targetRef="w_t_prep" />
+    <bpmn:exclusiveGateway id="w_g_frage2" name="Frage zum Ergebnis?">
+      <bpmn:incoming>f_12</bpmn:incoming>
+      <bpmn:outgoing>f_64</bpmn:outgoing>
+      <bpmn:outgoing>f_65</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="w_t_antw2" name="Auf Ergebnis und Mängel antworten (#86)">
+      <bpmn:incoming>f_64</bpmn:incoming>
+      <bpmn:outgoing>f_66</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:exclusiveGateway id="w_m_frage2" name="">
+      <bpmn:incoming>f_65</bpmn:incoming>
+      <bpmn:incoming>f_66</bpmn:incoming>
+      <bpmn:outgoing>f_67</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="f_64" name="ja" sourceRef="w_g_frage2" targetRef="w_t_antw2" />
+    <bpmn:sequenceFlow id="f_65" name="nein" sourceRef="w_g_frage2" targetRef="w_m_frage2" />
+    <bpmn:sequenceFlow id="f_66" sourceRef="w_t_antw2" targetRef="w_m_frage2" />
+    <bpmn:sequenceFlow id="f_67" sourceRef="w_m_frage2" targetRef="w_end" />
   </bpmn:process>
   <bpmn:process id="Process_Seezeit" name="Sauberkeitskontrolle R1" isExecutable="false">
     <bpmn:laneSet id="LaneSet_Process_Seezeit">
@@ -91,8 +129,6 @@
         <bpmn:flowNodeRef>s_t_del</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>s_g_del</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>s_end_del</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>s_t_uebermit</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>s_end</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>s_t_gprue</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>s_g_ann</bpmn:flowNodeRef>
       </bpmn:lane>
@@ -107,6 +143,7 @@
         <bpmn:flowNodeRef>o_m</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>o_t_erg</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>o_t_prot</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>o_end</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="s_start" name="Kontrolle fällig">
@@ -194,13 +231,6 @@
       <bpmn:incoming>f_38</bpmn:incoming>
       <bpmn:messageEventDefinition id="s_end_del_ed" />
     </bpmn:endEvent>
-    <bpmn:sendTask id="s_t_uebermit" name="Protokoll an WG übermitteln (US-39)">
-      <bpmn:incoming>f_48</bpmn:incoming>
-      <bpmn:outgoing>f_49</bpmn:outgoing>
-    </bpmn:sendTask>
-    <bpmn:endEvent id="s_end" name="Kontrolle abgeschlossen">
-      <bpmn:incoming>f_49</bpmn:incoming>
-    </bpmn:endEvent>
     <bpmn:userTask id="o_t_pruef" name="Zeitraum prüfen (US-17)">
       <bpmn:incoming>f_20</bpmn:incoming>
       <bpmn:outgoing>f_21</bpmn:outgoing>
@@ -278,8 +308,7 @@
     <bpmn:sequenceFlow id="f_45" sourceRef="o_t_mangel" targetRef="o_m" />
     <bpmn:sequenceFlow id="f_46" sourceRef="o_m" targetRef="o_t_erg" />
     <bpmn:sequenceFlow id="f_47" sourceRef="o_t_erg" targetRef="o_t_prot" />
-    <bpmn:sequenceFlow id="f_48" sourceRef="o_t_prot" targetRef="s_t_uebermit" />
-    <bpmn:sequenceFlow id="f_49" name="Ergebnis zugestellt" sourceRef="s_t_uebermit" targetRef="s_end" />
+    <bpmn:sequenceFlow id="f_48" sourceRef="o_t_prot" targetRef="o_end" />
     <bpmn:userTask id="s_t_gprue" name="Gegenvorschlag prüfen">
       <bpmn:incoming>f_25</bpmn:incoming>
       <bpmn:outgoing>f_26</bpmn:outgoing>
@@ -289,11 +318,14 @@
       <bpmn:outgoing>f_27</bpmn:outgoing>
       <bpmn:outgoing>f_28</bpmn:outgoing>
     </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="o_end" name="Ergebnis veröffentlicht">
+      <bpmn:incoming>f_48</bpmn:incoming>
+    </bpmn:endEvent>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="Diagram_R1">
     <bpmndi:BPMNPlane id="Plane_R1" bpmnElement="Collab_R1">
       <bpmndi:BPMNShape id="Part_WG_di" bpmnElement="Part_WG" isHorizontal="true">
-        <dc:Bounds x="1380" y="0" width="1940" height="260" />
+        <dc:Bounds x="1380" y="0" width="2220" height="260" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_start_di" bpmnElement="w_start">
         <dc:Bounds x="1442" y="122" width="36" height="36" />
@@ -305,24 +337,24 @@
         <dc:Bounds x="1600" y="100" width="120" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_t_prep_di" bpmnElement="w_t_prep">
-        <dc:Bounds x="1740" y="100" width="120" height="80" />
+        <dc:Bounds x="2040" y="100" width="120" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_t_self_di" bpmnElement="w_t_self">
-        <dc:Bounds x="1880" y="100" width="120" height="80" />
+        <dc:Bounds x="2180" y="100" width="120" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_eg_di" bpmnElement="w_eg">
-        <dc:Bounds x="2035" y="115" width="50" height="50" />
+        <dc:Bounds x="2335" y="115" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_c_cancel_di" bpmnElement="w_c_cancel">
-        <dc:Bounds x="2122" y="122" width="36" height="36" />
+        <dc:Bounds x="2422" y="122" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2100" y="103" width="81" height="14" />
+          <dc:Bounds x="2400" y="103" width="81" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_end_cancel_di" bpmnElement="w_end_cancel">
-        <dc:Bounds x="2222" y="122" width="36" height="36" />
+        <dc:Bounds x="2522" y="122" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2195" y="162" width="90" height="27" />
+          <dc:Bounds x="2495" y="162" width="90" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_c_result_di" bpmnElement="w_c_result">
@@ -335,10 +367,34 @@
         <dc:Bounds x="3070" y="20" width="120" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="w_end_di" bpmnElement="w_end">
-        <dc:Bounds x="3242" y="42" width="36" height="36" />
+        <dc:Bounds x="3542" y="42" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3215" y="82" width="90" height="27" />
+          <dc:Bounds x="3515" y="82" width="90" height="27" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="w_g_frage1_di" bpmnElement="w_g_frage1" isMarkerVisible="true">
+        <dc:Bounds x="1765" y="115" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1740" y="82" width="100" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="w_t_antw1_di" bpmnElement="w_t_antw1">
+        <dc:Bounds x="1830" y="175" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="w_m_frage1_di" bpmnElement="w_m_frage1" isMarkerVisible="true">
+        <dc:Bounds x="1965" y="115" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="w_g_frage2_di" bpmnElement="w_g_frage2" isMarkerVisible="true">
+        <dc:Bounds x="3235" y="35" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3233" y="6" width="53" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="w_t_antw2_di" bpmnElement="w_t_antw2">
+        <dc:Bounds x="3300" y="100" width="120" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="w_m_frage2_di" bpmnElement="w_m_frage2" isMarkerVisible="true">
+        <dc:Bounds x="3455" y="35" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="f_1_di" bpmnElement="f_1">
         <di:waypoint x="1478" y="140" />
@@ -346,27 +402,27 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_3_di" bpmnElement="f_3">
         <di:waypoint x="1720" y="140" />
-        <di:waypoint x="1740" y="140" />
+        <di:waypoint x="1765" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_4_di" bpmnElement="f_4">
-        <di:waypoint x="1860" y="140" />
-        <di:waypoint x="1880" y="140" />
+        <di:waypoint x="2160" y="140" />
+        <di:waypoint x="2180" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_5_di" bpmnElement="f_5">
-        <di:waypoint x="2000" y="140" />
-        <di:waypoint x="2035" y="140" />
+        <di:waypoint x="2300" y="140" />
+        <di:waypoint x="2335" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_8_di" bpmnElement="f_8">
-        <di:waypoint x="2085" y="140" />
-        <di:waypoint x="2122" y="140" />
+        <di:waypoint x="2385" y="140" />
+        <di:waypoint x="2422" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_9_di" bpmnElement="f_9">
-        <di:waypoint x="2158" y="140" />
-        <di:waypoint x="2222" y="140" />
+        <di:waypoint x="2458" y="140" />
+        <di:waypoint x="2522" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_10_di" bpmnElement="f_10">
-        <di:waypoint x="2060" y="115" />
-        <di:waypoint x="2060" y="60" />
+        <di:waypoint x="2360" y="115" />
+        <di:waypoint x="2360" y="60" />
         <di:waypoint x="2992" y="60" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_11_di" bpmnElement="f_11">
@@ -375,16 +431,64 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_12_di" bpmnElement="f_12">
         <di:waypoint x="3190" y="60" />
-        <di:waypoint x="3242" y="60" />
+        <di:waypoint x="3235" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_60_di" bpmnElement="f_60">
+        <di:waypoint x="1790" y="165" />
+        <di:waypoint x="1790" y="215" />
+        <di:waypoint x="1830" y="215" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1796" y="180" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_61_di" bpmnElement="f_61">
+        <di:waypoint x="1815" y="140" />
+        <di:waypoint x="1965" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1870" y="120" width="26" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_62_di" bpmnElement="f_62">
+        <di:waypoint x="1950" y="215" />
+        <di:waypoint x="1990" y="215" />
+        <di:waypoint x="1990" y="165" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_63_di" bpmnElement="f_63">
+        <di:waypoint x="2015" y="140" />
+        <di:waypoint x="2040" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_64_di" bpmnElement="f_64">
+        <di:waypoint x="3260" y="85" />
+        <di:waypoint x="3260" y="140" />
+        <di:waypoint x="3300" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3266" y="104" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_65_di" bpmnElement="f_65">
+        <di:waypoint x="3285" y="60" />
+        <di:waypoint x="3455" y="60" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3355" y="42" width="26" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_66_di" bpmnElement="f_66">
+        <di:waypoint x="3420" y="140" />
+        <di:waypoint x="3480" y="140" />
+        <di:waypoint x="3480" y="85" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f_67_di" bpmnElement="f_67">
+        <di:waypoint x="3505" y="60" />
+        <di:waypoint x="3542" y="60" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Part_Seezeit_di" bpmnElement="Part_Seezeit" isHorizontal="true">
-        <dc:Bounds x="60" y="300" width="3260" height="560" />
+        <dc:Bounds x="60" y="300" width="3540" height="560" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_OB_di" bpmnElement="Lane_OB" isHorizontal="true">
-        <dc:Bounds x="90" y="600" width="3230" height="260" />
+        <dc:Bounds x="90" y="600" width="3510" height="260" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_SB_di" bpmnElement="Lane_SB" isHorizontal="true">
-        <dc:Bounds x="90" y="300" width="3230" height="300" />
+        <dc:Bounds x="90" y="300" width="3510" height="300" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="s_start_di" bpmnElement="s_start">
@@ -461,15 +565,6 @@
           <dc:Bounds x="2162" y="527" width="85" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="s_t_uebermit_di" bpmnElement="s_t_uebermit">
-        <dc:Bounds x="2950" y="410" width="120" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="s_end_di" bpmnElement="s_end">
-        <dc:Bounds x="3122" y="432" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3095" y="472" width="90" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="o_t_pruef_di" bpmnElement="o_t_pruef">
         <dc:Bounds x="640" y="650" width="120" height="80" />
         <bpmndi:BPMNLabel />
@@ -517,6 +612,12 @@
         <dc:Bounds x="1185" y="505" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1180" y="493" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="o_end_di" bpmnElement="o_end">
+        <dc:Bounds x="3122" y="672" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3095" y="712" width="90" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="f_13_di" bpmnElement="f_13">
@@ -712,15 +813,8 @@
         <di:waypoint x="2950" y="690" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="f_48_di" bpmnElement="f_48">
-        <di:waypoint x="3010" y="650" />
-        <di:waypoint x="3010" y="490" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="f_49_di" bpmnElement="f_49">
-        <di:waypoint x="3070" y="450" />
-        <di:waypoint x="3122" y="450" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3074" y="398" width="46" height="27" />
-        </bpmndi:BPMNLabel>
+        <di:waypoint x="3070" y="690" />
+        <di:waypoint x="3122" y="690" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="a_1_di" bpmnElement="a_1">
         <dc:Bounds x="1590" y="10" width="170" height="40" />
@@ -740,16 +834,32 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="m_3_di" bpmnElement="m_3">
         <di:waypoint x="2140" y="522" />
-        <di:waypoint x="2140" y="158" />
+        <di:waypoint x="2140" y="280" />
+        <di:waypoint x="2440" y="280" />
+        <di:waypoint x="2440" y="158" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="2151" y="473" width="38" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="m_4_di" bpmnElement="m_4">
-        <di:waypoint x="3010" y="410" />
+        <di:waypoint x="3010" y="650" />
         <di:waypoint x="3010" y="78" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="3016" y="266" width="55" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="m_5_di" bpmnElement="m_5">
+        <di:waypoint x="1890" y="255" />
+        <di:waypoint x="1890" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1902" y="266" width="75" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="m_6_di" bpmnElement="m_6">
+        <di:waypoint x="3360" y="180" />
+        <di:waypoint x="3360" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3366" y="262" width="150" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="a_1_as_di" bpmnElement="a_1_as">
