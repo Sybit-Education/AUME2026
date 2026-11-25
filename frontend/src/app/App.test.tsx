@@ -64,6 +64,41 @@ afterEach(() => {
   routers = []
 })
 
+const imprintUrl = 'https://www.htwg-konstanz.de/info/impressum'
+const privacyUrl = 'https://www.htwg-konstanz.de/datenschutzerklaerung'
+
+function expectHtwgLegalLinks() {
+  const imprint = screen.getByRole('link', { name: /Impressum/ })
+  const privacy = screen.getByRole('link', { name: /Datenschutzerklärung/ })
+  expect(imprint.getAttribute('href')).toBe(imprintUrl)
+  expect(privacy.getAttribute('href')).toBe(privacyUrl)
+  expect(imprint.getAttribute('target')).toBe('_blank')
+  expect(privacy.getAttribute('rel')).toContain('noopener')
+  expect(screen.getByText('HTWG Konstanz')).toBeDefined()
+}
+
+it('shows HTWG legal links at the bottom of login and of every dashboard', async () => {
+  const router = mount('/login')
+  await screen.findByRole('button', { name: 'Objektbetreuung' })
+  expectHtwgLegalLinks()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Sachbearbeitung' }))
+  await screen.findByRole('heading', { name: 'Übersicht' })
+  expectHtwgLegalLinks()
+
+  fireEvent.click(screen.getByRole('link', { name: 'Wohnanlagen' }))
+  await screen.findByText('Sonne')
+  expect(screen.queryByRole('link', { name: /Impressum/ })).toBeNull()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
+  fireEvent.click(await screen.findByRole('link', { name: 'Übersicht' }))
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  expect(router.state.location.pathname).toBe('/')
+  expectHtwgLegalLinks()
+  expect(screen.getByRole('navigation', { name: 'Navigation der Studierenden' })).toBeDefined()
+})
+
 it('restores the requested path, query and fragment after mock login', async () => {
   const router = mount('/residences?page=1#assigned')
   fireEvent.click(await screen.findByRole('button', { name: 'Sachbearbeitung' }))

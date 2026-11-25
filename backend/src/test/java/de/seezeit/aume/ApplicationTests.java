@@ -180,7 +180,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(8));
+            .andExpect(jsonPath("$.privileges.length()").value(10));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -207,13 +207,15 @@ class ApplicationTests {
         assertThat(flats.count()).isEqualTo(9);
         assertThat(staffAssignments.count()).isEqualTo(8);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(8);
+        assertThat(privileges.count()).isEqualTo(10);
     }
 
     @Test
     void sampleInspectionIsPersistedForTheStudentWithoutDuplicates() {
         var originalId = sampleInspection().getId();
         var inspectionCount = entities.createQuery("select count(i) from InspectionEntity i", Long.class)
+            .getSingleResult();
+        var periodCount = entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
             .getSingleResult();
         studentSampleData.run();
         studentSampleData.run();
@@ -244,8 +246,16 @@ class ApplicationTests {
         assertThat(period.getEndsOn()).isEqualTo(LocalDate.of(2026, 12, 11));
         assertThat(period.getAnnouncedAt()).isNotNull();
         assertThat(period.getAnnouncedBy().getUserKey()).isEqualTo("clerk");
-        assertThat(entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
+        assertThat(entities.createQuery("""
+            select count(p) from InspectionPeriodEntity p
+            where p.residence = :residence and p.startsOn = :startsOn and p.endsOn = :endsOn
+            """, Long.class)
+            .setParameter("residence", flat.getResidence())
+            .setParameter("startsOn", period.getStartsOn())
+            .setParameter("endsOn", period.getEndsOn())
             .getSingleResult()).isEqualTo(1L);
+        assertThat(entities.createQuery("select count(p) from InspectionPeriodEntity p", Long.class)
+            .getSingleResult()).isEqualTo(periodCount);
     }
 
     @Test

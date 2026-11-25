@@ -11,6 +11,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
+| `/inspection-planning?residence=<id>` | Angemeldet, `INSPECTION_PLAN` | Kontrollzeitraum einer Wohnanlage planen und abstimmen |
 | `/kontrolle` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout mit Index-Weiterleitung zu `/kontrolle/termin` |
 | `/kontrolle/termin` | Angemeldet, Rolle `STUDENT` | Kontrolltermin der eigenen WG mit Kalenderexport |
 | `/kontrolle/checkliste` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Checkliste je Bereich mit Erklärungen (US-21, US-22) |

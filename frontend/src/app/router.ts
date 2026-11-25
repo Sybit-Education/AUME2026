@@ -15,6 +15,7 @@ import DashboardPage from '@/features/dashboard/DashboardPage'
 import StudentInspectionDashboardCard from '@/features/student-inspections/DashboardInspection'
 import { studentInspectionRoutes } from '@/features/student-inspections/routes'
 import { residenceRoutes } from '@/features/residences/routes'
+import { inspectionPlanningRoutes } from '@/features/inspection-planning/routes'
 import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
@@ -55,6 +56,7 @@ export function createAppRoutes(): RouteObject[] {
           ...standardsRoutes,
           ...inspectionRoutes,
           ...moreRoutes,
+          ...inspectionPlanningRoutes,
           // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
           { path: 'putzplan', Component: ComingSoonPage },
           { path: 'forbidden', Component: ForbiddenPage },

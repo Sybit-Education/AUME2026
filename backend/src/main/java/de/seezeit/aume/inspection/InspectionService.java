@@ -120,9 +120,14 @@ public class InspectionService {
         return toView(inspection);
     }
 
-    /** DRAFT → FINALIZED. Das Gesamtergebnis legt die prüfende Person fest (US-34, ADR-0007). */
+    /**
+     * DRAFT → PUBLISHED. Das Gesamtergebnis legt die prüfende Person fest (US-34, ADR-0007). Abschließen
+     * veröffentlicht zugleich: die WG sieht das Ergebnis sofort, eine Freigabe durch die Sachbearbeitung
+     * gibt es nicht (Teamentscheidung 24.11.2026). {@code FINALIZED} wird dadurch nicht mehr gesetzt.
+     */
     public InspectionView finalizeInspection(String userKey, Long id, Result overallResult) {
-        var inspection = requireDraft(users.requireUser(userKey), id);
+        var user = users.requireUser(userKey);
+        var inspection = requireDraft(user, id);
         if (overallResult == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Overall result is required");
         }
@@ -134,7 +139,9 @@ public class InspectionService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Every criterion must be rated");
         }
         inspection.setOverallResult(overallResult);
-        inspection.setStatus(Status.FINALIZED);
+        inspection.setStatus(Status.PUBLISHED);
+        inspection.setPublishedBy(user);
+        inspection.setPublishedAt(Instant.now());
         return toView(inspection);
     }
 
