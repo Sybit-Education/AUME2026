@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
+import TileIcon, { type TileIconName } from '@/components/TileIcon'
 import { useAuth } from '@/lib/auth/AuthContext'
 import type { Checklist, Criterion } from './api'
 
@@ -34,7 +35,10 @@ export default function ChecklistPage() {
         <>
           {data.checklist.areas.map((area, index) => (
             <section className="card checklist-area" key={area.name} aria-labelledby={`checklist-area-${index}`}>
-              <h3 id={`checklist-area-${index}`}>{area.name}</h3>
+              <h3 id={`checklist-area-${index}`}>
+                <span className="icon-tile sm" aria-hidden="true"><TileIcon name={areaIcon(area.name)} size={20} /></span>
+                {area.name}
+              </h3>
               {area.criteria.map((criterion) => <CriterionRow key={criterion.id} criterion={criterion} />)}
             </section>
           ))}
@@ -44,6 +48,18 @@ export default function ChecklistPage() {
       {processLink}
     </>
   )
+}
+
+/** Passendes Icon zum Bereichsnamen (Deutsch oder Englisch); sonst ein neutrales Listen-Icon. */
+const areaIcons: [RegExp, TileIconName][] = [
+  [/boden|floor/i, 'floor'],
+  [/küche|kitchen/i, 'kitchen'],
+  [/bad|bath|dusche|shower|wc|toilet/i, 'bath'],
+  [/treppe|stair/i, 'stairs'],
+]
+
+function areaIcon(name: string): TileIconName {
+  return areaIcons.find(([pattern]) => pattern.test(name))?.[1] ?? 'list'
 }
 
 function CriterionRow({ criterion }: { criterion: Criterion }) {

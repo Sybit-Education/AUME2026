@@ -1,3 +1,36 @@
+/* Design der Studierenden-App: weiche Farben, Manrope, Icon-Kacheln.
+   Variablen gelten global, die Stile darunter nur innerhalb von .st-wrap (Studierenden-Ansicht). */
+:root {
+  --bg: #F5F7F6;
+  --card: #FFFFFF;
+  --text: #1E2B2A;
+  --text-2: #3E4F4D;
+  --muted: #66787A;
+  --line: #EEF2F1;
+  --border: #E1E8E6;
+  --primary: #2E9488;
+  --primary-dark: #1F6F67;
+  --primary-soft: #E9F5F2;
+  --area-head: #F0F7F5;
+  --area-head-text: #1F4F4A;
+  --icon-fill: #BFE3DB;
+  --icon-muted: #7D8E8C;
+  --warn-bg: #FDF1EE;
+  --warn-border: #F5D3CB;
+  --warn-text: #8E3524;
+  --badge: #E8735B;
+  --segment-bg: #E8EEEC;
+  --check-border: #C8D6D3;
+  --shadow: 0 1px 2px rgba(30, 43, 42, .04), 0 6px 16px rgba(30, 43, 42, .05);
+  --shadow-up: 0 -6px 20px rgba(30, 43, 42, .07);
+  --radius-card: 20px;
+  --radius-btn: 12px;
+}
+
+body {
+  font-family: "Manrope", system-ui, sans-serif;
+}
+
 .hd .language-picker {
   display: flex;
   align-items: center;
@@ -42,17 +75,142 @@ a.btn {
   }
 }
 
-/* Reiter innerhalb von „Kontrolle“: vier gleich breite Segmente in einer Reihe. */
+/* ---------- Studierenden-Ansicht ---------- */
+
+.st-wrap {
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* Schrift-Hierarchie */
+.st-wrap h2,
+.st-wrap h3,
+.st-wrap .card > h3,
+.st-wrap .ch h3,
+.st-body main > .ch:first-child h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.st-wrap .card h4 {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.st-wrap b,
+.st-wrap strong {
+  font-weight: 600;
+}
+
+.st-wrap .mut {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.st-wrap .big {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.st-wrap .lbl {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.st-wrap a.back {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/* Karten: weiß, weich gerundet, Schatten statt Rahmen */
+.st-wrap .card {
+  background: var(--card);
+  border: 0;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+}
+
+.st-wrap .note {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border: 0;
+}
+
+/* Buttons: Haupt- und Zweitbutton */
+.st-wrap .btn {
+  background: var(--primary);
+  color: var(--card);
+  border: 0;
+  border-radius: var(--radius-btn);
+  font-weight: 700;
+}
+
+.st-wrap .btn:hover {
+  background: var(--primary-dark);
+}
+
+.st-wrap .btn.sec,
+.st-wrap .btn.gh {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border: 0;
+  font-weight: 600;
+}
+
+.st-wrap .btn.sec:hover,
+.st-wrap .btn.gh:hover,
+.st-wrap .btn.sec[aria-pressed="true"],
+.st-wrap .btn.gh[aria-pressed="true"] {
+  background: var(--icon-fill);
+}
+
+.st-wrap .btn:focus-visible,
+.st-wrap a:focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 2px;
+}
+
+/* Plastische Icon-Kachel mit zweifarbigem Icon */
+.icon-tile {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(150deg, #F2FAF8 0%, #D2ECE6 100%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -2px 0 rgba(31, 111, 103, .14), 0 4px 10px rgba(31, 111, 103, .14);
+}
+
+.icon-tile.sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+}
+
+.icon-tile svg {
+  stroke: var(--primary-dark);
+  stroke-width: 1.8;
+  fill: var(--icon-fill);
+}
+
+.icon-tile .tile-icon-hole {
+  fill: var(--card);
+}
+
+/* Reiter innerhalb von „Kontrolle“: Segment-Leiste, vier gleich breite Segmente in einer Reihe. */
 .student-control-tabs {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 4px;
   padding: 4px;
-  margin-bottom: 14px;
-  border: 1px solid #d7e3e4;
-  border-radius: 12px;
-  background: #eef4f4;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: var(--segment-bg);
 }
 
 .student-control-tabs a {
@@ -61,10 +219,10 @@ a.btn {
   justify-content: center;
   min-height: 40px;
   padding: 6px 4px;
-  border-radius: 9px;
-  color: #466166;
+  border-radius: 10px;
+  color: var(--muted);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   text-align: center;
   text-decoration: none;
   white-space: nowrap;
@@ -72,34 +230,40 @@ a.btn {
   text-overflow: ellipsis;
 }
 
-.student-control-tabs a:hover {
-  color: var(--td);
-  background: rgba(255, 255, 255, .6);
+.st-wrap .student-control-tabs a {
+  color: var(--muted);
 }
 
-.student-control-tabs a[aria-current="page"] {
-  background: var(--t);
-  color: #fff;
-  box-shadow: 0 1px 3px rgba(15, 79, 89, .18);
+.student-control-tabs a:hover {
+  color: var(--primary-dark);
+}
+
+.st-wrap .student-control-tabs a[aria-current="page"] {
+  background: var(--card);
+  color: var(--primary-dark);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(30, 43, 42, .1);
 }
 
 .student-control-tabs a:focus-visible {
-  outline: 2px solid var(--t);
+  outline: 2px solid var(--primary-dark);
   outline-offset: 2px;
 }
 
-/* Tab-Leiste der Studierenden-App: Linien-Icons, aktiver Tab mit Farbe und hellem Hintergrund
-   hinter dem Icon. Die Basisstile für .tabbar stehen in index.css. */
+/* Tab-Leiste unten: weiß, oben abgerundet, weicher Schatten nach oben.
+   Die Basisstile für .tabbar stehen in index.css. */
 .tabbar {
-  padding: 6px 6px max(8px, env(safe-area-inset-bottom));
-  box-shadow: 0 -4px 18px rgba(15, 79, 89, .06);
-  border-top-color: #e4ecec;
+  padding: 8px 6px max(10px, env(safe-area-inset-bottom));
+  background: var(--card);
+  border-top: 0;
+  border-radius: 24px 24px 0 0;
+  box-shadow: var(--shadow-up);
 }
 
-.tabbar a {
-  padding: 4px 2px 2px;
+.st-wrap .tabbar a {
+  padding: 2px 2px;
   font-size: 11px;
-  color: #7b8d91;
+  color: var(--muted);
   display: grid;
   gap: 3px;
   justify-items: center;
@@ -113,44 +277,46 @@ a.btn {
 .tabbar a .i {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 30px;
+  width: 56px;
+  height: 32px;
   border-radius: 999px;
-  transition: background-color .15s ease, color .15s ease;
+  transition: background .15s ease, box-shadow .15s ease;
 }
 
+/* Inaktiv: nur Linie; aktiv: zweifarbig */
 .tabbar a .nav-icon {
   width: 23px;
   height: 23px;
+  fill: none;
+  stroke: var(--icon-muted);
+  stroke-width: 1.8;
 }
 
-.tabbar a:hover {
-  color: var(--td);
+.st-wrap .tabbar a:hover {
+  color: var(--primary-dark);
 }
 
-.tabbar a.on,
-.tabbar a[aria-current="page"] {
-  color: var(--t);
-  font-weight: 750;
+.st-wrap .tabbar a.on,
+.st-wrap .tabbar a[aria-current="page"] {
+  color: var(--primary-dark);
+  font-weight: 700;
 }
 
 .tabbar a.on .i,
 .tabbar a[aria-current="page"] .i {
-  background: #e2f2ef;
+  background: linear-gradient(150deg, #EEF8F6, #D6EEE8);
+  box-shadow: 0 2px 6px rgba(31, 111, 103, .14);
 }
 
 .tabbar a.on .nav-icon,
 .tabbar a[aria-current="page"] .nav-icon {
-  stroke-width: 2.2;
+  fill: var(--icon-fill);
+  stroke: var(--primary-dark);
 }
 
 .tabbar a:focus-visible {
-  outline: 2px solid var(--t);
+  outline: 2px solid var(--primary-dark);
   outline-offset: 1px;
-}
-
-.st-body main > .ch:first-child h2 {
-  font-size: 21px;
 }
 
 a.back {

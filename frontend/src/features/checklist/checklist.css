@@ -3,20 +3,23 @@
   overflow: hidden;
 }
 
-/* Bereichsüberschrift als farbiger Kopf der Karte */
+/* Bereichskopf: ein Grün für alle Bereiche, Icon-Kachel und Überschrift */
+.st-wrap .checklist-area > h3,
 .checklist-area > h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin: 0;
   padding: 12px 16px;
-  background: #e2f2ef;
-  color: var(--td);
+  background: var(--area-head);
+  color: var(--area-head-text);
   font-size: 17px;
-  font-weight: 750;
-  letter-spacing: .1px;
+  font-weight: 700;
 }
 
 .checklist-criterion {
   margin: 0 16px;
-  border-bottom: 1px solid #edf1f1;
+  border-bottom: 1px solid var(--line);
 }
 
 .checklist-criterion:last-child {
@@ -29,25 +32,37 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  min-height: 52px;
+  min-height: 56px;
   padding: 10px 0;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
+/* Kriterium: 15px, halbfett */
+.checklist-toggle b {
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .checklist-toggle:focus-visible {
-  outline: 2px solid var(--t);
+  outline: 2px solid var(--primary-dark);
   outline-offset: 2px;
   border-radius: 8px;
 }
 
+/* Grüner Pfeil in einem 34 × 34-Feld */
 .checklist-chevron {
   flex: none;
-  color: var(--t);
+  width: 34px;
+  height: 34px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--area-head);
+  color: var(--primary-dark);
   transition: transform .18s ease;
 }
 
@@ -55,22 +70,31 @@
   transform: rotate(180deg);
 }
 
+/* Zusatztext */
+.st-wrap .checklist-explanation,
 .checklist-explanation {
   margin: -2px 0 14px;
   font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.checklist-explanation b {
+  color: var(--text-2);
 }
 
 .checklist-hint {
   margin: 4px 2px 0;
 }
 
+.st-wrap .checklist-process-link,
 .checklist-process-link {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  color: var(--td);
+  color: var(--primary-dark);
   font-weight: 700;
   text-decoration: none;
 }
