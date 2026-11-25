@@ -59,6 +59,7 @@ export function createAppRoutes(): RouteObject[] {
             // „inspections“-Seiten der Objektbetreuung kollidieren.
             path: 'student',
             children: [
+              { index: true, element: createElement(Navigate, { to: '/', replace: true }) },
               {
                 path: 'inspection',
                 Component: StudentControlLayout,
