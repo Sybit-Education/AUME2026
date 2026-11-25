@@ -67,7 +67,7 @@ Die Seite zeigt drei aufklappbare Bereiche im Stil der Checkliste (farbiger Kart
 | Bereich | Feld aus `GET /api/info-pages` | Darstellung |
 | --- | --- | --- |
 | Ablauf einer Kontrolle | `process` | zugeklappt |
-| Konsequenzen und Kosten | `consequences` | hervorgehoben: oranger Kopf, Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
+| Konsequenzen und Kosten | `consequences` | hervorgehoben in weichem Rot (Warnfarben `--warn-*`), Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
 | Sauberkeitsstandards | `standards` | zugeklappt |
 
 Die Texte pflegt die Sachbearbeitung unter **Informationen** (`/standards/info`). Sie sind reiner Text: Jede Zeile wird ein eigener Absatz. Ist ein Text leer, erscheint „Noch keine Informationen.“ Die Texte gibt es nur auf Deutsch. In der englischen Oberfläche steht deshalb ein kurzer Hinweis darüber.
@@ -81,6 +81,16 @@ Das Feature liegt in `frontend/src/features/inspection-process/` und hat einen e
 | `INFO_PAGE_READ` | ✓ | – | ✓ | Texte lesen; die Seite selbst ist zusätzlich auf die Rolle `STUDENT` beschränkt |
 
 Ohne `INFO_PAGE_READ` fehlt der Link unter der Checkliste, und die Adresse führt zu „Zugriff nicht erlaubt“, ohne die API aufzurufen.
+
+## Design der Studierenden-App
+
+Schrift **Manrope** (`@fontsource/manrope`, 400–700, eingebunden in `main.tsx`). Die Design-Variablen (`--bg`, `--card`, `--text`, `--primary`, `--area-head`, `--warn-*`, `--radius-card` …) stehen ganz oben in `app/App.css`. Alle Stile der Studierenden-Ansicht gelten nur innerhalb von `.st-wrap`, damit sich die Seiten der Objektbetreuung und Sachbearbeitung nicht verändern.
+
+- Karten weiß mit weichem Schatten statt Rahmen; Hauptbutton `--primary`, Zweitbutton `--primary-soft`.
+- Schrift-Hierarchie: Überschriften 17/700, Kriterien 15/600, Zusatztext 13–14/500 in `--muted`, Kontrolldatum 22/700.
+- `.icon-tile`: plastische Kachel mit zweifarbigem Icon aus `components/TileIcon.tsx` (Checklisten-Bereiche, „Mehr“). Das Icon eines Bereichs ergibt sich aus seinem Namen (Küche, Bad, Boden, Treppe, sonst Liste).
+- Tab-Leiste: weiß, oben abgerundet; aktiver Tab mit Pille und zweifarbigem Icon (`NavIcon`).
+- Checklisten-Bereiche haben alle denselben grünen Kopf (`--area-head`).
 
 ## Abstimmung mit anderen Teams
 

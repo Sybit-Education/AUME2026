@@ -1,10 +1,11 @@
 import type de from '@/locales/de.json'
+import type { TileIconName } from '@/components/TileIcon'
 
 type MoreKey = `more.${keyof typeof de.more}`
 
 export interface MoreItem {
   to: string
-  icon: string
+  icon: TileIconName
   label: MoreKey
   hint: MoreKey
   privilege?: string
@@ -24,7 +25,7 @@ export const moreGroups: MoreGroup[] = [
   {
     title: 'more.account',
     items: [
-      { to: '/student/settings', icon: '⚙️', label: 'more.settings', hint: 'more.settingsHint' },
+      { to: '/student/settings', icon: 'settings', label: 'more.settings', hint: 'more.settingsHint' },
     ],
   },
 ]

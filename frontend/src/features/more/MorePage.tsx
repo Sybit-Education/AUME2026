@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
+import TileIcon from '@/components/TileIcon'
 import { moreGroups } from './menu'
 
 /** „Mehr“ der Studierenden: weitere Funktionen thematisch gruppiert (Wireframe „Mehr“). */
@@ -21,7 +22,7 @@ export default function MorePage() {
           <div className="card more-list">
             {group.items.map((item) => (
               <Link key={item.to} to={item.to} className="row more-link">
-                <span className="more-icon" aria-hidden="true">{item.icon}</span>
+                <span className="icon-tile" aria-hidden="true"><TileIcon name={item.icon} /></span>
                 <span className="more-text">
                   <b>{t(item.label)}</b>
                   <span className="mut xs">{t(item.hint)}</span>
