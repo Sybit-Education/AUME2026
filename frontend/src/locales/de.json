@@ -208,14 +208,23 @@
     "languageHint": "Die Auswahl gilt für die ganze App und bleibt nach dem Neuladen erhalten."
   },
   "checklist": {
-    "title": "Checkliste",
-    "language": "Sprache",
     "sameCriteria": "Diese Kriterien nutzt auch die Objektbetreuung bei der Kontrolle.",
     "details": "Details",
     "less": "Weniger",
     "explanation": "Erklärung:",
     "empty": "Seezeit hat noch keine Checkliste veröffentlicht.",
-    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien."
+    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien.",
+    "processLink": "Ablauf und Konsequenzen"
+  },
+  "inspectionProcess": {
+    "title": "Ablauf und Konsequenzen",
+    "back": "Zurück zur Checkliste",
+    "process": "Ablauf einer Kontrolle",
+    "consequences": "Konsequenzen und Kosten",
+    "standards": "Sauberkeitsstandards",
+    "important": "Wichtig",
+    "empty": "Noch keine Informationen.",
+    "germanOnly": "Seezeit stellt diese Texte nur auf Deutsch bereit."
   },
   "inspections": {
     "title": "Kontrolle · WG {{label}}",

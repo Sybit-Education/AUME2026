@@ -7,7 +7,7 @@ import './checklist.css'
 
 export const checklistRoutes: RouteObject[] = [
   {
-    path: 'checkliste',
+    path: 'checklist',
     element: <RequirePrivilege privilege="CHECKLIST_READ"><ChecklistPage /></RequirePrivilege>,
     loader: protectedLoader('CHECKLIST_READ', async ({ request }, user): Promise<ChecklistData> => {
       if (!user.roles.includes('STUDENT')) throw redirect('/forbidden')

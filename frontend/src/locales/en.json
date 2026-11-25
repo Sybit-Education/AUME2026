@@ -208,14 +208,23 @@
     "languageHint": "Your choice applies to the whole app and is kept after reloading."
   },
   "checklist": {
-    "title": "Checklist",
-    "language": "Language",
     "sameCriteria": "The caretakers use the same criteria during the inspection.",
     "details": "Details",
     "less": "Less",
     "explanation": "Explanation:",
     "empty": "Seezeit has not published a checklist yet.",
-    "emptyHint": "As soon as it is published, you will see all criteria here."
+    "emptyHint": "As soon as it is published, you will see all criteria here.",
+    "processLink": "Procedure and consequences"
+  },
+  "inspectionProcess": {
+    "title": "Procedure and consequences",
+    "back": "Back to the checklist",
+    "process": "How an inspection works",
+    "consequences": "Consequences and costs",
+    "standards": "Cleanliness standards",
+    "important": "Important",
+    "empty": "No information yet.",
+    "germanOnly": "Seezeit provides these texts in German only."
   },
   "inspections": {
     "title": "Inspection · Flat {{label}}",

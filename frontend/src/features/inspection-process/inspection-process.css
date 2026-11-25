@@ -1,0 +1,87 @@
+/* Ablauf und Konsequenzen: gleiche Optik wie die Bereichskarten der Checkliste, Kopf als Button. */
+.process-section {
+  padding: 0;
+  overflow: hidden;
+}
+
+.process-section > h3 {
+  margin: 0;
+  padding: 0;
+  background: #e2f2ef;
+  color: var(--td);
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.process-chevron {
+  flex: none;
+  color: var(--t);
+  transition: transform .18s ease;
+}
+
+.process-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.process-toggle:focus-visible {
+  outline: 2px solid var(--t);
+  outline-offset: -2px;
+}
+
+.process-section.open .process-chevron {
+  transform: rotate(180deg);
+}
+
+.process-body {
+  padding: 12px 16px 4px;
+  font-size: 14px;
+}
+
+.process-body p {
+  margin: 0 0 10px;
+}
+
+/* Konsequenzen deutlich hervorheben */
+.process-section.important {
+  border: 1px solid #f0d49c;
+}
+
+.process-section.important > h3 {
+  background: var(--wrb);
+  color: var(--wr);
+}
+
+.process-section.important .process-chevron {
+  color: var(--wr);
+}
+
+.process-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--wr);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.process-cost {
+  color: var(--bad);
+  background: var(--badb);
+  padding: 0 3px;
+  border-radius: 4px;
+}

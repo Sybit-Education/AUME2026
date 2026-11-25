@@ -19,7 +19,20 @@ import { inspectionPlanningRoutes } from '@/features/inspection-planning/routes'
 import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
+import { inspectionProcessRoutes } from '@/features/inspection-process/routes'
 import { moreRoutes } from '@/features/more/routes'
+
+/** Alte deutsche Adressen (vor dem Präfix „student/“) leiten weiter, damit Lesezeichen funktionieren. */
+const legacyStudentRedirects: RouteObject[] = Object.entries({
+  kontrolle: '/student/inspection/appointment',
+  'kontrolle/termin': '/student/inspection/appointment',
+  'kontrolle/checkliste': '/student/inspection/checklist',
+  'kontrolle/ergebnis': '/student/inspection/result',
+  'kontrolle/verlauf': '/student/inspection/history',
+  putzplan: '/student/cleaning-plan',
+  mehr: '/student/more',
+  'mehr/einstellungen': '/student/settings',
+}).map(([path, to]) => ({ path, element: createElement(Navigate, { to, replace: true }) }))
 
 function DashboardWithStudentInspection() {
   return createElement(DashboardPage, null, createElement(StudentInspectionDashboardCard))
@@ -42,26 +55,36 @@ export function createAppRoutes(): RouteObject[] {
             ? { ...route, Component: DashboardWithStudentInspection }
             : route),
           {
-            path: 'kontrolle',
-            Component: StudentControlLayout,
+            // Studierenden-Adressen mit Präfix „student/“, damit sie nicht mit den
+            // „inspections“-Seiten der Objektbetreuung kollidieren.
+            path: 'student',
             children: [
-              { index: true, element: createElement(Navigate, { to: 'termin', replace: true }) },
-              ...studentInspectionRoutes,
-              ...checklistRoutes,
-              { path: 'ergebnis', Component: ComingSoonPage },
-              { path: 'verlauf', Component: ComingSoonPage },
+              { index: true, element: createElement(Navigate, { to: '/', replace: true }) },
+              {
+                path: 'inspection',
+                Component: StudentControlLayout,
+                children: [
+                  { index: true, element: createElement(Navigate, { to: 'appointment', replace: true }) },
+                  ...studentInspectionRoutes,
+                  ...checklistRoutes,
+                  ...inspectionProcessRoutes,
+                  { path: 'result', Component: ComingSoonPage },
+                  { path: 'history', Component: ComingSoonPage },
+                ],
+              },
+              // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
+              { path: 'cleaning-plan', Component: ComingSoonPage },
+              ...moreRoutes,
             ],
           },
           ...residenceRoutes,
           ...standardsRoutes,
           ...inspectionRoutes,
-          ...moreRoutes,
           ...inspectionPlanningRoutes,
-          // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
-          { path: 'putzplan', Component: ComingSoonPage },
           { path: 'forbidden', Component: ForbiddenPage },
         ],
       },
+      ...legacyStudentRedirects,
       { path: '*', Component: NotFoundPage },
     ],
   }]

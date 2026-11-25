@@ -12,16 +12,36 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
 | `/inspection-planning?residence=<id>` | Angemeldet, `INSPECTION_PLAN` | Kontrollzeitraum einer Wohnanlage planen und abstimmen |
-| `/kontrolle` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout mit Index-Weiterleitung zu `/kontrolle/termin` |
-| `/kontrolle/termin` | Angemeldet, Rolle `STUDENT` | Kontrolltermin der eigenen WG mit Kalenderexport |
-| `/kontrolle/checkliste` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Checkliste je Bereich mit Erklärungen (US-21, US-22) |
-| `/kontrolle/ergebnis` | Angemeldet, Rolle `STUDENT` | Platzhalter für das eigene Kontrollergebnis |
-| `/kontrolle/verlauf` | Angemeldet, Rolle `STUDENT` | Platzhalter für den eigenen Kontrollverlauf |
-| `/putzplan` | Angemeldet | Platzhalter, bis das Putzplan-Feature die Route übernimmt |
-| `/mehr` | Angemeldet | Weitere Studierenden-Funktionen, gruppiert |
-| `/mehr/einstellungen` | Angemeldet | Sprache wählen (US-26) |
+| `/student` | Angemeldet | Leitet zur gemeinsamen Startseite `/` weiter |
+| `/student/inspection` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout der Kontroll-Reiter, Index leitet zu `/student/inspection/appointment` weiter |
+| `/student/inspection/appointment` | Angemeldet, Rolle `STUDENT` | Reiter „Termin“: Kontrolltermin der eigenen WG mit Kalenderexport |
+| `/student/inspection/checklist` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Reiter „Checkliste“: Kriterien je Bereich mit Erklärungen (US-21, US-22) |
+| `/student/inspection/process` | Angemeldet, Rolle `STUDENT`, `INFO_PAGE_READ` | Ablauf und Konsequenzen (US-23), Link unter der Checkliste; Reiter „Checkliste“ bleibt markiert |
+| `/student/inspection/result` | Angemeldet, Rolle `STUDENT` | Reiter „Ergebnis“: Platzhalter für das eigene Kontrollergebnis |
+| `/student/inspection/history` | Angemeldet, Rolle `STUDENT` | Reiter „Verlauf“: Platzhalter für den eigenen Kontrollverlauf |
+| `/student/cleaning-plan` | Angemeldet | Platzhalter, bis das Putzplan-Feature die Route übernimmt |
+| `/student/more` | Angemeldet | Weitere Studierenden-Funktionen, gruppiert |
+| `/student/settings` | Angemeldet | Sprache wählen (US-26); unterer Tab „Mehr“ bleibt markiert |
 | `/forbidden` | Angemeldet | Fehlende Berechtigung |
 | Andere URLs | Öffentlich | Seite nicht gefunden |
+
+### Präfix `student/`
+
+Die Fachseiten der Studierenden-Ansicht verwenden das Präfix `/student/`, um Pfadkollisionen mit Personalrouten wie `/inspections` zu vermeiden. Sie hängen in `app/router.ts` unter `path: 'student'`. Die Features registrieren relative Pfade wie `checklist`, `appointment` und `more`. Die geschützte Startseite bleibt für alle Rollen unter `/` erreichbar. Wer ohne Sitzung `/student` öffnet, gelangt nach der Anmeldung über diese Indexroute zur Startseite.
+
+Die früheren deutschen Adressen leiten im Browser weiter (`legacyStudentRedirects` in `app/router.ts`), damit Lesezeichen funktionieren:
+
+| Alt | Neu |
+|---|---|
+| `/kontrolle`, `/kontrolle/termin` | `/student/inspection/appointment` |
+| `/kontrolle/checkliste` | `/student/inspection/checklist` |
+| `/kontrolle/ergebnis` | `/student/inspection/result` |
+| `/kontrolle/verlauf` | `/student/inspection/history` |
+| `/putzplan` | `/student/cleaning-plan` |
+| `/mehr` | `/student/more` |
+| `/mehr/einstellungen` | `/student/settings` |
+
+Ein unterer Tab bleibt über `activeWithin` (Liste von Adressmustern in `app/navigation.ts`) auch auf Unterseiten markiert, z. B. „Kontrolle“ auf allen Reitern und „Mehr“ auf den Einstellungen.
 
 Die Beispiele für `inspections` in dieser Anleitung beschreiben eine künftige Erweiterung.
 
