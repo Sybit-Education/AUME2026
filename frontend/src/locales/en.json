@@ -10,6 +10,13 @@
     "logout": "Sign out",
     "retry": "Try again"
   },
+  "legal": {
+    "nav": "Legal information of HTWG Konstanz",
+    "imprint": "Legal notice",
+    "privacy": "Privacy policy",
+    "provider": "HTWG Konstanz",
+    "newTab": "opens in a new tab"
+  },
   "roles": {
     "student": "Student",
     "caretaker": "Caretaker",

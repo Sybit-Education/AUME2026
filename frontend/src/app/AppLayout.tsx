@@ -37,7 +37,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div aria-busy={busy}>
+    <div className="app" aria-busy={busy}>
       <header className="hd">
         <h1 className="brand">{t('app.name')}</h1>
         {auth.user && !studentView && (
