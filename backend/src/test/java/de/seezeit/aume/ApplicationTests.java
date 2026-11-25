@@ -19,6 +19,7 @@ import de.seezeit.aume.user.*;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class ApplicationTests {
     private static final String APPOINTMENT_PATH = "/api/student/inspection-appointment";
+    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
     @Autowired private MockMvc mvc;
     @Autowired private UserRepository users;
     @Autowired private ResidenceRepository residences;
@@ -260,7 +262,7 @@ class ApplicationTests {
 
     @Test
     void studentReadsTheNextAnnouncedPeriodOnlyFromTheirOwnFlat() throws Exception {
-        var today = LocalDate.now();
+        var today = LocalDate.now(BERLIN);
         var own = sampleInspection();
         own.getPeriod().setStartsOn(today.plusDays(2));
         own.getPeriod().setEndsOn(today.plusDays(4));
@@ -278,14 +280,70 @@ class ApplicationTests {
             .andExpect(jsonPath("$.id").value(own.getId().intValue()))
             .andExpect(jsonPath("$.startsOn").value(today.plusDays(2).toString()))
             .andExpect(jsonPath("$.endsOn").value(today.plusDays(4).toString()))
+            .andExpect(jsonPath("$.appointmentChanged").value(false))
             .andExpect(jsonPath("$.exactDay").doesNotExist())
-            .andExpect(jsonPath("$.changed").doesNotExist());
+            .andExpect(jsonPath("$.changed").doesNotExist())
+            .andExpect(jsonPath("$.rescheduledAt").doesNotExist());
     }
 
     @ParameterizedTest
-    @CsvSource({"ended", "future", "missing", "ambiguous"})
+    @CsvSource({"1, true", "0, false", "-1, false"})
+    void changeNoticeIsVisibleOnlyBeforeTheUpdatedPeriodStarts(int daysUntilStart, boolean expectedNotice)
+            throws Exception {
+        var today = LocalDate.now(BERLIN);
+        var period = sampleInspection().getPeriod();
+        var startsOn = today.plusDays(daysUntilStart);
+        period.setStartsOn(startsOn);
+        period.setEndsOn(startsOn.plusDays(2));
+        var announcedAt = startsOn.minusDays(2).atStartOfDay(BERLIN).toInstant();
+        period.setAnnouncedAt(announcedAt);
+        period.setRescheduledAt(announcedAt);
+        entities.flush();
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.startsOn").value(startsOn.toString()))
+            .andExpect(jsonPath("$.endsOn").value(startsOn.plusDays(2).toString()))
+            .andExpect(jsonPath("$.appointmentChanged").value(expectedNotice))
+            .andExpect(jsonPath("$.rescheduledAt").doesNotExist());
+    }
+
+    @Test
+    void expiredRescheduledPeriodDoesNotAppear() throws Exception {
+        var today = LocalDate.now(BERLIN);
+        var period = sampleInspection().getPeriod();
+        period.setStartsOn(today.minusDays(3));
+        period.setEndsOn(today.minusDays(1));
+        period.setRescheduledAt(today.minusDays(4).atStartOfDay(BERLIN).toInstant());
+        entities.flush();
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+            .andExpect(status().isNoContent())
+            .andExpect(content().string(""));
+    }
+
+    @Test
+    void studentWithFutureMoveOutCanReadTheAppointment() throws Exception {
+        var today = LocalDate.now(BERLIN);
+        var own = sampleInspection();
+        var membership = entities.createQuery("""
+            select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
+            """, MembershipEntity.class).getSingleResult();
+        membership.setValidTo(today.plusDays(1));
+        own.getPeriod().setStartsOn(today.plusDays(2));
+        own.getPeriod().setEndsOn(today.plusDays(4));
+        entities.flush();
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(own.getId().intValue()))
+            .andExpect(jsonPath("$.appointmentChanged").value(false));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"ended", "endsToday", "future", "missing", "ambiguous", "ambiguousWithFutureMoveOut"})
     void studentWithoutOneActiveFlatReceivesNoAppointment(String membershipState) throws Exception {
-        var today = LocalDate.now();
+        var today = LocalDate.now(BERLIN);
         var membership = entities.createQuery("""
             select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
             """, MembershipEntity.class).getSingleResult();
@@ -294,12 +352,17 @@ class ApplicationTests {
         period.setEndsOn(today.plusDays(2));
         switch (membershipState) {
             case "ended" -> membership.setValidTo(today.minusDays(1));
+            case "endsToday" -> membership.setValidTo(today);
             case "future" -> membership.setValidFrom(today.plusDays(1));
             case "missing" -> entities.remove(membership);
-            case "ambiguous" -> {
+            case "ambiguous", "ambiguousWithFutureMoveOut" -> {
                 var otherFlat = flats.findByResidenceIdAndLabel(membership.getFlat().getResidence().getId(), "S-02")
                     .orElseThrow();
-                entities.persist(new MembershipEntity(otherFlat, membership.getUser(), today));
+                var otherMembership = new MembershipEntity(otherFlat, membership.getUser(), today);
+                if (membershipState.equals("ambiguousWithFutureMoveOut")) {
+                    otherMembership.setValidTo(today.plusDays(1));
+                }
+                entities.persist(otherMembership);
             }
             default -> throw new IllegalArgumentException(membershipState);
         }
@@ -312,7 +375,7 @@ class ApplicationTests {
     @Test
     void equallyEarlyAppointmentsAreNotSelectedArbitrarily() throws Exception {
         var own = sampleInspection();
-        var start = LocalDate.now().plusDays(1);
+        var start = LocalDate.now(BERLIN).plusDays(1);
         own.getPeriod().setStartsOn(start);
         own.getPeriod().setEndsOn(start.plusDays(2));
         inspection(own.getFlat(), start, true);

@@ -214,6 +214,7 @@ erDiagram
         timestamptz created_at
         bigint announced_by FK
         timestamptz announced_at
+        timestamptz rescheduled_at
         varchar status
         varchar kind
         bigint caretaker_id FK
@@ -229,6 +230,10 @@ erDiagram
 ```
 
 `inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR`. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
+
+`rescheduled_at` ist optional und erfasst den Zeitpunkt der letzten erneuten Ankündigung mit geändertem Start- oder Enddatum. Der Ankündigungsprozess der Sachbearbeitung muss den Zeitpunkt in derselben Transaktion wie die aktualisierten Kalendergrenzen setzen. Bis einschließlich der Erstankündigung bleibt das Feld leer. Eine Speicherung ohne Änderung der Kalendergrenzen lässt den vorhandenen Wert bestehen. Der US-15-Lesepfad verwendet das Feld bereits. Der produktive Schreibpfad gehört zu US-18.
+
+Hibernate legt die Spalte im aktuellen H2-Schema mit `ddl-auto: create-drop` an. Für persistente Installationen braucht es eine abgestimmte Migration, die die nullable Spalte ergänzt und bestehende Zeiträume ohne Änderungsnachweis leer lässt.
 
 ## Kontrollen
 

@@ -1,10 +1,11 @@
 import { api, type LoggedInUser } from '@/lib/auth/client'
 import { requireOk } from '@/lib/auth/response'
 
-type UpcomingAppointment = {
+export type UpcomingAppointment = {
   id: number
   startsOn: string
   endsOn: string
+  appointmentChanged: boolean
 }
 
 export async function loadAppointment(user: LoggedInUser, signal: AbortSignal): Promise<UpcomingAppointment | null> {

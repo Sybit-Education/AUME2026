@@ -175,7 +175,6 @@
     "detailsTitle": "Kontrolle",
     "period": "Zeitraum",
     "details": "Details",
-    "exactDay": "Genauer Kontrolltag: {{date}}",
     "changed": "Termin geändert",
     "empty": "Keine Kontrolle angekündigt.",
     "download": "In Kalender übernehmen"

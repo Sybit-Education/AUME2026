@@ -2,6 +2,7 @@ package de.seezeit.aume.inspection;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class InspectionAppointmentController {
+    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
+
     private final InspectionAppointmentRepository appointments;
 
     public InspectionAppointmentController(InspectionAppointmentRepository appointments) {
@@ -22,7 +25,8 @@ public class InspectionAppointmentController {
     @PreAuthorize("hasRole('STUDENT')")
     @Transactional(readOnly = true)
     public ResponseEntity<AppointmentView> upcoming(Principal principal) {
-        var candidates = appointments.findUpcoming(principal.getName(), LocalDate.now(),
+        var today = LocalDate.now(BERLIN);
+        var candidates = appointments.findUpcoming(principal.getName(), today,
             InspectionEntity.Status.PLANNED, PageRequest.ofSize(2));
         if (candidates.isEmpty()) return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
 
@@ -31,9 +35,11 @@ public class InspectionAppointmentController {
         if (candidates.size() == 2 && period.getStartsOn().equals(candidates.get(1).getPeriod().getStartsOn())) {
             return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
         }
+        // findUpcoming returns only announced periods.
+        var appointmentChanged = period.getRescheduledAt() != null && today.isBefore(period.getStartsOn());
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-            .body(new AppointmentView(inspection.getId(), period.getStartsOn(), period.getEndsOn()));
+            .body(new AppointmentView(inspection.getId(), period.getStartsOn(), period.getEndsOn(), appointmentChanged));
     }
 
-    public record AppointmentView(Long id, LocalDate startsOn, LocalDate endsOn) {}
+    public record AppointmentView(Long id, LocalDate startsOn, LocalDate endsOn, boolean appointmentChanged) {}
 }

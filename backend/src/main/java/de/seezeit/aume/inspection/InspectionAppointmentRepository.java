@@ -15,11 +15,12 @@ interface InspectionAppointmentRepository extends Repository<InspectionEntity, L
           and exists (
               select m.id from MembershipEntity m
               where m.user.userKey = :userKey and m.flat = i.flat
-                and m.validTo is null and m.validFrom <= :today
+                and m.validFrom <= :today and (m.validTo is null or m.validTo > :today)
           )
           and 1 = (
               select count(distinct m.flat.id) from MembershipEntity m
-              where m.user.userKey = :userKey and m.validTo is null and m.validFrom <= :today
+              where m.user.userKey = :userKey
+                and m.validFrom <= :today and (m.validTo is null or m.validTo > :today)
           )
         order by p.startsOn, i.id
         """)

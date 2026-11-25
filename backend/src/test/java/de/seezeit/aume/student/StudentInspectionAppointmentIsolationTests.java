@@ -16,6 +16,7 @@ import de.seezeit.aume.user.UserEntity;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,7 @@ class StudentInspectionAppointmentIsolationTests {
 
     @Test
     void studentInspectionAppointmentsStayIsolatedBetweenTwoStudentSessions() throws Exception {
-        var today = LocalDate.now();
+        var today = LocalDate.now(ZoneId.of("Europe/Berlin"));
         var residence = new ResidenceEntity("US-15 Testwohnanlage");
         entities.persist(residence);
         var flatA = new FlatEntity(residence, "S-01", 1);
@@ -67,6 +68,7 @@ class StudentInspectionAppointmentIsolationTests {
 
         var clerk = users.requireUser("clerk");
         var appointmentA = announcedAppointment(flatA, clerk, today.plusDays(1));
+        appointmentA.getPeriod().setRescheduledAt(appointmentA.getPeriod().getAnnouncedAt());
         entities.flush();
 
         mvc.perform(get("/api/me").session(sessionA))
@@ -74,7 +76,7 @@ class StudentInspectionAppointmentIsolationTests {
         mvc.perform(get("/api/me").session(sessionB))
             .andExpect(status().isOk()).andExpect(jsonPath("$.userKey").value(studentB.getUserKey()));
 
-        expectAppointment(sessionA, appointmentA);
+        expectAppointment(sessionA, appointmentA, true);
         mvc.perform(get(STUDENT_INSPECTION_APPOINTMENT_PATH).session(sessionB))
             .andExpect(status().isNoContent()).andExpect(content().string(""));
         mvc.perform(get(STUDENT_INSPECTION_APPOINTMENT_PATH).session(sessionB)
@@ -84,10 +86,10 @@ class StudentInspectionAppointmentIsolationTests {
         var appointmentB = announcedAppointment(flatB, clerk, today.plusDays(5));
         entities.flush();
 
-        expectAppointment(sessionB, appointmentB);
-        expectAppointment(sessionA, appointmentA);
-        expectAppointment(sessionB, appointmentB, flatA.getId().toString());
-        expectAppointment(sessionA, appointmentA, flatB.getId().toString());
+        expectAppointment(sessionB, appointmentB, false);
+        expectAppointment(sessionA, appointmentA, true);
+        expectAppointment(sessionB, appointmentB, false, flatA.getId().toString());
+        expectAppointment(sessionA, appointmentA, true, flatB.getId().toString());
     }
 
     private MockHttpSession studentSession(StudentEntity student) {
@@ -110,14 +112,15 @@ class StudentInspectionAppointmentIsolationTests {
         return appointment;
     }
 
-    private void expectAppointment(MockHttpSession session, InspectionEntity appointment, String... foreignFlatIds)
-            throws Exception {
+    private void expectAppointment(MockHttpSession session, InspectionEntity appointment, boolean appointmentChanged,
+            String... foreignFlatIds) throws Exception {
         var request = get(STUDENT_INSPECTION_APPOINTMENT_PATH).session(session);
         if (foreignFlatIds.length > 0) request.param("flatId", foreignFlatIds);
         mvc.perform(request)
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(appointment.getId().intValue()))
             .andExpect(jsonPath("$.startsOn").value(appointment.getPeriod().getStartsOn().toString()))
-            .andExpect(jsonPath("$.endsOn").value(appointment.getPeriod().getEndsOn().toString()));
+            .andExpect(jsonPath("$.endsOn").value(appointment.getPeriod().getEndsOn().toString()))
+            .andExpect(jsonPath("$.appointmentChanged").value(appointmentChanged));
     }
 }

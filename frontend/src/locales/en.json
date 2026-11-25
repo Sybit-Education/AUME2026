@@ -175,7 +175,6 @@
     "detailsTitle": "Inspection",
     "period": "Period",
     "details": "Details",
-    "exactDay": "Inspection day: {{date}}",
     "changed": "Inspection date changed",
     "empty": "No inspection announced.",
     "download": "Add to calendar"

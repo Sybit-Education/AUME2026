@@ -10,6 +10,7 @@ import { invalidateSession } from '@/lib/auth/session'
 import { UiError } from '@/lib/errors'
 import i18n from '@/lib/i18n'
 import { api, login, type LoggedInUser } from '@/lib/auth/client'
+import type { UpcomingAppointment } from './api'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
@@ -20,8 +21,12 @@ vi.mock('@/lib/auth/client', () => ({
 
 const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
+const unchangedAppointment = {
+  id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false,
+} satisfies UpcomingAppointment
+
 let signedIn: LoggedInUser | null
-let studentInspectionAppointment: { id: number; startsOn: string; endsOn: string } | null
+let studentInspectionAppointment: UpcomingAppointment | null
 let studentInspectionFailure: number | Error | null
 let studentInspectionResponse: Promise<Response> | undefined
 let routers: ReturnType<typeof createMemoryRouter>[] = []
@@ -73,7 +78,7 @@ afterEach(() => {
 
 it('shows the backend appointment without adding an exact date or change notice', async () => {
   signedIn = student
-  studentInspectionAppointment = { id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11' }
+  studentInspectionAppointment = unchangedAppointment
   mount()
 
   await screen.findByRole('heading', { name: 'Nächste Kontrolle' })
@@ -88,6 +93,27 @@ it('shows the backend appointment without adding an exact date or change notice'
   await screen.findByRole('heading', { name: 'Kontrolle' })
   expect(screen.getByText(period).textContent).toBe(period)
   expect(screen.getByRole('button', { name: 'In Kalender übernehmen' })).toBeTruthy()
+})
+
+it('shows the rescheduled period and notice on the dashboard and appointment route', async () => {
+  signedIn = student
+  studentInspectionAppointment = {
+    ...unchangedAppointment,
+    startsOn: '2026-12-14',
+    endsOn: '2026-12-18',
+    appointmentChanged: true,
+  }
+  const router = mount()
+
+  const dashboardCard = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  await dashboardCard.findByText('Termin geändert')
+  expect(dashboardCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
+  fireEvent.click(dashboardCard.getByRole('link', { name: 'Details' }))
+
+  const detailsCard = within(await screen.findByRole('region', { name: 'Kontrolle' }))
+  expect(router.state.location.pathname).toBe('/student/inspection/appointment')
+  expect(detailsCard.getByText('Termin geändert')).toBeTruthy()
+  expect(detailsCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
 })
 
 it('shows the empty appointment card when the backend has no appointment', async () => {
@@ -146,7 +172,7 @@ it.each([200, 401, 403, 500])('ignores a late student inspection HTTP %s after l
   expect(signal?.aborted).toBe(true)
   await act(async () => {
     resolve(status === 200
-      ? Response.json({ id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11' })
+      ? Response.json(unchangedAppointment)
       : new Response(null, { status }))
   })
 
@@ -158,7 +184,7 @@ it.each([200, 401, 403, 500])('ignores a late student inspection HTTP %s after l
 
 it('reformats the loaded inspection when changing language without fetching it again', async () => {
   signedIn = student
-  studentInspectionAppointment = { id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11' }
+  studentInspectionAppointment = unchangedAppointment
   mount()
 
   await screen.findByText('Mo 07.12. bis Fr 11.12.2026')
