@@ -4,12 +4,12 @@ import { Link, useLoaderData } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import type { InspectionPage, InspectionSummary } from './api'
 import type { RequestPage } from './requestsApi'
-import RequestsSection from './RequestsPage'
+import RequestsSection from './RequestsSection'
 import { formatDayMonth, formatPeriod, formatWindow, today } from './dates'
-import { formatDate } from './history'
 import InspectionTabs from './InspectionTabs'
 import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
-import { compareValues, contains, overlaps, useFilterMenu, useLocalTable, type FilterSpec } from './tableState'
+import { compareValues, contains, overlaps, periodChipLabel, useFilterMenu, useLocalTable, type FilterSpec } from './tableState'
+import './inspections.css'
 
 // Seite Kontrollen der Objektbetreuung: oben die Anfragen (Zeitraum abstimmen), darunter die anstehenden Kontrollen.
 
@@ -101,8 +101,7 @@ function UpcomingSection({ inspections }: { inspections: InspectionSummary[] }) 
   if (filters.flat?.text) active.push({ key: 'flat', label: `${label.flat}: ${filters.flat.text}`, clear: clear('flat') })
   if (filters.kind?.value) active.push({ key: 'kind', label: `${label.kind}: ${kindText(filters.kind.value)}`, clear: clear('kind') })
   if (filters.period?.from || filters.period?.to) {
-    const day = (value?: string) => value ? formatDate(value, language) : '…'
-    active.push({ key: 'period', label: `${label.period}: ${day(filters.period.from)} – ${day(filters.period.to)}`, clear: clear('period') })
+    active.push({ key: 'period', label: periodChipLabel(label.period, filters.period, language), clear: clear('period') })
   }
   if (filters.status?.value) {
     active.push({ key: 'status', label: `${label.status}: ${statusText[filters.status.value as StatusKey]}`, clear: clear('status') })
@@ -117,7 +116,7 @@ function UpcomingSection({ inspections }: { inspections: InspectionSummary[] }) 
   )
 
   return (
-    <section className="ins-section ins-history" ref={section} aria-labelledby="upcoming-title">
+    <section className="ins-section" ref={section} aria-labelledby="upcoming-title">
       <h3 id="upcoming-title">{t('inspections.upcomingTitle')}</h3>
       <ActiveFilters filters={active} onReset={table.reset} />
       {inspections.length === 0 ? <p className="mut">{t('inspections.none')}</p> : (

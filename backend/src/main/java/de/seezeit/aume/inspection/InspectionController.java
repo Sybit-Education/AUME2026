@@ -1,7 +1,6 @@
 package de.seezeit.aume.inspection;
 
 import java.security.Principal;
-import java.util.Map;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
 import de.seezeit.aume.inspection.InspectionService.FindingRequest;
 import de.seezeit.aume.inspection.InspectionService.InspectionSummary;
@@ -70,7 +69,9 @@ public class InspectionController {
 
     /** 409 mit Code, damit das Frontend „erst ab Beginn des Zeitraums“ statt eines allgemeinen Konflikts zeigt. */
     @ExceptionHandler(InspectionService.PeriodNotStartedException.class)
-    public ResponseEntity<Map<String, String>> periodNotStarted() {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("code", "period_not_started"));
+    public ResponseEntity<ErrorView> periodNotStarted() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorView("period_not_started"));
     }
+
+    public record ErrorView(String code) {}
 }

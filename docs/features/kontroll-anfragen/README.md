@@ -43,7 +43,7 @@ Keine neuen Tabellen und kein neuer Backend-Code. Genutzt wird die API der Kontr
 
 ## Code
 
-`frontend/src/features/inspections/`: `RequestsPage.tsx` (Abschnitt Anfragen und Dialoge, eingebunden in `InspectionsPage.tsx`), `requestsApi.ts`, `requestsActions.ts`, `requests.css`, Route in `routes.tsx`, Reiter in `InspectionTabs.tsx`. Tests: `RequestsPage.test.tsx`.
+`frontend/src/features/inspections/`: `RequestsSection.tsx` (Abschnitt Anfragen und Dialoge, eingebunden in `InspectionsPage.tsx`), `requestsApi.ts`, `requestsActions.ts`, `requests.css`, Route in `routes.tsx`, Reiter in `InspectionTabs.tsx`. Tests: `RequestsSection.test.tsx`.
 
 ## Offen
 

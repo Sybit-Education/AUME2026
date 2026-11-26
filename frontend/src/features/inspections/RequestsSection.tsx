@@ -4,9 +4,8 @@ import { Form, Link, useActionData, useNavigate, useNavigation, useSearchParams 
 import type { RequestActionResult } from './requestsActions'
 import { MAX_REASON_LENGTH, type InspectionRequest, type RequestPage } from './requestsApi'
 import { formatPeriod, formatWindow } from './dates'
-import { formatDate } from './history'
 import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
-import { compareValues, contains, overlaps, useFilterMenu, useLocalTable, type FilterSpec } from './tableState'
+import { compareValues, contains, overlaps, periodChipLabel, useFilterMenu, useLocalTable, type FilterSpec } from './tableState'
 import './requests.css'
 
 // Aufbau nach dem Wireframe (Objektbetreuung, „Anstehend“ und „Vorschlag beantworten“).
@@ -166,7 +165,7 @@ function RequestRow({ request, answerUrl }: { request: InspectionRequest; answer
       <td>{request.residenceName}</td>
       <td><b>{request.flatCount}</b></td>
       <td>{t(`inspectionRequests.kind.${request.kind}`)}</td>
-      <td className="requests-period">
+      <td className="ins-period">
         {formatPeriod(request.startsOn, request.endsOn, i18n.resolvedLanguage)}
         {hours && <div className="xs mut">{hours}</div>}
         {counter && (
@@ -238,8 +237,7 @@ export default function RequestsSection({ data }: { data: RequestPage }) {
   const clear = (column: Column) => () => table.setFilter(column, {})
   if (filters.residence?.text) active.push({ key: 'residence', label: `${label.residence}: ${filters.residence.text}`, clear: clear('residence') })
   if (filters.period?.from || filters.period?.to) {
-    const day = (value?: string) => value ? formatDate(value, i18n.resolvedLanguage) : '…'
-    active.push({ key: 'period', label: `${label.period}: ${day(filters.period.from)} – ${day(filters.period.to)}`, clear: clear('period') })
+    active.push({ key: 'period', label: periodChipLabel(label.period, filters.period, i18n.resolvedLanguage), clear: clear('period') })
   }
   if (filters.status?.value) {
     active.push({ key: 'status', label: `${label.status}: ${statusText(filters.status.value as InspectionRequest['status'])}`, clear: clear('status') })
@@ -263,7 +261,7 @@ export default function RequestsSection({ data }: { data: RequestPage }) {
   const menuSpec = menu.open ? spec[menu.open.column] : undefined
 
   return (
-    <section className="ins-section ins-history" ref={section} aria-labelledby="requests-title">
+    <section className="ins-section" ref={section} aria-labelledby="requests-title">
       <h3 id="requests-title">{t('inspectionRequests.title')}</h3>
       {savedKey && <p className="note ok" role="status">{t(`inspectionRequests.saved.${savedKey}`)}</p>}
       <ActiveFilters filters={active} onReset={table.reset} />

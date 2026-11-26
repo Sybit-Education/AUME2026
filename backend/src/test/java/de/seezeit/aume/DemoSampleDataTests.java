@@ -6,6 +6,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
@@ -48,8 +49,8 @@ class DemoSampleDataTests {
     void onlyTheRunningPeriodCanBeStarted() throws Exception {
         var session = login("caretaker");
         var content = mvc.perform(get("/api/inspections").session(session)).andReturn().getResponse().getContentAsString();
-        Integer running = com.jayway.jsonpath.JsonPath.read(content, "$.content[0].id");
-        Integer future = com.jayway.jsonpath.JsonPath.read(content, "$.content[1].id");
+        Integer running = JsonPath.read(content, "$.content[0].id");
+        Integer future = JsonPath.read(content, "$.content[1].id");
 
         mvc.perform(post("/api/inspections/" + future + "/start").session(session).with(csrf()))
             .andExpect(status().isConflict())

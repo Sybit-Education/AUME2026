@@ -48,11 +48,11 @@ export const inspectionRoutes: RouteObject[] = [{
     if (new URL(request.url).searchParams.get('start') === '1') {
       try {
         await startInspection(id)
-        throw redirect(`/inspections/${id}`)
       } catch (cause) {
         if (!(cause instanceof UiError)) throw cause
         startError = cause.key
       }
+      if (!startError) throw redirect(`/inspections/${id}`)
     }
     const [inspection, previous] = await Promise.all([
       getInspection(id, request.signal), getPreviousFindings(id, request.signal),

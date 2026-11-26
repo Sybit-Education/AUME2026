@@ -1,4 +1,5 @@
 import { useState, type RefObject } from 'react'
+import { formatDate } from './history'
 
 /*
  * Zustand und Hilfsfunktionen der Kontroll-Tabellen; die Bausteine zum Anzeigen stehen in tableControls.tsx.
@@ -30,7 +31,7 @@ interface OpenMenu<C extends string> {
   button: HTMLButtonElement
 }
 
-/** Öffnet das Filter-Menü einer Spalte unter ihrem Trichter-Symbol, innerhalb von {@code section}. */
+/** Öffnet das Filter-Menü einer Spalte unter ihrem Trichter-Symbol, innerhalb von `section`. */
 export function useFilterMenu<C extends string>(section: RefObject<HTMLElement | null>) {
   const [open, setOpen] = useState<OpenMenu<C> | null>(null)
 
@@ -101,6 +102,13 @@ export function overlaps(start: string | null, end: string | null, filter: Filte
   return (!filter.to || start <= filter.to) && (!filter.from || end >= filter.from)
 }
 
+/** Enthält der Text den gesuchten Begriff (ohne Groß-/Kleinschreibung)? Ohne Filter: ja. */
 export function contains(text: string, filter: FilterValues | undefined): boolean {
   return !filter?.text || text.toLowerCase().includes(filter.text.trim().toLowerCase())
+}
+
+/** Beschriftung des Chips für einen Zeitraum-Filter, z. B. „Zeitraum: 01.12.2026 – …“. */
+export function periodChipLabel(label: string, filter: FilterValues, language: string | undefined): string {
+  const day = (value?: string) => value ? formatDate(value, language) : '…'
+  return `${label}: ${day(filter.from)} – ${day(filter.to)}`
 }

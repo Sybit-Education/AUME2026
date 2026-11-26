@@ -1,14 +1,17 @@
 package de.seezeit.aume.inspection;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.List;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import com.jayway.jsonpath.JsonPath;
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.FlatRepository;
@@ -179,14 +182,14 @@ class InspectionHistoryTests {
         mvc.perform(get(HISTORY).session(session))
             .andExpect(jsonPath("$.content[0].residenceName").value("Wohnanlage Sonne"));
         long all = total(session, "");
-        org.assertj.core.api.Assertions.assertThat(total(session, "?residence=sonne")).isEqualTo(all);
+        assertThat(total(session, "?residence=sonne")).isEqualTo(all);
         expectTotal(session, "?residence=Egg", 0);
 
         // „mit Mängeln“ und „ohne Mängel“ teilen die Historie vollständig auf; die nicht bestandene Kontrolle hat Mängel.
         long with = total(session, "?defects=true");
         long without = total(session, "?defects=false");
-        org.assertj.core.api.Assertions.assertThat(with + without).isEqualTo(all);
-        org.assertj.core.api.Assertions.assertThat(with).isGreaterThanOrEqualTo(1);
+        assertThat(with + without).isEqualTo(all);
+        assertThat(with).isGreaterThanOrEqualTo(1);
         mvc.perform(get(HISTORY + "?defects=true&result=FAILED").session(session))
             .andExpect(jsonPath("$.content[?(@.deficiencies < 1)]").isEmpty());
         mvc.perform(get(HISTORY + "?defects=false").session(session))
@@ -199,9 +202,9 @@ class InspectionHistoryTests {
         long all = total(session, "");
         List<Integer> descending = deficiencies(session, "?orderBy=DEFECTS&direction=DESC&size=100");
         List<Integer> ascending = deficiencies(session, "?orderBy=DEFECTS&direction=ASC&size=100");
-        org.assertj.core.api.Assertions.assertThat(descending).hasSize((int) all).isSortedAccordingTo(java.util.Comparator.reverseOrder());
-        org.assertj.core.api.Assertions.assertThat(ascending).isSorted();
-        org.assertj.core.api.Assertions.assertThat(descending.getFirst()).isGreaterThan(0);
+        assertThat(descending).hasSize((int) all).isSortedAccordingTo(Comparator.reverseOrder());
+        assertThat(ascending).isSorted();
+        assertThat(descending.getFirst()).isGreaterThan(0);
         mvc.perform(get(HISTORY + "?orderBy=RESIDENCE").session(session))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.totalElements").value(all));
@@ -209,12 +212,12 @@ class InspectionHistoryTests {
 
     private List<Integer> deficiencies(MockHttpSession session, String query) throws Exception {
         var body = mvc.perform(get(HISTORY + query).session(session)).andReturn().getResponse().getContentAsString();
-        return com.jayway.jsonpath.JsonPath.read(body, "$.content[*].deficiencies");
+        return JsonPath.read(body, "$.content[*].deficiencies");
     }
 
     private long total(MockHttpSession session, String query) throws Exception {
         var body = mvc.perform(get(HISTORY + query).session(session)).andReturn().getResponse().getContentAsString();
-        return ((Number) com.jayway.jsonpath.JsonPath.read(body, "$.page.totalElements")).longValue();
+        return ((Number) JsonPath.read(body, "$.page.totalElements")).longValue();
     }
 
     @Test

@@ -9,6 +9,7 @@ import {
 import InspectionTabs from './InspectionTabs'
 import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
 import { useFilterMenu, type FilterSpec, type FilterValues } from './tableState'
+import './inspections.css'
 
 export interface HistoryLoaderData {
   filter: HistoryFilter
