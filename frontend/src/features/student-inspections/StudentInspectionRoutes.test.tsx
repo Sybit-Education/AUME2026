@@ -10,7 +10,7 @@ import { invalidateSession } from '@/lib/auth/session'
 import { UiError } from '@/lib/errors'
 import i18n from '@/lib/i18n'
 import { api, login, type LoggedInUser } from '@/lib/auth/client'
-import type { UpcomingAppointment } from './api'
+import type { AppointmentDetails, UpcomingAppointment } from './api'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
@@ -25,9 +25,13 @@ const unchangedAppointment = {
   id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
 } satisfies UpcomingAppointment
 
+// The dashboard uses the detail view to show the time window of an announced inspection (#99).
+const DASHBOARD_APPOINTMENT_PATH = '/api/student/inspection-appointment?view=details'
+
 let signedIn: LoggedInUser | null
 let studentInspectionAppointment: UpcomingAppointment | null
 let studentInspectionFailure: number | Error | null
+let studentInspectionDetails: Partial<AppointmentDetails>
 let studentInspectionResponse: Promise<Response> | undefined
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
@@ -50,6 +54,7 @@ beforeEach(async () => {
   signedIn = null
   studentInspectionAppointment = null
   studentInspectionFailure = null
+  studentInspectionDetails = {}
   studentInspectionResponse = undefined
   await i18n.changeLanguage('de')
   vi.mocked(login).mockImplementation(async (key) => { signedIn = key === 'student' ? student : clerk })
@@ -67,7 +72,7 @@ beforeEach(async () => {
       if (studentInspectionFailure !== null) return new Response(null, { status: studentInspectionFailure })
       if (!studentInspectionAppointment) return new Response(null, { status: 204 })
       return Response.json(path.endsWith('?view=details')
-        ? { ...studentInspectionAppointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00' }
+        ? { ...studentInspectionAppointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00', ...studentInspectionDetails }
         : studentInspectionAppointment)
     }
     throw new Error(`Unexpected API call: ${path}`)
@@ -145,6 +150,42 @@ it('shows the rescheduled period and notice on the dashboard and appointment rou
   expect(detailsCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
 })
 
+it('shows the announced time window on the dashboard without the status timeline', async () => {
+  signedIn = student
+  studentInspectionAppointment = unchangedAppointment
+  mount()
+
+  const card = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  await card.findByText('Die Objektbetreuung kommt zwischen 09:00 und 16:00 Uhr.')
+  expect(card.queryByRole('list')).toBeNull()
+  expect(card.queryByRole('button', { name: 'In Kalender übernehmen' })).toBeNull()
+})
+
+it('keeps showing a running inspection as announced on the dashboard', async () => {
+  signedIn = student
+  studentInspectionAppointment = unchangedAppointment
+  studentInspectionDetails = { display: 'CURRENT' }
+  mount()
+
+  const card = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  await card.findByText('Mo 07.12. bis Fr 11.12.2026')
+  expect(card.getByText('Die Objektbetreuung kommt zwischen 09:00 und 16:00 Uhr.')).toBeTruthy()
+})
+
+it.each([
+  ['an available result', { status: 'RESULT_AVAILABLE', display: 'PAST' }],
+  ['an expired period without status', { status: null, display: 'PAST' }],
+] as const)('shows no announcement on the dashboard for %s', async (_case, details) => {
+  signedIn = student
+  studentInspectionAppointment = unchangedAppointment
+  studentInspectionDetails = details
+  mount()
+
+  await screen.findByText('Keine Kontrolle angekündigt.')
+  expect(screen.queryByText('Mo 07.12. bis Fr 11.12.2026')).toBeNull()
+  expect(screen.queryByText('Ergebnis verfügbar')).toBeNull()
+})
+
 it('shows the empty appointment card when the backend has no appointment', async () => {
   signedIn = student
   mount()
@@ -163,12 +204,10 @@ it.each(['HTTP 500', 'a network error'])('keeps the personalized dashboard usabl
   await card.findByRole('alert')
   expect(card.getByRole('alert').textContent).toBe('Der Kontrolltermin konnte nicht geladen werden.')
   expect(card.queryByText('Keine Kontrolle angekündigt.')).toBeNull()
-  expect(screen.getByText('Willkommen, Mia.')).toBeTruthy()
-  expect(screen.getByText('Hallo Mia, willkommen in Sonne.')).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Hallo, Mia' })).toBeTruthy()
 
   await act(async () => { await i18n.changeLanguage('en') })
-  await screen.findByText('Hello Mia, welcome to Sonne.')
-  expect(screen.getByText('Welcome, Mia.')).toBeTruthy()
+  await screen.findByRole('heading', { name: 'Hello, Mia' })
   expect(card.getByRole('alert').textContent).toBe('The inspection appointment could not be loaded.')
 })
 
@@ -178,8 +217,7 @@ it('shows the dashboard greeting while the student inspection request is pending
   mount()
 
   const card = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
-  expect(screen.getByText('Willkommen, Alex.')).toBeTruthy()
-  expect(screen.getByText('Hallo Alex, willkommen in Sonne.')).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Hallo, Alex' })).toBeTruthy()
   expect(card.getByRole('status').textContent).toContain('Wird geladen')
   expect(card.queryByText('Keine Kontrolle angekündigt.')).toBeNull()
 
@@ -191,7 +229,7 @@ it.each([200, 401, 403, 500])('ignores a late student inspection HTTP %s after l
   signedIn = student
   const resolve = deferStudentInspectionResponse()
   const router = mount()
-  const request = () => vi.mocked(api).mock.calls.find(([path]) => path === '/api/student/inspection-appointment')
+  const request = () => vi.mocked(api).mock.calls.find(([path]) => path === DASHBOARD_APPOINTMENT_PATH)
   await waitFor(() => { expect(request()).toBeDefined() })
   const signal = request()?.[1]?.signal
   expect(signal?.aborted).toBe(false)
@@ -218,9 +256,9 @@ it('reformats the loaded inspection when changing language without fetching it a
 
   await screen.findByText('Mo 07.12. bis Fr 11.12.2026')
   await act(async () => { await i18n.changeLanguage('en') })
-  await screen.findByText('Hello Alex, welcome to Sonne.')
+  await screen.findByRole('heading', { name: 'Hello, Alex' })
   await screen.findByText('Mon 7 Dec to Fri 11 Dec 2026')
-  expect(vi.mocked(api).mock.calls.filter(([path]) => path === '/api/student/inspection-appointment')).toHaveLength(1)
+  expect(vi.mocked(api).mock.calls.filter(([path]) => path === DASHBOARD_APPOINTMENT_PATH)).toHaveLength(1)
 })
 
 it('returns to login when the student inspection dashboard request reports an expired session', async () => {
@@ -261,7 +299,7 @@ it.each(['CLERK', 'CARETAKER'])('does not request or show an appointment on the 
 
   await screen.findByRole('link', { name: 'Zugewiesene Wohnanlagen öffnen' })
   expect(screen.queryByRole('heading', { name: 'Nächste Kontrolle' })).toBeNull()
-  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/student/inspection-appointment')).toBe(false)
+  expect(vi.mocked(api).mock.calls.some(([path]) => String(path).startsWith('/api/student/inspection-appointment'))).toBe(false)
 })
 
 it('shows the English inspection heading on direct access as a student', async () => {

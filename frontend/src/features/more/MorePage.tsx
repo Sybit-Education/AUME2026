@@ -15,7 +15,6 @@ export default function MorePage() {
 
   return (
     <>
-      <div className="ch"><h2>{t('more.title')}</h2></div>
       {groups.map((group) => (
         <section key={group.title} aria-labelledby={`more-${group.title}`} className="more-group">
           <h3 id={`more-${group.title}`}>{t(group.title)}</h3>

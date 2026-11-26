@@ -99,6 +99,7 @@ it('shows the week with who does what and keeps suggestions out of the main page
   expect(screen.getByText('wöchentlich')).toBeTruthy()
   expect(screen.getByText('alle 2 Wochen · erledigt von Bea')).toBeTruthy()
   expect(screen.getByText('1 von 2 Aufgaben erledigt')).toBeTruthy()
+  // Den Seitentitel zeigt die Kopfleiste der App, nicht die Seite selbst.
   expect(screen.queryByRole('heading', { name: 'Putzplan' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Arbeitsflächen' })).toBeNull()
   expect(screen.getAllByRole('checkbox')).toHaveLength(1)
@@ -118,7 +119,7 @@ it('ticks off a task and can undo it', async () => {
 
 it('picks a checklist suggestion in the form, links it and closes the form', async () => {
   const router = mount()
-  fireEvent.click(await screen.findByRole('link', { name: '+ Aufgabe' }))
+  fireEvent.click(await screen.findByRole('link', { name: 'Aufgabe anlegen' }))
   const form = await screen.findByRole('form', { name: 'Aufgabe anlegen' })
   fireEvent.click(within(form).getByRole('button', { name: 'Arbeitsflächen' }))
   expect((within(form).getByLabelText('Aufgabe') as HTMLInputElement).value).toBe('Arbeitsflächen')
@@ -169,7 +170,7 @@ it('removes the link again when a picked suggestion is edited or tapped twice', 
 
 it('opens the add form as a bottom sheet and closes it by button, escape and backdrop', async () => {
   const router = mount()
-  const open = await screen.findByRole('link', { name: '+ Aufgabe' })
+  const open = await screen.findByRole('link', { name: 'Aufgabe anlegen' })
   const closed = async () => {
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Aufgabe anlegen' })).toBeNull())
     expect(router.state.location.search).toBe(`?week=${week}`)
@@ -181,11 +182,11 @@ it('opens the add form as a bottom sheet and closes it by button, escape and bac
   fireEvent.click(screen.getByRole('button', { name: 'Schließen' }))
   await closed()
 
-  fireEvent.click(screen.getByRole('link', { name: '+ Aufgabe' }))
+  fireEvent.click(screen.getByRole('link', { name: 'Aufgabe anlegen' }))
   fireEvent.keyDown(await screen.findByRole('dialog', { name: 'Aufgabe anlegen' }), { key: 'Escape' })
   await closed()
 
-  fireEvent.click(screen.getByRole('link', { name: '+ Aufgabe' }))
+  fireEvent.click(screen.getByRole('link', { name: 'Aufgabe anlegen' }))
   const dialog = await screen.findByRole('dialog', { name: 'Aufgabe anlegen' })
   fireEvent.click(dialog.parentElement!)
   await closed()

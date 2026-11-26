@@ -44,7 +44,7 @@ it('displays the period and follows the backend change notice flag', () => {
   expect(screen.queryByText('Termin geändert')).toBeNull()
   const initialLabel = screen.getByText('Erstkontrolle')
   expect(initialLabel.className).toBe('chip inf')
-  expect(initialLabel.parentElement).toBe(screen.getByRole('heading', { name: 'Kontrolle' }).parentElement)
+  expect(initialLabel.parentElement).toBe(screen.getByRole('heading', { name: 'Kontrolltermin' }).parentElement)
 
   rerender(<InspectionAppointment appointment={rescheduledAppointment} />)
 
@@ -53,7 +53,7 @@ it('displays the period and follows the backend change notice flag', () => {
   expect(screen.getByText('Termin geändert')).toBeTruthy()
   const changedLabel = screen.getByText('Termin geändert')
   expect(changedLabel.className).toBe('chip wr')
-  expect(changedLabel.parentElement).toBe(screen.getByRole('heading', { name: 'Kontrolle' }).parentElement)
+  expect(changedLabel.parentElement).toBe(screen.getByRole('heading', { name: 'Kontrolltermin' }).parentElement)
   expect(screen.queryByText('Erstkontrolle')).toBeNull()
 
   rerender(<InspectionAppointment appointment={{ ...rescheduledAppointment, appointmentChanged: false }} />)

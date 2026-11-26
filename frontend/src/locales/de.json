@@ -2,7 +2,9 @@
   "app": {
     "name": "Seezeit",
     "language": "Sprache",
-    "loading": "Wird geladen …"
+    "loading": "Wird geladen …",
+    "back": "Zurück",
+    "close": "Schließen"
   },
   "auth": {
     "mockLogin": "Testnutzer anmelden",
@@ -85,7 +87,9 @@
     "requestStartPassed": "Der Zeitraum hat schon begonnen. Zustimmen geht nicht mehr, bitte schlage einen neuen Zeitraum vor.",
     "requestAnswered": "Diese Anfrage ist schon beantwortet oder angekündigt. Die Liste ist aktualisiert.",
     "requestGone": "Diese Anfrage gibt es nicht mehr. Die Sachbearbeitung hat sie zurückgezogen oder einer anderen Person zugeordnet.",
-    "inspectionNotStarted": "Die Kontrolle kann erst ab Beginn des Zeitraums gestartet werden."
+    "inspectionNotStarted": "Die Kontrolle kann erst ab Beginn des Zeitraums gestartet werden.",
+    "selfCheck": "Der Selbstcheck konnte nicht geladen werden.",
+    "selfCheckSave": "Der Selbstcheck konnte nicht gespeichert werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -250,7 +254,7 @@
   },
   "studentInspections": {
     "title": "Nächste Kontrolle",
-    "detailsTitle": "Kontrolle",
+    "detailsTitle": "Kontrolltermin",
     "periodTitle": "Kontrollzeitraum",
     "lastTitle": "Letzte Kontrolle",
     "announced": "Angekündigt",
@@ -301,6 +305,19 @@
     "comingSoon": "Kommt bald",
     "comingSoonDescription": "Diese Funktion wird gerade entwickelt."
   },
+  "home": {
+    "hello": "Hallo, {{name}}",
+    "membership": "Deine WG",
+    "flat": "WG {{flat}}",
+    "noFlat": "Du bist noch keiner WG zugeordnet.",
+    "joinFlat": "WG beitreten",
+    "week": "Diese Woche",
+    "noTasks": "Diese Woche hast du keine Aufgabe.",
+    "openPlan": "Ganzen Putzplan öffnen",
+    "consequenceTitle": "Wichtig: Konsequenz bei nicht behobenen Mängeln",
+    "consequenceText": "Werden festgestellte Mängel trotz Aufforderung nicht behoben, kann Seezeit eine Reinigungsfirma beauftragen. Dabei können Kosten für die WG entstehen. Maßgeblich sind die vertraglichen Regelungen und die Mitteilung von Seezeit.",
+    "consequenceLink": "Kontrollablauf und Konsequenzen ansehen"
+  },
   "more": {
     "title": "Mehr",
     "account": "Konto und Datenschutz",
@@ -322,7 +339,20 @@
     "less": "Weniger",
     "explanation": "Erklärung:",
     "empty": "Seezeit hat noch keine Checkliste veröffentlicht.",
-    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien."
+    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien.",
+    "selfCheck": "Selbstcheck",
+    "selfCheckIntro": "Geht die Checkliste gemeinsam durch. Das ist nur für eure WG sichtbar und zählt nicht zur Bewertung.",
+    "selfCheckProgress": "{{done}} / {{total}} erledigt",
+    "selfCheckProgressLabel": "Fortschritt im Selbstcheck",
+    "selfCheckDone": "Erledigt: {{title}}",
+    "selfCheckNoFlat": "Tritt deiner WG bei, um die Checkliste gemeinsam abzuhaken.",
+    "selfCheckJoin": "WG beitreten",
+    "reset": "Zurücksetzen",
+    "resetConfirm": "Alle Haken eurer WG werden entfernt. Das sehen auch deine Mitbewohnenden.",
+    "resetYes": "Zurücksetzen",
+    "resetNo": "Abbrechen",
+    "resetHint": "Nach jeder Kontrolle beginnt der Selbstcheck neu.",
+    "resetTitle": "Selbstcheck zurücksetzen?"
   },
   "inspectionProcess": {
     "title": "Ablauf und Konsequenzen",
@@ -489,17 +519,17 @@
     "members": "Mitbewohnende",
     "leave": "WG verlassen",
     "leaving": "Wird verlassen …",
-    "leaveYes": "Ja, WG verlassen",
+    "leaveYes": "Verlassen",
     "leaveNo": "Abbrechen",
-    "leaveConfirm": "Möchtest du die WG wirklich verlassen? Du verlierst sofort den Zugriff und brauchst für eine Rückkehr einen neuen Code."
+    "leaveConfirm": "Möchtest du die WG wirklich verlassen? Du verlierst sofort den Zugriff und brauchst für eine Rückkehr einen neuen Code.",
+    "leaveTitle": "WG verlassen?"
   },
   "plan": {
     "noFlat": "Tritt zuerst deiner WG bei, um den Putzplan zu sehen.",
     "week": "KW {{week}} · {{from}} bis {{to}}",
     "previousWeek": "Vorherige Woche",
     "nextWeek": "Nächste Woche",
-    "add": "+ Aufgabe",
-    "closeSheet": "Schließen",
+    "add": "Hinzufügen",
     "addTask": "Aufgabe anlegen",
     "editTask": "Aufgabe bearbeiten",
     "editFor": "{{title}} bearbeiten",

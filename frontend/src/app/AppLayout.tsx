@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, matchPath, NavLink, Outlet, useLocation, useNavigation, useRevalidator } from 'react-router'
+import { Link, matchPath, NavLink, Outlet, useLocation, useMatches, useNavigation, useRevalidator } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
 import NavIcon from '@/components/NavIcon'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { supportedLanguage } from '@/lib/i18n'
+import type { PageHandle } from '@/lib/pageHandle'
 import { navigation, studentTabs, usesStudentView } from './navigation'
 
 export default function AppLayout({ children }: PropsWithChildren) {
@@ -19,6 +20,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const [error, setError] = useState<ErrorKey | null>(null)
   const studentView = auth.user ? usesStudentView(auth.user.roles) : false
   const allowed = (privilege?: string) => !privilege || auth.user!.privileges.includes(privilege)
+  // Titel und Zurück-Ziel der Kopfleiste kommen aus der tiefsten Route mit `handle.title`.
+  const page = useMatches().map((match) => match.handle as PageHandle | undefined)
+    .filter((handle) => handle?.title).at(-1)
 
   useEffect(() => {
     if (previousLanguage.current !== language) {
@@ -40,7 +44,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
   return (
     <div className="app" aria-busy={busy}>
-      <header className="hd">
+      {!studentView && <header className="hd">
         <h1 className="brand">{t('app.name')}</h1>
         {auth.user && !studentView && (
           <nav className="seg" aria-label={t('navigation.main')}>
@@ -65,9 +69,25 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <button className="btn gh" disabled={busy} onClick={() => void signOut()}>{t('auth.logout')}</button>
           </>
         )}
-      </header>
+      </header>}
       {studentView ? (
         <div className="st-wrap">
+          {/* App-Kopfleiste wie im Wireframe: Zurück, Seitentitel, Abmelden. */}
+          <header className="st-top">
+            {page?.back ? (
+              <Link className="st-icon-btn" to={page.back} aria-label={t('app.back')}>
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="m14.5 5.5-6.5 6.5 6.5 6.5" /></svg>
+              </Link>
+            ) : <span className="st-icon-btn" aria-hidden="true" />}
+            <h1>{page ? t(page.title, { name: auth.user?.name }) : t('app.name')}</h1>
+            <button className="st-icon-btn" type="button" disabled={busy} aria-label={t('auth.logout')} title={t('auth.logout')}
+              onClick={() => void signOut()}>
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                <path d="M10 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H10" />
+                <path d="m14 8 4 4-4 4M18 12H9" />
+              </svg>
+            </button>
+          </header>
           <div className="st-body">
             {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
             {error && <p className="err" role="alert">{t(error)}</p>}

@@ -9,6 +9,7 @@ import ComingSoonPage from './routes/ComingSoonPage'
 import StudentControlLayout from './routes/StudentControlLayout'
 import { studentInspectionAppointmentRoute } from './routes/StudentInspectionAppointmentRoute'
 import LoadingPage from '@/components/LoadingPage'
+import { pageHandle } from '@/lib/pageHandle'
 import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
 import { homeRoutes } from './homeRoute'
@@ -60,6 +61,7 @@ export function createAppRoutes(): RouteObject[] {
               {
                 path: 'inspection',
                 Component: StudentControlLayout,
+                handle: pageHandle({ title: 'navigation.inspection' }),
                 children: [
                   { index: true, element: createElement(Navigate, { to: 'appointment', replace: true }) },
                   studentInspectionAppointmentRoute,

@@ -9,6 +9,7 @@ import { ensureSession, invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
 import type { ResidenceDetail, ResidenceRow } from '@/features/inspection-overview/api'
 import type { CaretakerOverview } from '@/features/overview/api'
+import type { Plan, PlanTask } from '@/features/putzplan/api'
 import { inspectionOverviewRoutes } from '@/features/inspection-overview/routes'
 import { homeRoutes } from './homeRoute'
 
@@ -36,6 +37,21 @@ let signedIn: LoggedInUser
 let rows: ResidenceRow[]
 let detail: ResidenceDetail
 let routers: ReturnType<typeof createMemoryRouter>[] = []
+let tasks: PlanTask[]
+
+const resident: LoggedInUser = {
+  ...student, privileges: ['GREETING_READ', 'WG_MEMBERSHIP', 'CHECKLIST_READ', 'INFO_PAGE_READ'],
+}
+const task = (id: number, title: string, mine: boolean, done = false): PlanTask => ({
+  id, title, rhythm: 'WEEKLY', startWeek: '2026-11-23', assigneeId: mine ? 1 : 2, assigneeName: mine ? 'Lea' : 'Tom',
+  mine, done, doneBy: done ? 'Lea' : null, checkable: mine,
+})
+const plan = (): Plan => ({
+  week: '2026-11-23', currentWeek: '2026-11-23', me: 1,
+  members: [{ id: 1, name: 'Lea' }, { id: 2, name: 'Tom' }],
+  tasks: tasks.map((entry) => ({ ...entry, doneBy: entry.done ? 'Lea' : null })),
+  allTitles: tasks.map(({ title }) => title), suggestions: [],
+})
 
 function mount(path = '/') {
   const router = createMemoryRouter([{
@@ -56,6 +72,7 @@ beforeEach(async () => {
   vi.resetAllMocks()
   invalidateSession()
   signedIn = clerk
+  tasks = [task(1, 'Küche wischen', true), task(2, 'Bad putzen', false), task(3, 'Müll rausbringen', true, true)]
   detail = { id: 3, name: 'Sonne', rounds: [], openInspections: [] }
   rows = [
     {
@@ -70,13 +87,24 @@ beforeEach(async () => {
     },
   ]
   await i18n.changeLanguage('de')
-  vi.mocked(api).mockImplementation(async (path) => {
+  vi.mocked(api).mockImplementation(async (path, init) => {
     if (path === '/api/me') return Response.json(signedIn)
     if (path === '/api/greeting') return new Response('Hallo Lea, willkommen in Sonne.')
-    if (path === appointmentPath) {
+    if (path === `${appointmentPath}?view=details`) {
       return Response.json({
         id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
+        windowStart: '09:00', windowEnd: '16:00', status: 'ANNOUNCED', display: 'UPCOMING',
       })
+    }
+    if (path === '/api/memberships/me') {
+      return Response.json({ flat: '3.08', residence: 'Sonne', validFrom: '2026-10-01', members: ['Lea', 'Tom'] })
+    }
+    if (path === '/api/wg/tasks') return Response.json(plan())
+    const completion = /^\/api\/wg\/tasks\/(\d+)\/completion$/.exec(String(path))
+    if (completion) {
+      const task = tasks.find(({ id }) => id === Number(completion[1]))
+      if (task) task.done = init?.method === 'PUT'
+      return new Response(null, { status: 204 })
     }
     if (path === '/api/inspection-overview/counts') return Response.json({ counterProposed: 1, agreedNotAnnounced: 1 })
     if (String(path).startsWith('/api/inspection-overview?')) return Response.json(page(rows))
@@ -157,11 +185,14 @@ it('opens rounds and only open single-flat inspections of a residence', async ()
   expect(screen.queryByText('Protokoll liegt vor')).toBeNull()
 })
 
-it('keeps the dashboard for users without the overview privilege', async () => {
+it('shows students no welcome card; the greeting sits in the app bar', async () => {
   signedIn = student
   mount()
-  expect(await screen.findByText('Willkommen, Lea.')).toBeDefined()
-  expect(screen.getByText('Hallo Lea, willkommen in Sonne.')).toBeDefined()
+  await screen.findByRole('region', { name: 'Nächste Kontrolle' })
+  expect(screen.queryByRole('heading', { name: 'Übersicht' })).toBeNull()
+  expect(screen.queryByText('Willkommen, Lea.')).toBeNull()
+  expect(screen.queryByText('Hallo Lea, willkommen in Sonne.')).toBeNull()
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/greeting')).toBe(false)
   const appointment = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
   expect(await appointment.findByText('Erstkontrolle')).toBeDefined()
   expect(appointment.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/student/inspection/appointment')
@@ -174,4 +205,68 @@ it('shows the caretaker overview for users with the caretaker privilege', async 
   expect(await screen.findByRole('heading', { name: 'Hallo Fischer' })).toBeDefined()
   expect(screen.queryByText('Willkommen, Fischer.')).toBeNull()
   expect(overviewCalls()).toEqual([])
+})
+
+it('shows flat, weekly tasks and the consequence notice on the student dashboard', async () => {
+  signedIn = resident
+  mount()
+
+  const membership = within(await screen.findByLabelText('Deine WG'))
+  expect(membership.getByText('WG 3.08')).toBeDefined()
+  expect(membership.getByText('Sonne')).toBeDefined()
+
+  const appointment = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  expect(await appointment.findByText('Die Objektbetreuung kommt zwischen 09:00 und 16:00 Uhr.')).toBeDefined()
+  expect(appointment.getByRole('link', { name: 'Checkliste' }).getAttribute('href')).toBe('/student/inspection/checklist')
+
+  const week = within(screen.getByRole('region', { name: 'Diese Woche' }))
+  expect(week.getByLabelText('Küche wischen')).toBeDefined()
+  expect(week.queryByText('Bad putzen')).toBeNull()
+  expect((week.getByLabelText('Müll rausbringen') as HTMLInputElement).checked).toBe(true)
+  expect(week.getByRole('link', { name: 'Ganzen Putzplan öffnen' }).getAttribute('href')).toBe('/student/cleaning-plan')
+
+  const notice = within(screen.getByRole('complementary', { name: 'Wichtig: Konsequenz bei nicht behobenen Mängeln' }))
+  expect(notice.getByRole('link', { name: 'Kontrollablauf und Konsequenzen ansehen' }).getAttribute('href'))
+    .toBe('/student/inspection/appointment#inspection-process')
+})
+
+it('ticks off an own task on the dashboard and reloads the plan', async () => {
+  signedIn = resident
+  const router = mount()
+
+  const week = within(await screen.findByRole('region', { name: 'Diese Woche' }))
+  fireEvent.click(week.getByLabelText('Küche wischen'))
+  await vi.waitFor(() => expect(vi.mocked(api)).toHaveBeenCalledWith('/api/wg/tasks/1/completion', expect.objectContaining({ method: 'PUT' })))
+  await vi.waitFor(() => expect((week.getByLabelText('Küche wischen') as HTMLInputElement).checked).toBe(true))
+  await vi.waitFor(() => expect(vi.mocked(api).mock.calls.filter(([path]) => path === '/api/wg/tasks')).toHaveLength(2))
+  expect(week.getAllByText('erledigt')).toHaveLength(2)
+  expect(router.state.location.pathname).toBe('/')
+})
+
+it('keeps the student dashboard usable when the plan cannot be loaded', async () => {
+  signedIn = resident
+  const fallback = vi.mocked(api).getMockImplementation()!
+  vi.mocked(api).mockImplementation(async (path, init) => path === '/api/wg/tasks'
+    ? new Response(null, { status: 500 }) : fallback(path, init))
+  mount()
+
+  const week = within(await screen.findByRole('region', { name: 'Diese Woche' }))
+  expect(week.getByRole('alert').textContent).toBe('Der Putzplan konnte nicht geladen werden.')
+  expect(screen.getByText('WG 3.08')).toBeDefined()
+})
+
+it('hides the procedure link without INFO_PAGE_READ and the flat chips without a flat', async () => {
+  signedIn = { ...resident, privileges: ['WG_MEMBERSHIP'] }
+  const fallback = vi.mocked(api).getMockImplementation()!
+  vi.mocked(api).mockImplementation(async (path, init) => {
+    if (path === '/api/memberships/me') return new Response(null, { status: 204 })
+    if (path === '/api/wg/tasks') return Response.json({ code: 'not_member' }, { status: 404 })
+    return fallback(path, init)
+  })
+  mount()
+
+  expect(await screen.findByRole('link', { name: 'WG beitreten' })).toBeDefined()
+  expect(screen.queryByRole('region', { name: 'Diese Woche' })).toBeNull()
+  expect(screen.getByRole('complementary', { name: 'Wichtig: Konsequenz bei nicht behobenen Mängeln' })).toBeDefined()
+  expect(screen.queryByRole('link', { name: 'Kontrollablauf und Konsequenzen ansehen' })).toBeNull()
 })

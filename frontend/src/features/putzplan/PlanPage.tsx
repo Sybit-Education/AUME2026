@@ -4,7 +4,7 @@ import {
   Form, Link, useActionData, useFetcher, useLoaderData, useNavigate, useNavigation, useSearchParams, useSubmit,
 } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
-import BottomSheet from './BottomSheet'
+import BottomSheet from '@/components/BottomSheet'
 import type { PlanActionResult } from './actions'
 import { rhythms, type Plan, type PlanSuggestion, type PlanTask } from './api'
 import { planPath } from './paths'
@@ -99,7 +99,7 @@ function TaskForm({ plan, task, onClose }: { plan: Plan; task?: PlanTask; onClos
           <input id="plan-week" name="startWeek" type="date" required defaultValue={task?.startWeek ?? plan.week} />
         </div>
         {result && <p className="err" role="alert">{t(result.error)}</p>}
-        <div className="plan-sheet-actions">
+        <div className="sheet-actions">
           <button className="btn gh" type="button" disabled={saving} onClick={onClose}>{t('plan.cancel')}</button>
           <button className="btn" type="submit" disabled={saving}>{saving ? t('plan.saving') : t('plan.save')}</button>
         </div>
@@ -119,7 +119,7 @@ function DeleteSheet({ task, week, onClose }: { task: PlanTask; week: string; on
       <fetcher.Form method="post" action={planUrl(week)}>
         <input type="hidden" name="intent" value="delete" />
         <input type="hidden" name="id" value={task.id} />
-        <div className="plan-sheet-actions">
+        <div className="sheet-actions">
           <button className="btn gh" type="button" disabled={busy} onClick={onClose}>{t('plan.cancel')}</button>
           <button className="btn dg" type="submit" disabled={busy}>{t('plan.delete')}</button>
         </div>
@@ -147,9 +147,10 @@ function TaskRow({ task, week, onDelete }: { task: PlanTask; week: string; onDel
           {t(`plan.rhythms.${task.rhythm}`)}
           {task.done && ` · ${task.doneBy ? t('plan.doneBy', { name: task.doneBy }) : t('plan.done')}`}
         </div>
+        {/* Unter dem Titel, damit lange Aufgaben auf dem Handy Platz haben. */}
+        <span className={task.mine ? 'chip t plan-assignee' : 'chip plan-assignee'}>{task.assigneeName ?? t('plan.unassigned')}</span>
       </div>
       <div className="sw">
-        <span className={task.mine ? 'chip t' : 'chip'}>{task.assigneeName ?? t('plan.unassigned')}</span>
         <Link className="btn sm gh" to={planUrl(week, { edit: String(task.id) })}
           aria-label={t('plan.editFor', { title: task.title })}>✎</Link>
         <button className="btn sm gh" type="button" aria-label={t('plan.deleteFor', { title: task.title })}
@@ -172,7 +173,6 @@ export default function PlanPage() {
     return (
       <section className="card empty">
         <div className="ic" aria-hidden="true">🧽</div>
-        <h2>{t('navigation.cleaningPlan')}</h2>
         <p className="mut">{t('plan.noFlat')}</p>
         <Link className="btn" to="/student/flat">{t('wg.join')}</Link>
       </section>
@@ -200,13 +200,18 @@ export default function PlanPage() {
           </b>
           <Link className="btn sm gh" to={planUrl(shiftWeeks(plan.week, 1))} aria-label={t('plan.nextWeek')}>›</Link>
         </div>
-        <Link className="btn sm" to={planUrl(plan.week, { edit: 'new' })}>{t('plan.add')}</Link>
       </div>
 
       {!edit && result && <p className="err" role="alert">{t(result.error)}</p>}
 
       <section className="card">
-        <h3>{t('plan.tasks')}</h3>
+        {/* Hinzufügen gehört zur Liste, deshalb im Kartenkopf statt in einer eigenen Zeile. */}
+        <div className="plan-card-head">
+          <h3>{t('plan.tasks')}</h3>
+          <Link className="btn sm gh plan-add" to={planUrl(plan.week, { edit: 'new' })} aria-label={t('plan.addTask')}>
+            <span aria-hidden="true">+</span> {t('plan.add')}
+          </Link>
+        </div>
         {plan.tasks.length === 0
           ? <p className="mut">{plan.allTitles.length === 0 ? t('plan.empty') : t('plan.noneThisWeek')}</p>
           : plan.tasks.map((task) => (

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import AuthProvider from '@/lib/auth/AuthProvider'
@@ -84,16 +84,19 @@ it('joins with a valid code and shows the flat with its members', async () => {
   expect(screen.getByText('Bea')).toBeTruthy()
 })
 
-it('leaves only after confirming on the page, without a browser dialog', async () => {
+it('leaves only after confirming in the bottom sheet, without a browser dialog', async () => {
   membership = joined
   const confirm = vi.spyOn(window, 'confirm')
   mount()
   fireEvent.click(await screen.findByRole('button', { name: 'WG verlassen' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+  const sheet = within(screen.getByRole('dialog', { name: 'WG verlassen?' }))
+  expect(sheet.getByText(/Du verlierst sofort den Zugriff/)).toBeTruthy()
+  fireEvent.click(sheet.getByRole('button', { name: 'Abbrechen' }))
+  expect(screen.queryByRole('dialog')).toBeNull()
   expect(membership).not.toBeNull()
 
   fireEvent.click(screen.getByRole('button', { name: 'WG verlassen' }))
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Ja, WG verlassen' })) })
+  await act(async () => { fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Verlassen' })) })
   expect(await screen.findByLabelText('Einladungscode')).toBeTruthy()
   expect(membership).toBeNull()
   expect(confirm).not.toHaveBeenCalled()

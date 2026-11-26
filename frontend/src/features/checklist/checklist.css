@@ -86,3 +86,62 @@
 .checklist-hint {
   margin: 4px 2px 0;
 }
+
+/* Selbstcheck (US-84) */
+.self-check h3 {
+  margin: 0 0 6px;
+}
+
+.st-wrap .self-check-bar {
+  height: 10px;
+  margin: 12px 0 6px;
+}
+
+.self-check-bar i {
+  transition: width .2s ease;
+}
+
+.self-check-count {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.self-check-actions {
+  justify-content: space-between;
+}
+
+.checklist-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.checklist-head .checklist-toggle {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Checkbox mit 44px Trefferfläche links vom Kriterium */
+.self-check-box {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -10px;
+  cursor: pointer;
+}
+
+.self-check-box input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.checklist-criterion.done .checklist-toggle b {
+  color: var(--muted);
+}

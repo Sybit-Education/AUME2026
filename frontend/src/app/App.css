@@ -616,3 +616,248 @@ a.back {
     min-height: calc(100dvh - 57px);
   }
 }
+
+/* ---------- Studierenden-Ansicht: einheitlicher Seitenaufbau ----------
+ * Oben eine schlanke App-Kopfleiste wie im Wireframe: Zurück (nur Unterseiten), Seitentitel,
+ * Abmelden. Text bleibt auf dem Handy lesbar (Fließtext 15px, Nebentexte mindestens 13px) und
+ * alles Antippbare ist mindestens 44px groß.
+ */
+.st-wrap .st-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 6px 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line, #E4EAE8);
+  border-radius: 30px 30px 0 0;
+}
+
+.st-wrap .st-top h1 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.st-wrap .st-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--primary-dark);
+}
+
+.st-wrap .st-icon-btn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st-wrap button.st-icon-btn:hover,
+.st-wrap a.st-icon-btn:hover {
+  background: var(--primary-soft);
+}
+
+.st-wrap .st-icon-btn:disabled {
+  opacity: .45;
+}
+
+.st-wrap .st-body {
+  padding-top: 14px;
+}
+
+@media (max-width: 600px) {
+  .st-wrap .st-top {
+    border-radius: 0;
+  }
+}
+
+/* Karten- und Abschnittstitel einheitlich */
+.st-wrap .card > h2,
+.st-wrap .card h2,
+.st-wrap .inspection-process-card > .inspection-process-title {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+/* Lesbare Nebentexte */
+.st-wrap .xs {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.st-wrap .sm2 {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.st-wrap .chip {
+  font-size: 13px;
+  padding: 4px 10px;
+}
+
+.st-wrap .process-badge,
+.st-wrap .inspection-status-step {
+  font-size: 13px;
+}
+
+.st-wrap .plan-week {
+  font-size: 15px;
+}
+
+/* Klickflächen ab 44px */
+.st-wrap .btn,
+.st-wrap .btn.sm,
+.st-wrap .lang-switch .btn.sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  text-decoration: none;
+}
+
+.st-wrap .btn {
+  padding: 10px 16px;
+  font-size: 15px;
+}
+
+.st-wrap .btn.sm {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.st-wrap .student-control-tabs a {
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.st-wrap .chk {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.st-wrap .chk input {
+  width: 22px;
+  height: 22px;
+}
+
+.st-wrap .see-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+/* Putzplan: Wochenauswahl über die volle Breite. */
+.st-wrap .plan-toolbar {
+  margin-top: 0;
+}
+
+.st-wrap .plan-toolbar > .sw {
+  flex: 1 1 100%;
+  justify-content: space-between;
+}
+
+.st-wrap .plan-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -6px -6px 4px 0;
+}
+
+.st-wrap .plan-card-head h3 {
+  margin: 0;
+}
+
+.st-wrap .plan-add {
+  font-weight: 700;
+}
+
+.st-wrap .plan-add > span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Handy-Rahmen: auf jeder Seite gleich hoch.
+ * Desktop: fester Rahmen, Kopf- und Tab-Leiste stehen still, nur der Inhalt scrollt.
+ * Handy: Rahmen füllt den Bildschirm, die Seite scrollt, die Leisten bleiben kleben. */
+.st-wrap,
+.app:has(.page-stack) > .st-wrap {
+  flex: none;
+  height: calc(100dvh - 36px);
+  min-height: 0;
+}
+
+.st-wrap .st-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 600px) {
+  .st-wrap,
+  .app:has(.page-stack) > .st-wrap {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .st-wrap .st-body {
+    overflow-y: visible;
+  }
+}
+
+/* Putzplan-Zeile: links Titel, Rhythmus und zuständige Person untereinander, rechts nur
+ * Bearbeiten und Löschen. So bleibt der Titel auch auf dem Handy lesbar. */
+.st-wrap .plan-row > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.st-wrap .plan-row b {
+  overflow-wrap: anywhere;
+}
+
+.st-wrap .plan-assignee {
+  margin-top: 6px;
+}
+
+.st-wrap .plan-row > .sw {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+/* Folgenreiche Aktionen (Zurücksetzen, WG verlassen) und Rückfragen davor heben sich farblich ab. */
+.st-wrap .btn.dg {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  box-shadow: inset 0 0 0 1px var(--warn-border);
+}
+
+.st-wrap .btn.dg:hover {
+  background: var(--warn-border);
+}
+
+.st-wrap .note.wr {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}

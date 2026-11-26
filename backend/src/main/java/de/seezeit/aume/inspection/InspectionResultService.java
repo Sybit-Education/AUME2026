@@ -3,6 +3,7 @@ package de.seezeit.aume.inspection;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import de.seezeit.aume.inspection.FindingEntity.Rating;
 import de.seezeit.aume.inspection.FindingEntity.Severity;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
@@ -52,6 +53,12 @@ public class InspectionResultService {
         return inspections.findByFlatIdAndStatusAndPublishedAtGreaterThanEqualOrderByPublishedAtDesc(
                 flatId, VISIBLE_TO_RESIDENTS, notBefore).stream()
             .map(this::toResult).toList();
+    }
+
+    /** Zeitpunkt, zu dem die WG zuletzt ein Kontrollergebnis bekommen hat; leer ohne Ergebnis. */
+    public Optional<Instant> latestPublication(Long flatId) {
+        return inspections.findFirstByFlatIdAndStatusOrderByPublishedAtDesc(flatId, VISIBLE_TO_RESIDENTS)
+            .map(InspectionEntity::getPublishedAt);
     }
 
     public boolean hasVisibleResult(Long inspectionId, Long flatId, Instant notBefore) {
