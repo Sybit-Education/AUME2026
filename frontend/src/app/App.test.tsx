@@ -16,7 +16,6 @@ vi.mock('@/lib/auth/client', () => ({
   logout: vi.fn(),
 }))
 
-const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ', 'CHECKLIST_READ'] }
 const caretaker: LoggedInUser = { userKey: 'caretaker', name: 'Jordan', roles: ['CARETAKER'], privileges: ['RESIDENCE_READ'] }
 const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ', 'CHECKLIST_READ', 'WG_MEMBERSHIP'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
