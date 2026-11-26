@@ -37,9 +37,12 @@ public class InspectionAppointmentController {
         }
         // findUpcoming returns only announced periods.
         var appointmentChanged = period.getRescheduledAt() != null && today.isBefore(period.getStartsOn());
+        var showInitialInspection = inspection.getRound() == 0 && period.getRescheduledAt() == null;
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-            .body(new AppointmentView(inspection.getId(), period.getStartsOn(), period.getEndsOn(), appointmentChanged));
+            .body(new AppointmentView(inspection.getId(), period.getStartsOn(), period.getEndsOn(),
+                appointmentChanged, showInitialInspection));
     }
 
-    public record AppointmentView(Long id, LocalDate startsOn, LocalDate endsOn, boolean appointmentChanged) {}
+    public record AppointmentView(Long id, LocalDate startsOn, LocalDate endsOn, boolean appointmentChanged,
+                                  boolean showInitialInspection) {}
 }

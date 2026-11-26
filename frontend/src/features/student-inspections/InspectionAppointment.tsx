@@ -5,6 +5,7 @@ import LoadingPage from '@/components/LoadingPage'
 import { createInspectionCalendar } from './calendar'
 import { formatInspectionPeriod } from './formatInspectionPeriod'
 import type { UpcomingAppointment } from './api'
+import './inspection-appointment.css'
 
 export default function InspectionAppointment({
   appointment,
@@ -27,10 +28,16 @@ export default function InspectionAppointment({
 
   return (
     <section className="card" aria-labelledby={headingId}>
-      <h2 id={headingId}>{summary ? t('studentInspections.title') : t('studentInspections.detailsTitle')}</h2>
+      <div className="inspection-appointment-heading">
+        <h2 id={headingId}>{summary ? t('studentInspections.title') : t('studentInspections.detailsTitle')}</h2>
+        {!loading && !loadFailed && appointment && (
+          appointment.appointmentChanged
+            ? <span className="chip wr">{t('studentInspections.changed')}</span>
+            : appointment.showInitialInspection && <span className="chip inf">{t('studentResult.initial')}</span>
+        )}
+      </div>
       {loading ? <LoadingPage /> : appointment ? (
         <>
-          {appointment.appointmentChanged && <p><strong>{t('studentInspections.changed')}</strong></p>}
           {!summary && <p className="lbl">{t('studentInspections.period')}</p>}
           <p className="big">{formatInspectionPeriod(appointment.startsOn, appointment.endsOn, i18n.resolvedLanguage)}</p>
           <div className="acts">

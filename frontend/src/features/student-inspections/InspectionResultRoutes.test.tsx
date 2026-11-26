@@ -84,7 +84,9 @@ afterEach(() => {
 })
 
 it('shows the empty state with the announced inspection hint', async () => {
-  appointment = { id: 3, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false }
+  appointment = {
+    id: 3, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
+  }
   mount()
   await screen.findByRole('heading', { name: 'Noch kein Ergebnis' })
   expect(screen.getByText('Eure Kontrolle ist angekündigt. Das Ergebnis erscheint hier, sobald Seezeit es übermittelt hat. '

@@ -281,6 +281,7 @@ class ApplicationTests {
             .andExpect(jsonPath("$.startsOn").value(today.plusDays(2).toString()))
             .andExpect(jsonPath("$.endsOn").value(today.plusDays(4).toString()))
             .andExpect(jsonPath("$.appointmentChanged").value(false))
+            .andExpect(jsonPath("$.showInitialInspection").value(true))
             .andExpect(jsonPath("$.exactDay").doesNotExist())
             .andExpect(jsonPath("$.changed").doesNotExist())
             .andExpect(jsonPath("$.rescheduledAt").doesNotExist());
@@ -305,7 +306,28 @@ class ApplicationTests {
             .andExpect(jsonPath("$.startsOn").value(startsOn.toString()))
             .andExpect(jsonPath("$.endsOn").value(startsOn.plusDays(2).toString()))
             .andExpect(jsonPath("$.appointmentChanged").value(expectedNotice))
+            .andExpect(jsonPath("$.showInitialInspection").value(false))
             .andExpect(jsonPath("$.rescheduledAt").doesNotExist());
+    }
+
+    @Test
+    void unchangedFollowUpDoesNotShowTheInitialInspectionLabel() throws Exception {
+        var today = LocalDate.now(BERLIN);
+        var initial = sampleInspection();
+        var period = initial.getPeriod();
+        period.setStartsOn(today.plusDays(1));
+        period.setEndsOn(today.plusDays(3));
+        initial.setStatus(InspectionEntity.Status.PUBLISHED);
+        var followUp = new InspectionEntity(initial, today.plusDays(3));
+        followUp.setPeriod(period);
+        entities.persist(followUp);
+        entities.flush();
+
+        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(followUp.getId().intValue()))
+            .andExpect(jsonPath("$.appointmentChanged").value(false))
+            .andExpect(jsonPath("$.showInitialInspection").value(false));
     }
 
     @Test

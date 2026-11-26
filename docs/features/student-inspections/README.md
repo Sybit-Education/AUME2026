@@ -20,11 +20,11 @@ Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabru
 
 ## API
 
-`GET /api/student/inspection-appointment` liefert bei einem Treffer `id` (Kontroll-ID), `startsOn` und `endsOn` (Kalenderdaten im Format `YYYY-MM-DD`) sowie den verpflichtenden Boolean `appointmentChanged`. Der Wert ist `true`, wenn der Zeitraum angekündigt wurde, `rescheduledAt` gesetzt ist und das Berliner Kalenderdatum vor `startsOn` liegt. Der interne Änderungszeitpunkt bleibt im Backend.
+`GET /api/student/inspection-appointment` liefert bei einem Treffer `id` (Kontroll-ID), `startsOn` und `endsOn` (Kalenderdaten im Format `YYYY-MM-DD`) sowie die verpflichtenden Booleans `appointmentChanged` und `showInitialInspection`. `appointmentChanged` ist `true`, wenn der Zeitraum angekündigt wurde, `rescheduledAt` gesetzt ist und das Berliner Kalenderdatum vor `startsOn` liegt. `showInitialInspection` ist `true`, wenn die Kontrolle eine Erstkontrolle ist (`round == 0`) und `rescheduledAt` leer ist. Der interne Änderungszeitpunkt bleibt im Backend.
 
 | Ergebnis | Verhalten |
 | --- | --- |
-| `200 OK` mit `id`, `startsOn`, `endsOn` und `appointmentChanged` | Die Karte zeigt den Zeitraum und bei `appointmentChanged: true` den Änderungshinweis. |
+| `200 OK` mit `id`, `startsOn`, `endsOn`, `appointmentChanged` und `showInitialInspection` | Beide Kartenvarianten zeigen den Zeitraum. In der Kopfzeile erscheint bei `appointmentChanged: true` das gelbe Label „Termin geändert“, sonst bei `showInitialInspection: true` das blaue Label „Erstkontrolle“. Ist beides `false`, erscheint kein Label. Das gilt auch für geänderte Zeiträume ab ihrem Beginn und unveränderte Nachkontrollen. |
 | `204 No Content` | Die Karte zeigt „Keine Kontrolle angekündigt“. |
 | `401 Unauthorized` | Die bestehende Sitzungsbehandlung führt zum Login und erhält das Rückkehrziel. |
 | `403 Forbidden` | Die Rolle `STUDENT` fehlt. Das Frontend führt zu `/forbidden`. |

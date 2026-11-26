@@ -22,7 +22,7 @@ vi.mock('@/lib/auth/client', () => ({
 const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
 const unchangedAppointment = {
-  id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false,
+  id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
 } satisfies UpcomingAppointment
 
 let signedIn: LoggedInUser | null
@@ -87,10 +87,14 @@ it('shows the backend appointment without adding an exact date or change notice'
   expect(screen.getByText(period).textContent).toBe(period)
   expect(screen.queryByText(/Genauer Kontrolltag/)).toBeNull()
   expect(screen.queryByText('Termin geändert')).toBeNull()
+  expect(screen.getByText('Erstkontrolle').parentElement)
+    .toBe(screen.getByRole('heading', { name: 'Nächste Kontrolle' }).parentElement)
   expect(screen.queryByText('Beispieltermin für die lokale Entwicklung')).toBeNull()
   expect(screen.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/student/inspection/appointment')
   fireEvent.click(screen.getByRole('link', { name: 'Details' }))
   await screen.findByRole('heading', { name: 'Kontrolle' })
+  expect(screen.getByText('Erstkontrolle').parentElement)
+    .toBe(screen.getByRole('heading', { name: 'Kontrolle' }).parentElement)
   expect(screen.getByText(period).textContent).toBe(period)
   expect(screen.getByRole('button', { name: 'In Kalender übernehmen' })).toBeTruthy()
 })
@@ -102,17 +106,22 @@ it('shows the rescheduled period and notice on the dashboard and appointment rou
     startsOn: '2026-12-14',
     endsOn: '2026-12-18',
     appointmentChanged: true,
+    showInitialInspection: false,
   }
   const router = mount()
 
   const dashboardCard = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
   await dashboardCard.findByText('Termin geändert')
+  expect(dashboardCard.getByText('Termin geändert').parentElement)
+    .toBe(dashboardCard.getByRole('heading', { name: 'Nächste Kontrolle' }).parentElement)
   expect(dashboardCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
   fireEvent.click(dashboardCard.getByRole('link', { name: 'Details' }))
 
   const detailsCard = within(await screen.findByRole('region', { name: 'Kontrolle' }))
   expect(router.state.location.pathname).toBe('/student/inspection/appointment')
   expect(detailsCard.getByText('Termin geändert')).toBeTruthy()
+  expect(detailsCard.getByText('Termin geändert').parentElement)
+    .toBe(detailsCard.getByRole('heading', { name: 'Kontrolle' }).parentElement)
   expect(detailsCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
 })
 

@@ -6,6 +6,7 @@ export type UpcomingAppointment = {
   startsOn: string
   endsOn: string
   appointmentChanged: boolean
+  showInitialInspection: boolean
 }
 
 export async function loadAppointment(user: LoggedInUser, signal: AbortSignal): Promise<UpcomingAppointment | null> {
