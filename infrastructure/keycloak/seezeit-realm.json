@@ -11,33 +11,33 @@
       "credentials": [
         {
           "type": "password",
-          "value": "student",
+          "value": "student.aume2026!",
           "temporary": false
         }
       ]
     },
     {
       "id": "00000000-0000-4000-8000-000000000002",
-      "username": "clerk",
+      "username": "sachbearbeiter",
       "enabled": true,
       "firstName": "Sachbearbeitung",
       "credentials": [
         {
           "type": "password",
-          "value": "clerk",
+          "value": "sachbearbeiter.aume2026!",
           "temporary": false
         }
       ]
     },
     {
       "id": "00000000-0000-4000-8000-000000000003",
-      "username": "caretaker",
+      "username": "objektbetreuer",
       "enabled": true,
       "firstName": "Objektbetreuung",
       "credentials": [
         {
           "type": "password",
-          "value": "caretaker",
+          "value": "objektbetreuer.aume2026!",
           "temporary": false
         }
       ]
