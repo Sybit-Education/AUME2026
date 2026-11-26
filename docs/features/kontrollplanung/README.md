@@ -84,6 +84,6 @@ Im Profil `dev` legt `InspectionPlanningSampleData` für die Anlage Egg einen of
 
 ## Offen
 
-- Die Ansicht der Objektbetreuung zum Zustimmen und für den Gegenvorschlag (Bezug US-19) schließt Gruppe 3 an diese API an. Bis dahin sind diese Schritte nur über die API möglich.
+- Die Ansicht der Objektbetreuung zum Zustimmen und für den Gegenvorschlag beschreibt [Kontroll-Anfragen](../kontroll-anfragen/README.md) (#44).
 - Der Checklist-Branch muss Kontrollen mit Zeitraum erst nach der Ankündigung starten lassen.
 - Weitere Kontrollarten sind nicht Teil dieser Story.

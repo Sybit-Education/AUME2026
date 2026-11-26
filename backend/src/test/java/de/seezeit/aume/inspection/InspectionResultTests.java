@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import de.seezeit.aume.planning.InspectionPeriodRepository;
+import java.time.LocalDate;
 import com.jayway.jsonpath.JsonPath;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 class InspectionResultTests {
     @Autowired private MockMvc mvc;
     @Autowired private InspectionRepository inspections;
+    @Autowired private InspectionPeriodRepository periods;
     @Autowired private InspectionResultService results;
 
     @Test
@@ -38,6 +41,12 @@ class InspectionResultTests {
         Long id = inspection.getId();
         Long flatId = inspection.getFlat().getId();
         assertThat(results.resultsForFlat(flatId)).noneMatch(r -> r.inspectionId().equals(id));
+        // Die Studierenden-Testdaten kündigen S-01 für Dezember an; starten geht erst ab Beginn des Zeitraums.
+        var period = inspection.getPeriod();
+        if (period != null && period.getStartsOn().isAfter(LocalDate.now().minusDays(1))) {
+            period.setStartsOn(LocalDate.now().minusDays(1));
+            periods.saveAndFlush(period);
+        }
 
         var session = login("caretaker");
         String started = mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))

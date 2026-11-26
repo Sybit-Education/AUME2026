@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData, useLocation, useNavigate } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
+import Select from '@/components/Select'
 import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
 import { forgetUser } from '@/lib/auth/session'
@@ -22,22 +23,28 @@ export interface InspectionLoaderData {
   inspection: Inspection
   /** Vorgeschichte der WG (US-51), neueste zuerst. */
   previous: PreviousInspection[]
+  /** Warum der direkte Start aus der Liste nicht geklappt hat. */
+  startError?: ErrorKey
 }
 
 export default function InspectionPage() {
   const loaded = useLoaderData<InspectionLoaderData | null>()
   if (!loaded) return <LoadingPage />
-  return <InspectionView key={loaded.inspection.id} initial={loaded.inspection} previous={loaded.previous} />
+  return <InspectionView key={loaded.inspection.id} initial={loaded.inspection} previous={loaded.previous} startError={loaded.startError} />
 }
 
-function InspectionView({ initial, previous }: { initial: Inspection; previous: PreviousInspection[] }) {
+function InspectionView({ initial, previous, startError }: {
+  initial: Inspection
+  previous: PreviousInspection[]
+  startError?: ErrorKey
+}) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [inspection, setInspection] = useState(initial)
   const [step, setStep] = useState<'check' | 'summary'>(initial.status === 'DRAFT' || initial.status === 'PLANNED' ? 'check' : 'summary')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<ErrorKey | null>(null)
+  const [error, setError] = useState<ErrorKey | null>(startError ?? null)
   const [toast, setToast] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -109,6 +116,7 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
           {editable && step === 'summary' && (
             <button className="btn gh" disabled={busy} onClick={() => setStep('check')}>{t('inspections.backToChecklist')}</button>
           )}
+          {done && <Link className="btn gh" to="/inspections/history">{t('inspections.protocol.backToHistory')}</Link>}
           {done && (
             <button className="btn" disabled={busy}
               onClick={() => void run(async () => { await downloadProtocol(inspection.id); return inspection })}>
@@ -119,7 +127,7 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
       </div>
       <div className="ins-meta">
         <span>{inspection.residenceName}</span>
-        <span>{t('inspections.places', { count: inspection.capacity })}</span>
+        {!done && <span>{t('inspections.places', { count: inspection.capacity })}</span>}
         <span>{t(`inspections.status.${inspection.status}`)}</span>
         {inspection.round > 0 && <span>{t('inspections.round', { round: inspection.round })}</span>}
         {done && inspection.inspectedAt && (
@@ -127,7 +135,6 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
         )}
         {done && inspection.inspectorName && <span>{t('inspections.protocol.inspectedBy', { name: inspection.inspectorName })}</span>}
       </div>
-      {done && <p className="xs"><Link to="/inspections/history">{t('inspections.protocol.backToHistory')}</Link></p>}
       {error && <p className="err" role="alert">{t(error)}</p>}
 
       {states.length === 0 ? (
@@ -148,7 +155,10 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
             <h3>{t('inspections.checklistOf', { area: current.area })}</h3>
             {current.criteria.map((criterion) => (
               <CriterionRow key={criterion.id} criterion={criterion} finding={finding(criterion.id)}
-                earlier={earlier.get(criterionKey(criterion.area, criterion.title))} />
+                earlier={earlier.get(criterionKey(criterion.area, criterion.title))} editable={editable} busy={busy}
+                onResolve={(item) => void run(() => rateCriterion(inspection.id, item.criterionId, { ...item, rating: 'RESOLVED_ON_SITE' }))}
+                onToggleBuilding={(item) => void run(() => rateCriterion(inspection.id, item.criterionId, { ...item, buildingCauseSuspected: !item.buildingCauseSuspected }))}
+                onDelete={(item) => void run(() => clearFinding(inspection.id, item.criterionId), t('inspections.defectDeleted'))} />
             ))}
             {editable && (
               <div className="acts">
@@ -160,10 +170,6 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
               </div>
             )}
           </section>
-          <DefectList area={current} findings={inspection.findings} editable={editable} busy={busy}
-            onResolve={(item) => void run(() => rateCriterion(inspection.id, item.criterionId, { ...item, rating: 'RESOLVED_ON_SITE' }))}
-            onToggleBuilding={(item) => void run(() => rateCriterion(inspection.id, item.criterionId, { ...item, buildingCauseSuspected: !item.buildingCauseSuspected }))}
-            onDelete={(item) => void run(() => clearFinding(inspection.id, item.criterionId), t('inspections.defectDeleted'))} />
         </>
       ) : (
         <>
@@ -187,10 +193,26 @@ function InspectionView({ initial, previous }: { initial: Inspection; previous: 
   )
 }
 
-function CriterionRow({ criterion, finding, earlier }: { criterion: Criterion; finding?: Finding; earlier?: EarlierDefect }) {
+interface CriterionRowProps {
+  criterion: Criterion
+  finding?: Finding
+  earlier?: EarlierDefect
+  editable: boolean
+  busy: boolean
+  onResolve: (finding: Finding) => void
+  onToggleBuilding: (finding: Finding) => void
+  onDelete: (finding: Finding) => void
+}
+
+/**
+ * Kriterium der Checkliste. Ein erfasster Mangel steht im aufklappbaren Bereich unter der Beschreibung; Kriterien mit
+ * Mangel sind deshalb von Anfang an aufgeklappt und lassen sich über den Pfeil wie gewohnt zuklappen.
+ */
+function CriterionRow({ criterion, finding, earlier, editable, busy, onResolve, onToggleBuilding, onDelete }: CriterionRowProps) {
   const { t, i18n } = useTranslation()
+  const defect = finding && finding.rating !== 'OK' ? finding : undefined
   return (
-    <details className="acc">
+    <details className="acc" open={defect ? true : undefined}>
       <summary>
         {criterion.title}
         {earlier && (
@@ -201,53 +223,29 @@ function CriterionRow({ criterion, finding, earlier }: { criterion: Criterion; f
       <div className="in">
         <p className="sm2">{criterion.description}</p>
         {earlier?.defect.note && <p className="sm2 mut">{t('inspections.previous.earlierNote', { note: earlier.defect.note })}</p>}
+        {defect && (
+          <div className="mg ins-defect" aria-label={t('inspections.defectOf', { criterion: criterion.title })}>
+            <div className="ch" style={{ marginBottom: 4 }}>
+              <b>{t('inspections.defectLabel')}</b>
+              <span className="acts" style={{ marginTop: 0 }}>
+                {defect.buildingCauseSuspected && <span className="chip inf">{t('inspections.buildingCause')}</span>}
+                {defect.rating === 'RESOLVED_ON_SITE'
+                  ? <span className="chip ok">{t('inspections.rating.RESOLVED_ON_SITE')}</span>
+                  : defect.severity && <span className="chip bad">{t(`inspections.severity.${defect.severity}`)}</span>}
+              </span>
+            </div>
+            {defect.note && <p className="sm2">{defect.note}</p>}
+            {editable && (
+              <div className="acts">
+                <button className="btn gh sm" disabled={busy || defect.rating === 'RESOLVED_ON_SITE'} onClick={() => onResolve(defect)}>{t('inspections.resolveOnSite')}</button>
+                <button className="btn gh sm" disabled={busy} aria-pressed={defect.buildingCauseSuspected} onClick={() => onToggleBuilding(defect)}>{t('inspections.buildingCause')}</button>
+                <button className="btn gh sm" disabled={busy} onClick={() => onDelete(defect)}>{t('inspections.delete')}</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </details>
-  )
-}
-
-interface DefectListProps {
-  area: AreaState
-  findings: Finding[]
-  editable: boolean
-  busy: boolean
-  onResolve: (finding: Finding) => void
-  onToggleBuilding: (finding: Finding) => void
-  onDelete: (finding: Finding) => void
-}
-
-function DefectList({ area, findings, editable, busy, onResolve, onToggleBuilding, onDelete }: DefectListProps) {
-  const { t } = useTranslation()
-  const defects = area.criteria.flatMap((criterion) => {
-    const item = findings.find((entry) => entry.criterionId === criterion.id)
-    return item && item.rating !== 'OK' ? [{ criterion, item }] : []
-  })
-  if (defects.length === 0) return null
-  return (
-    <section className="card">
-      <h3>{t('inspections.defects')}</h3>
-      {defects.map(({ criterion, item }) => (
-        <div className="mg" key={criterion.id}>
-          <div className="ch" style={{ marginBottom: 4 }}>
-            <b>{criterion.title}</b>
-            <span className="acts" style={{ marginTop: 0 }}>
-              {item.buildingCauseSuspected && <span className="chip inf">{t('inspections.buildingCause')}</span>}
-              {item.rating === 'RESOLVED_ON_SITE'
-                ? <span className="chip ok">{t('inspections.rating.RESOLVED_ON_SITE')}</span>
-                : item.severity && <span className="chip bad">{t(`inspections.severity.${item.severity}`)}</span>}
-            </span>
-          </div>
-          {item.note && <p className="sm2">{item.note}</p>}
-          {editable && (
-            <div className="acts">
-              <button className="btn gh sm" disabled={busy || item.rating === 'RESOLVED_ON_SITE'} onClick={() => onResolve(item)}>{t('inspections.resolveOnSite')}</button>
-              <button className="btn gh sm" disabled={busy} aria-pressed={item.buildingCauseSuspected} onClick={() => onToggleBuilding(item)}>{t('inspections.buildingCause')}</button>
-              <button className="btn gh sm" disabled={busy} onClick={() => onDelete(item)}>{t('inspections.delete')}</button>
-            </div>
-          )}
-        </div>
-      ))}
-    </section>
   )
 }
 
@@ -294,10 +292,10 @@ function Summary({ inspection, states, open, busy, onFinalize }: SummaryProps) {
             <p className="xs mut" style={{ marginTop: 6 }}>{t('inspections.resultHint')}</p>
             <div className="fld">
               <label htmlFor="overall-result">{t('inspections.result')}</label>
-              <select id="overall-result" value={result} onChange={(event) => setResult(event.target.value as OverallResult)}>
-                <option value="PASSED">{t('inspections.overall.PASSED')}</option>
-                <option value="FAILED">{t('inspections.overall.FAILED')}</option>
-              </select>
+              <Select id="overall-result" value={result} onChange={(value) => setResult(value as OverallResult)} options={[
+                { value: 'PASSED', label: t('inspections.overall.PASSED') },
+                { value: 'FAILED', label: t('inspections.overall.FAILED') },
+              ]} />
             </div>
             {open > 0 && <p className="note wr">{t('inspections.rateAllFirst', { count: open })}</p>}
             <button className="btn" disabled={busy || open > 0} onClick={() => onFinalize(result)}>{t('inspections.finalize')}</button>

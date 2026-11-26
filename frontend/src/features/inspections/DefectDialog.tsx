@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Criterion, Finding, Severity } from './api'
+import Select from '@/components/Select'
 
 interface DefectDialogProps {
   area: string
@@ -36,21 +37,19 @@ export default function DefectDialog({ area, criteria, findings, busy, onCancel,
         <h3 id="defect-title">{t('inspections.defectTitle', { area })}</h3>
         <div className="fld">
           <label htmlFor="defect-criterion">{t('inspections.criterion')} *</label>
-          <select id="defect-criterion" value={criterionId} onChange={(event) => setCriterionId(Number(event.target.value))}>
-            {criteria.map((criterion) => (
-              <option key={criterion.id} value={criterion.id}>
-                {defectOf(criterion.id) ? `${criterion.title} (${t('inspections.hasDefect')})` : criterion.title}
-              </option>
-            ))}
-          </select>
+          <Select id="defect-criterion" value={String(criterionId)} onChange={(value) => setCriterionId(Number(value))}
+            options={criteria.map((criterion) => ({
+              value: String(criterion.id),
+              label: defectOf(criterion.id) ? `${criterion.title} (${t('inspections.hasDefect')})` : criterion.title,
+            }))} />
           {existing && <p className="note wr" role="status">{t('inspections.replacesDefect')}</p>}
         </div>
         <div className="fld">
           <label htmlFor="defect-severity">{t('inspections.severityLabel')}</label>
-          <select id="defect-severity" value={severity} onChange={(event) => setSeverity(event.target.value as Severity)}>
-            <option value="LIGHT">{t('inspections.severity.LIGHT')}</option>
-            <option value="SEVERE">{t('inspections.severity.SEVERE')}</option>
-          </select>
+          <Select id="defect-severity" value={severity} onChange={(value) => setSeverity(value as Severity)} options={[
+            { value: 'LIGHT', label: t('inspections.severity.LIGHT') },
+            { value: 'SEVERE', label: t('inspections.severity.SEVERE') },
+          ]} />
         </div>
         <div className="fld">
           <label htmlFor="defect-note">{t('inspections.note')} *</label>
