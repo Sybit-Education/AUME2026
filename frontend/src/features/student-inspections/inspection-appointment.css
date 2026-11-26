@@ -1,0 +1,12 @@
+.inspection-appointment-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+  row-gap: 4px;
+}
+
+.inspection-appointment-heading > .chip {
+  margin-inline-start: auto;
+  white-space: normal;
+}

@@ -117,7 +117,7 @@ erDiagram
     }
 ```
 
-`memberships.valid_to` leer heißt aktuell eingezogen. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig; eine Person hat pro Anlage also höchstens eine Zuständigkeit. `kind` ist `CARETAKER` (Objektbetreuung), `DEPUTY` (Vertretung, ebenfalls eine Objektbetreuung) oder `CLERK` (Sachbearbeitung). Pro Anlage gibt es höchstens eine Betreuung und eine Vertretung; das sichert der Service, nicht die Datenbank. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
+`memberships.valid_to` leer heißt aktuell eingezogen; sonst ist es der erste Tag ohne Zugriff. `invitations` speichert nur den Hash des einmaligen Tokens. `staff_assignments` ist je Nutzer und Wohnanlage eindeutig; eine Person hat pro Anlage also höchstens eine Zuständigkeit. `kind` ist `CARETAKER` (Objektbetreuung), `DEPUTY` (Vertretung, ebenfalls eine Objektbetreuung) oder `CLERK` (Sachbearbeitung). Pro Anlage gibt es höchstens eine Betreuung und eine Vertretung; das sichert der Service, nicht die Datenbank. `users` ist je `(identity_issuer, identity_subject)` eindeutig.
 
 ## Anhänge
 
@@ -214,6 +214,7 @@ erDiagram
         timestamptz created_at
         bigint announced_by FK
         timestamptz announced_at
+        timestamptz rescheduled_at
         varchar status
         varchar kind
         bigint caretaker_id FK
@@ -229,6 +230,10 @@ erDiagram
 ```
 
 `inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR`. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
+
+`rescheduled_at` ist optional und erfasst den Zeitpunkt der letzten erneuten Ankündigung mit geändertem Start- oder Enddatum. Der Ankündigungsprozess der Sachbearbeitung muss den Zeitpunkt in derselben Transaktion wie die aktualisierten Kalendergrenzen setzen. Bis einschließlich der Erstankündigung bleibt das Feld leer. Eine Speicherung ohne Änderung der Kalendergrenzen lässt den vorhandenen Wert bestehen. Der US-15-Lesepfad verwendet das Feld bereits. Der produktive Schreibpfad gehört zu US-18.
+
+Hibernate legt die Spalte im aktuellen H2-Schema mit `ddl-auto: create-drop` an. Für persistente Installationen braucht es eine abgestimmte Migration, die die nullable Spalte ergänzt und bestehende Zeiträume ohne Änderungsnachweis leer lässt.
 
 ## Kontrollen
 
@@ -354,6 +359,9 @@ erDiagram
         varchar title
         bigint criterion_id FK
         int position
+        bigint assignee_id FK
+        varchar rhythm
+        date start_week
         timestamptz archived_at
     }
     wg_task_assignments {

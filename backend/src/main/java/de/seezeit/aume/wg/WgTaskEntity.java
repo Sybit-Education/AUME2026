@@ -1,8 +1,10 @@
 package de.seezeit.aume.wg;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.standard.CriterionEntity;
+import de.seezeit.aume.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -34,11 +36,28 @@ public class WgTaskEntity {
     @Column(nullable = false)
     private int position;
 
+    /** Manually assigned person. */
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id", nullable = false)
+    private UserEntity assignee;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private WgTaskRhythm rhythm;
+
+    /** Monday of the first due week. */
+    @Column(nullable = false)
+    private LocalDate startWeek;
+
     private Instant archivedAt;
 
-    public WgTaskEntity(FlatEntity flat, String title, int position) {
+    public WgTaskEntity(FlatEntity flat, String title, int position, UserEntity assignee,
+                        WgTaskRhythm rhythm, LocalDate startWeek) {
         this.flat = flat;
         this.title = title;
         this.position = position;
+        this.assignee = assignee;
+        this.rhythm = rhythm;
+        this.startWeek = startWeek;
     }
 }

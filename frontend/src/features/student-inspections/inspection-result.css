@@ -1,0 +1,74 @@
+/* US-38: Reiter „Ergebnis“ im Look der Studierenden-App (Variablen aus app/App.css). */
+.result-summary > h3 {
+  margin: 0 0 8px;
+}
+
+.result-chip {
+  font-weight: 700;
+}
+
+.st-wrap .result-chip.ok {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+}
+
+.st-wrap .result-chip.deficient {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+/* Weiches Gelb für „Gebäudeursache wird geprüft“ */
+.st-wrap .result-chip.building {
+  background: var(--wrb);
+  color: var(--wr);
+}
+
+.st-wrap .result-failed {
+  margin: 12px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--warn-text);
+}
+
+.st-wrap .result-passed {
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+
+.result-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.result-list li:last-child {
+  border-bottom: 0;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.result-row b {
+  font-weight: 600;
+}
+
+.result-row .chip {
+  flex: none;
+}
+
+.st-wrap .result-note {
+  margin: 4px 0 2px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+}

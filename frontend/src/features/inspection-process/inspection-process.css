@@ -1,0 +1,101 @@
+/* Ablauf und Konsequenzen: gleiche Optik wie die Bereichskarten der Checkliste, Kopf als Button. */
+.process-section {
+  padding: 0;
+  overflow: hidden;
+}
+
+.st-wrap .process-section > h3,
+.process-section > h3 {
+  margin: 0;
+  padding: 0;
+  background: var(--area-head);
+  color: var(--area-head-text);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.process-chevron {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--primary-dark);
+  transition: transform .18s ease;
+}
+
+.process-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 11px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.process-toggle:focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: -2px;
+}
+
+.process-section.open .process-chevron {
+  transform: rotate(180deg);
+}
+
+.process-body {
+  padding: 14px 16px 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.process-body p {
+  margin: 0 0 10px;
+}
+
+/* Konsequenzen deutlich, aber in weichem Rot hervorheben */
+.st-wrap .process-section.important,
+.process-section.important {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+}
+
+.st-wrap .process-section.important > h3,
+.process-section.important > h3 {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-bottom: 1px solid var(--warn-border);
+}
+
+.process-section.important .process-chevron {
+  color: var(--warn-text);
+}
+
+.process-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--badge);
+  color: var(--card);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.st-wrap .process-cost,
+.process-cost {
+  color: var(--warn-text);
+  font-weight: 700;
+  background: var(--card);
+  padding: 0 4px;
+  border-radius: 4px;
+}
