@@ -55,6 +55,9 @@ public class InspectionPeriodEntity {
 
     private Instant announcedAt;
 
+    /** Zeitpunkt der letzten erneuten Ankündigung mit verändertem Start- oder Enddatum. */
+    private Instant rescheduledAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private Status status = Status.WAITING_FOR_CARETAKER;

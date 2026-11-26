@@ -32,6 +32,7 @@
     "greeting": "Der Gruß konnte nicht geladen werden.",
     "inspectionOverview": "Die Kontrollübersicht konnte nicht geladen werden.",
     "residences": "Die Wohnanlagen konnten nicht geladen werden.",
+    "studentInspectionAppointment": "Der Kontrolltermin konnte nicht geladen werden.",
     "caretakers": "Die Objektbetreuung konnte nicht geladen werden.",
     "assignStaff": "Die Zuständigkeit konnte nicht gespeichert werden. Bitte erneut versuchen.",
     "caretakerRequired": "Bitte eine Objektbetreuung auswählen.",
@@ -61,7 +62,21 @@
     "periodAnnounced": "Der Zeitraum wurde bereits angekündigt und kann hier nicht mehr geändert werden.",
     "periodChanged": "Der Zeitraum wurde inzwischen geändert. Bitte prüfe den aktuellen Stand.",
     "periodInvalidStatus": "Dieser Schritt ist im aktuellen Status nicht möglich.",
-    "periodStarted": "Mindestens eine Kontrolle wurde bereits begonnen. Der Vorschlag kann nicht mehr zurückgezogen werden."
+    "periodStarted": "Mindestens eine Kontrolle wurde bereits begonnen. Der Vorschlag kann nicht mehr zurückgezogen werden.",
+    "studentInspectionResult": "Das Kontrollergebnis konnte nicht geladen werden.",
+    "wg": "Deine WG konnte nicht geladen werden.",
+    "wgJoin": "Der Beitritt ist fehlgeschlagen. Bitte erneut versuchen.",
+    "wgLeave": "Der Austritt ist fehlgeschlagen. Bitte erneut versuchen.",
+    "wgInvalidCode": "Dieser Code ist ungültig oder nicht mehr gültig.",
+    "wgAlreadyMember": "Du bist bereits Mitglied einer WG.",
+    "wgFlatFull": "Diese WG ist bereits voll belegt.",
+    "plan": "Der Putzplan konnte nicht geladen werden.",
+    "planSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "planTitle": "Bitte gib eine Aufgabe mit höchstens 120 Zeichen ein.",
+    "planAssignee": "Bitte wähle eine Person aus deiner WG aus.",
+    "planNotAssignee": "Nur die zugeteilte Person kann diese Aufgabe abhaken.",
+    "planNotDue": "Diese Aufgabe ist in dieser Woche nicht fällig.",
+    "planCriterion": "Dieser Vorschlag ist nicht mehr in der aktuellen Checkliste."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -74,7 +89,8 @@
     "inspection": "Kontrolle",
     "more": "Mehr",
     "studentTabs": "Navigation der Studierenden",
-    "inspectionPlanning": "Kontrollen planen"
+    "inspectionPlanning": "Kontrollen planen",
+    "wg": "Meine WG"
   },
   "inspectionOverview": {
     "openWork": "Offene Arbeit",
@@ -215,6 +231,47 @@
     "saving": "Wird gespeichert …",
     "cancel": "Abbrechen"
   },
+  "studentControl": {
+    "navigation": "Kontrollbereich",
+    "appointment": "Termin",
+    "checklist": "Checkliste",
+    "result": "Ergebnis",
+    "history": "Verlauf"
+  },
+  "studentInspections": {
+    "title": "Nächste Kontrolle",
+    "detailsTitle": "Kontrolle",
+    "period": "Zeitraum",
+    "details": "Details",
+    "changed": "Termin geändert",
+    "empty": "Keine Kontrolle angekündigt.",
+    "download": "In Kalender übernehmen"
+  },
+  "studentResult": {
+    "emptyTitle": "Noch kein Ergebnis",
+    "emptyAnnounced": "Eure Kontrolle ist angekündigt. Das Ergebnis erscheint hier, sobald Seezeit es übermittelt hat. Das passiert spätestens 24 Stunden nach der Kontrolle.",
+    "emptyNext": "Nach der nächsten Kontrolle erscheint hier euer Ergebnis.",
+    "title": "Ergebnis · {{kind}} am {{date}}",
+    "titleWithoutDate": "Ergebnis · {{kind}}",
+    "initial": "Erstkontrolle",
+    "followUp": "Nachkontrolle",
+    "available": "Ergebnis verfügbar",
+    "passed": "Bestanden! Eure WG hat die Kontrolle gut gemeistert.",
+    "failed": "Nicht bestanden",
+    "assessedBy": "Die Bewertung hat die Objektbetreuung vorgenommen. Nur eure WG sieht dieses Ergebnis.",
+    "nextStepTitle": "Euer nächster Schritt",
+    "nextStep": "Behebt die Mängel. Seezeit legt die Frist für die Nachkontrolle fest und schickt euch eine Nachricht.",
+    "deficienciesTitle": "Mängel ({{count}})",
+    "deficient": "Mangel",
+    "noNote": "Keine Notiz.",
+    "buildingCause": "Gebäudeursache wird geprüft",
+    "buildingCauseHint": "Die Objektbetreuung vermutet eine Ursache am Gebäude. Seezeit prüft das.",
+    "noDeficiencies": "Es wurden keine Mängel festgestellt.",
+    "resolvedTitle": "Vor Ort geklärt ({{count}})",
+    "resolved": "geklärt",
+    "passedTitle": "Bestandene Kriterien ({{count}})",
+    "ok": "in Ordnung"
+  },
   "pages": {
     "welcome": "Willkommen, {{name}}.",
     "openResidences": "Zugewiesene Wohnanlagen öffnen",
@@ -235,6 +292,9 @@
     "account": "Konto und Datenschutz",
     "settings": "Einstellungen",
     "settingsHint": "Sprache",
+    "living": "Wohnen",
+    "wg": "Meine WG",
+    "wgHint": "Beitreten, Mitbewohnende, Austritt",
     "back": "Mehr"
   },
   "settings": {
@@ -243,14 +303,23 @@
     "languageHint": "Die Auswahl gilt für die ganze App und bleibt nach dem Neuladen erhalten."
   },
   "checklist": {
-    "title": "Checkliste",
-    "language": "Sprache",
     "sameCriteria": "Diese Kriterien nutzt auch die Objektbetreuung bei der Kontrolle.",
     "details": "Details",
     "less": "Weniger",
     "explanation": "Erklärung:",
     "empty": "Seezeit hat noch keine Checkliste veröffentlicht.",
-    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien."
+    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien.",
+    "processLink": "Ablauf und Konsequenzen"
+  },
+  "inspectionProcess": {
+    "title": "Ablauf und Konsequenzen",
+    "back": "Zurück zur Checkliste",
+    "process": "Ablauf einer Kontrolle",
+    "consequences": "Konsequenzen und Kosten",
+    "standards": "Sauberkeitsstandards",
+    "important": "Wichtig",
+    "empty": "Noch keine Informationen.",
+    "germanOnly": "Seezeit stellt diese Texte nur auf Deutsch bereit."
   },
   "inspections": {
     "title": "Kontrolle · WG {{label}}",
@@ -370,5 +439,59 @@
       "earlier": "früher auffällig · {{date}}",
       "earlierNote": "Zuletzt notiert: {{note}}"
     }
+  },
+  "wg": {
+    "title": "Meine WG",
+    "joinIntro": "Gib den Einladungscode deiner WG ein.",
+    "code": "Einladungscode",
+    "join": "WG beitreten",
+    "joining": "Wird geprüft …",
+    "flat": "WG",
+    "residence": "Wohnanlage",
+    "since": "Mitglied seit",
+    "members": "Mitbewohnende",
+    "leave": "WG verlassen",
+    "leaving": "Wird verlassen …",
+    "leaveYes": "Ja, WG verlassen",
+    "leaveNo": "Abbrechen",
+    "leaveConfirm": "Möchtest du die WG wirklich verlassen? Du verlierst sofort den Zugriff und brauchst für eine Rückkehr einen neuen Code."
+  },
+  "plan": {
+    "noFlat": "Tritt zuerst deiner WG bei, um den Putzplan zu sehen.",
+    "week": "KW {{week}} · {{from}} bis {{to}}",
+    "previousWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "add": "+ Aufgabe",
+    "closeSheet": "Schließen",
+    "addTask": "Aufgabe anlegen",
+    "editTask": "Aufgabe bearbeiten",
+    "editFor": "{{title}} bearbeiten",
+    "deleteFor": "{{title}} löschen",
+    "deleteTitle": "Aufgabe löschen?",
+    "delete": "Löschen",
+    "tasks": "Aufgaben",
+    "task": "Aufgabe",
+    "taskPlaceholder": "z. B. Küche reinigen",
+    "person": "Person",
+    "rhythm": "Rhythmus",
+    "startWeek": "Ab Woche",
+    "rhythms": {
+      "WEEKLY": "wöchentlich",
+      "BIWEEKLY": "alle 2 Wochen",
+      "MONTHLY": "alle 4 Wochen"
+    },
+    "save": "Speichern",
+    "saving": "Wird gespeichert …",
+    "cancel": "Abbrechen",
+    "empty": "Noch keine Aufgaben.",
+    "addFirst": "Erste Aufgabe anlegen",
+    "noneThisWeek": "In dieser Woche sind keine Aufgaben fällig.",
+    "unassigned": "Nicht zugeteilt",
+    "done": "erledigt",
+    "doneBy": "erledigt von {{name}}",
+    "progressLabel": "Fortschritt der Woche",
+    "progress": "{{done}} von {{total}} Aufgaben erledigt",
+    "onlyCurrentWeek": "Nur die aktuelle Woche lässt sich abhaken.",
+    "fromChecklist": "Aus der Checkliste"
   }
 }

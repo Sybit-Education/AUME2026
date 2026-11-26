@@ -3,6 +3,11 @@
   margin: 14px 2px 8px;
 }
 
+.st-wrap .more-group > h3 {
+  font-size: 15px;
+  color: var(--text-2);
+}
+
 .more-list {
   padding: 4px 16px;
 }
@@ -11,18 +16,23 @@
   color: inherit;
   text-decoration: none;
   justify-content: flex-start;
-  min-height: 48px;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.st-wrap .more-link {
+  color: var(--text);
+  border-bottom-color: var(--line);
+}
+
+.more-link b {
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .more-link:hover b,
 .more-link:focus-visible b {
-  color: var(--td);
-}
-
-.more-icon {
-  font-size: 18px;
-  width: 26px;
-  text-align: center;
+  color: var(--primary-dark);
 }
 
 .more-text {
@@ -32,11 +42,10 @@
 }
 
 .more-chevron {
-  color: var(--mut);
-  font-size: 18px;
+  color: var(--primary-dark);
+  font-size: 20px;
 }
 
 .settings-hint {
   margin: 10px 0 0;
 }
-

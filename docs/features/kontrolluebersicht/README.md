@@ -51,7 +51,9 @@ Alle Pfade beginnen mit `/api/inspection-overview` und sind nur lesend.
 
 ## Entwicklungsdaten
 
-`InspectionOverviewSampleData` hängt nur bereits abgeschlossene Erstkontrollen der Wohnanlage Sonne an einen vergangenen Zeitraum. Status und sonstige Testdaten bleiben unverändert. Egg behält den offenen Gegenvorschlag aus US-17.
+`InspectionOverviewSampleData` ordnet die beiden eindeutig gefundenen historischen Erstkontrollen von S-01 und S-02 einer vergangenen Runde zu. Bei S-01 identifiziert die vorhandene Nachkontrolle die historische Erstkontrolle. Bereits zugeordnete Kontrollen behalten ihren Zeitraum. Die angekündigte US-15-Runde und das veröffentlichte US-38-Ergebnis bleiben erhalten. Egg behält den offenen Gegenvorschlag aus US-17.
+
+Die Verhaltensprüfungen in `InspectionOverviewTests` verwenden eigene transaktionale Fixtures. Ein separater Test prüft das Zusammenspiel der Dev-Seeder und die wiederholte Ausführung des Übersicht-Seeders ohne Duplikate.
 
 ## Offen
 

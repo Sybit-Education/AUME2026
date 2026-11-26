@@ -19,7 +19,8 @@ vi.mock('@/lib/auth/client', () => ({
 }))
 
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['CLERK_INSPECTION_OVERVIEW_READ'] }
-const student: LoggedInUser = { userKey: 'student', name: 'Lea', roles: ['STUDENT'], privileges: [] }
+const student: LoggedInUser = { userKey: 'student', name: 'Lea', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
+const appointmentPath = '/api/student/inspection-appointment'
 const page = (content: unknown[]) => ({ content, page: { number: 0, size: 20, totalElements: content.length, totalPages: 1 } })
 let signedIn: LoggedInUser
 let rows: ResidenceRow[]
@@ -61,6 +62,12 @@ beforeEach(async () => {
   await i18n.changeLanguage('de')
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return Response.json(signedIn)
+    if (path === '/api/greeting') return new Response('Hallo Lea, willkommen in Sonne.')
+    if (path === appointmentPath) {
+      return Response.json({
+        id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
+      })
+    }
     if (path === '/api/inspection-overview/counts') return Response.json({ counterProposed: 1, agreedNotAnnounced: 1 })
     if (String(path).startsWith('/api/inspection-overview?')) return Response.json(page(rows))
     if (String(path) === '/api/inspection-overview/3') return Response.json(detail)
@@ -86,6 +93,7 @@ it('shows one row per residence with last completed round, current round and nex
   expect(within(sonne).getByText('Abgestimmt, nicht angekündigt')).toBeDefined()
   expect(within(sonne).getByRole('button', { name: 'Ankündigen' })).toBeDefined()
   expect(screen.queryByText(/Sam/)).toBeNull()
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === appointmentPath)).toBe(false)
 })
 
 it('filters by counter tiles, status and inspection type', async () => {
@@ -142,5 +150,9 @@ it('keeps the dashboard for users without the overview privilege', async () => {
   signedIn = student
   mount()
   expect(await screen.findByText('Willkommen, Lea.')).toBeDefined()
+  expect(screen.getByText('Hallo Lea, willkommen in Sonne.')).toBeDefined()
+  const appointment = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  expect(await appointment.findByText('Erstkontrolle')).toBeDefined()
+  expect(appointment.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/student/inspection/appointment')
   expect(overviewCalls()).toEqual([])
 })

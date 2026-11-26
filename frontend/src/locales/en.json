@@ -32,6 +32,7 @@
     "greeting": "The greeting could not be loaded.",
     "inspectionOverview": "The inspection overview could not be loaded.",
     "residences": "The residences could not be loaded.",
+    "studentInspectionAppointment": "The inspection appointment could not be loaded.",
     "caretakers": "The caretakers could not be loaded.",
     "assignStaff": "The responsibility could not be saved. Please try again.",
     "caretakerRequired": "Please select a caretaker.",
@@ -61,7 +62,21 @@
     "periodAnnounced": "This period has already been announced and can no longer be changed here.",
     "periodChanged": "This period has changed in the meantime. Please check the current state.",
     "periodInvalidStatus": "This step is not possible in the current status.",
-    "periodStarted": "At least one inspection has already started. The proposal can no longer be withdrawn."
+    "periodStarted": "At least one inspection has already started. The proposal can no longer be withdrawn.",
+    "studentInspectionResult": "The inspection result could not be loaded.",
+    "wg": "Your shared flat could not be loaded.",
+    "wgJoin": "Joining failed. Please try again.",
+    "wgLeave": "Leaving failed. Please try again.",
+    "wgInvalidCode": "This code is invalid or no longer valid.",
+    "wgAlreadyMember": "You are already a member of a shared flat.",
+    "wgFlatFull": "This shared flat is already full.",
+    "plan": "The cleaning plan could not be loaded.",
+    "planSave": "The change could not be saved. Please try again.",
+    "planTitle": "Please enter a task with at most 120 characters.",
+    "planAssignee": "Please choose a person from your flat.",
+    "planNotAssignee": "Only the assigned person can tick off this task.",
+    "planNotDue": "This task is not due this week.",
+    "planCriterion": "This suggestion is no longer in the current checklist."
   },
   "navigation": {
     "main": "Main navigation",
@@ -74,7 +89,8 @@
     "inspection": "Inspection",
     "more": "More",
     "studentTabs": "Student navigation",
-    "inspectionPlanning": "Plan inspections"
+    "inspectionPlanning": "Plan inspections",
+    "wg": "My flat"
   },
   "inspectionOverview": {
     "openWork": "Open work",
@@ -215,6 +231,47 @@
     "saving": "Saving …",
     "cancel": "Cancel"
   },
+  "studentControl": {
+    "navigation": "Inspection sections",
+    "appointment": "Appointment",
+    "checklist": "Checklist",
+    "result": "Result",
+    "history": "History"
+  },
+  "studentInspections": {
+    "title": "Next inspection",
+    "detailsTitle": "Inspection",
+    "period": "Period",
+    "details": "Details",
+    "changed": "Inspection date changed",
+    "empty": "No inspection announced.",
+    "download": "Add to calendar"
+  },
+  "studentResult": {
+    "emptyTitle": "No result yet",
+    "emptyAnnounced": "Your inspection has been announced. The result will appear here as soon as Seezeit has sent it. This happens no later than 24 hours after the inspection.",
+    "emptyNext": "Your result will appear here after the next inspection.",
+    "title": "Result · {{kind}} on {{date}}",
+    "titleWithoutDate": "Result · {{kind}}",
+    "initial": "Initial inspection",
+    "followUp": "Follow-up inspection",
+    "available": "Result available",
+    "passed": "Passed! Your flat did well in the inspection.",
+    "failed": "Not passed",
+    "assessedBy": "The caretakers carried out the assessment. Only your flat can see this result.",
+    "nextStepTitle": "Your next step",
+    "nextStep": "Fix the deficiencies. Seezeit will set the deadline for the follow-up inspection and send you a message.",
+    "deficienciesTitle": "Deficiencies ({{count}})",
+    "deficient": "Deficiency",
+    "noNote": "No note.",
+    "buildingCause": "Building cause under review",
+    "buildingCauseHint": "The caretakers suspect a cause in the building. Seezeit is looking into it.",
+    "noDeficiencies": "No deficiencies were found.",
+    "resolvedTitle": "Resolved on site ({{count}})",
+    "resolved": "resolved",
+    "passedTitle": "Passed criteria ({{count}})",
+    "ok": "OK"
+  },
   "pages": {
     "welcome": "Welcome, {{name}}.",
     "openResidences": "Open assigned residences",
@@ -235,6 +292,9 @@
     "account": "Account and privacy",
     "settings": "Settings",
     "settingsHint": "Language",
+    "living": "Living",
+    "wg": "My flat",
+    "wgHint": "Join, flatmates, leave",
     "back": "More"
   },
   "settings": {
@@ -243,14 +303,23 @@
     "languageHint": "Your choice applies to the whole app and is kept after reloading."
   },
   "checklist": {
-    "title": "Checklist",
-    "language": "Language",
     "sameCriteria": "The caretakers use the same criteria during the inspection.",
     "details": "Details",
     "less": "Less",
     "explanation": "Explanation:",
     "empty": "Seezeit has not published a checklist yet.",
-    "emptyHint": "As soon as it is published, you will see all criteria here."
+    "emptyHint": "As soon as it is published, you will see all criteria here.",
+    "processLink": "Procedure and consequences"
+  },
+  "inspectionProcess": {
+    "title": "Procedure and consequences",
+    "back": "Back to the checklist",
+    "process": "How an inspection works",
+    "consequences": "Consequences and costs",
+    "standards": "Cleanliness standards",
+    "important": "Important",
+    "empty": "No information yet.",
+    "germanOnly": "Seezeit provides these texts in German only."
   },
   "inspections": {
     "title": "Inspection · Flat {{label}}",
@@ -370,5 +439,59 @@
       "earlier": "previously flagged · {{date}}",
       "earlierNote": "Last note: {{note}}"
     }
+  },
+  "wg": {
+    "title": "My shared flat",
+    "joinIntro": "Enter your flat's invitation code.",
+    "code": "Invitation code",
+    "join": "Join flat",
+    "joining": "Checking …",
+    "flat": "Flat",
+    "residence": "Residence",
+    "since": "Member since",
+    "members": "Flatmates",
+    "leave": "Leave flat",
+    "leaving": "Leaving …",
+    "leaveYes": "Yes, leave flat",
+    "leaveNo": "Cancel",
+    "leaveConfirm": "Do you really want to leave this flat? You will lose access immediately and need a new code to return."
+  },
+  "plan": {
+    "noFlat": "Join your flat first to see the cleaning plan.",
+    "week": "Week {{week}} · {{from}} to {{to}}",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "add": "+ Task",
+    "closeSheet": "Close",
+    "addTask": "Add task",
+    "editTask": "Edit task",
+    "editFor": "Edit {{title}}",
+    "deleteFor": "Delete {{title}}",
+    "deleteTitle": "Delete task?",
+    "delete": "Delete",
+    "tasks": "Tasks",
+    "task": "Task",
+    "taskPlaceholder": "e.g. Clean the kitchen",
+    "person": "Person",
+    "rhythm": "Frequency",
+    "startWeek": "From week",
+    "rhythms": {
+      "WEEKLY": "weekly",
+      "BIWEEKLY": "every 2 weeks",
+      "MONTHLY": "every 4 weeks"
+    },
+    "save": "Save",
+    "saving": "Saving …",
+    "cancel": "Cancel",
+    "empty": "No tasks yet.",
+    "addFirst": "Add first task",
+    "noneThisWeek": "No tasks are due this week.",
+    "unassigned": "Unassigned",
+    "done": "done",
+    "doneBy": "done by {{name}}",
+    "progressLabel": "Progress this week",
+    "progress": "{{done}} of {{total}} tasks done",
+    "onlyCurrentWeek": "Only the current week can be ticked off.",
+    "fromChecklist": "From the checklist"
   }
 }
