@@ -9,6 +9,20 @@ export type UpcomingAppointment = {
   showInitialInspection: boolean
 }
 
+export type AppointmentDetails = UpcomingAppointment & {
+  windowStart: string | null
+  windowEnd: string | null
+  status: 'ANNOUNCED' | 'RESULT_AVAILABLE' | null
+  display: 'UPCOMING' | 'CURRENT' | 'PAST'
+}
+
+export async function loadAppointmentDetails(signal: AbortSignal): Promise<AppointmentDetails | null> {
+  const response = await api('/api/student/inspection-appointment?view=details', { signal })
+  signal.throwIfAborted()
+  requireOk(response, 'errors.studentInspectionAppointment')
+  return response.status === 204 ? null : await response.json() as AppointmentDetails
+}
+
 export async function loadAppointment(user: LoggedInUser, signal: AbortSignal): Promise<UpcomingAppointment | null> {
   if (!user.roles.includes('STUDENT')) return null
   const response = await api('/api/student/inspection-appointment', { signal })

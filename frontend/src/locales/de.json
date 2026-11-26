@@ -251,6 +251,10 @@
   "studentInspections": {
     "title": "Nächste Kontrolle",
     "detailsTitle": "Kontrolle",
+    "periodTitle": "Kontrollzeitraum",
+    "lastTitle": "Letzte Kontrolle",
+    "announced": "Angekündigt",
+    "window": "Die Objektbetreuung kommt zwischen {{start}} und {{end}} Uhr.",
     "period": "Zeitraum",
     "details": "Details",
     "changed": "Termin geändert",
@@ -318,14 +322,12 @@
     "less": "Weniger",
     "explanation": "Erklärung:",
     "empty": "Seezeit hat noch keine Checkliste veröffentlicht.",
-    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien.",
-    "processLink": "Ablauf und Konsequenzen"
+    "emptyHint": "Sobald sie veröffentlicht ist, siehst du hier alle Kriterien."
   },
   "inspectionProcess": {
     "title": "Ablauf und Konsequenzen",
-    "back": "Zurück zur Checkliste",
-    "process": "Ablauf einer Kontrolle",
-    "consequences": "Konsequenzen und Kosten",
+    "process": "So läuft die Kontrolle ab",
+    "consequences": "Was passiert bei Mängeln?",
     "standards": "Sauberkeitsstandards",
     "important": "Wichtig",
     "empty": "Noch keine Informationen.",

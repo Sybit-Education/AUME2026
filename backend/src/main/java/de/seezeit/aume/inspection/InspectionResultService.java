@@ -54,6 +54,11 @@ public class InspectionResultService {
             .map(this::toResult).toList();
     }
 
+    public boolean hasVisibleResult(Long inspectionId, Long flatId, Instant notBefore) {
+        return inspections.existsByIdAndFlatIdAndStatusAndPublishedAtGreaterThanEqual(
+            inspectionId, flatId, VISIBLE_TO_RESIDENTS, notBefore);
+    }
+
     private ResidentResult toResult(InspectionEntity inspection) {
         var criteria = inspection.getChecklistVersion() == null ? List.<ResultCriterion>of()
             : checklists.criteria(inspection.getChecklistVersion()).stream()

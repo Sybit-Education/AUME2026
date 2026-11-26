@@ -7,6 +7,7 @@ import ForbiddenPage from './routes/ForbiddenPage'
 import NotFoundPage from './routes/NotFoundPage'
 import ComingSoonPage from './routes/ComingSoonPage'
 import StudentControlLayout from './routes/StudentControlLayout'
+import { studentInspectionAppointmentRoute } from './routes/StudentInspectionAppointmentRoute'
 import LoadingPage from '@/components/LoadingPage'
 import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
@@ -61,6 +62,7 @@ export function createAppRoutes(): RouteObject[] {
                 Component: StudentControlLayout,
                 children: [
                   { index: true, element: createElement(Navigate, { to: 'appointment', replace: true }) },
+                  studentInspectionAppointmentRoute,
                   ...studentInspectionRoutes,
                   ...checklistRoutes,
                   ...inspectionProcessRoutes,

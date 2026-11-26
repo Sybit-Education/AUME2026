@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import i18n from '@/lib/i18n'
 import InspectionAppointment from './InspectionAppointment'
+import type { AppointmentDetails } from './api'
 
 const appointment = {
   id: 42, startsOn: '2026-12-28', endsOn: '2026-12-31', appointmentChanged: false, showInitialInspection: true,
@@ -117,4 +118,69 @@ it('exports the updated calendar boundaries after a reschedule', () => {
   fireEvent.click(screen.getByRole('button', { name: 'In Kalender übernehmen' }))
 
   expect(download).toHaveBeenCalledOnce()
+})
+
+it.each([
+  { status: 'ANNOUNCED', display: 'CURRENT', heading: 'Kontrollzeitraum', label: 'Angekündigt' },
+  { status: null, display: 'PAST', heading: 'Kontrollzeitraum', label: null },
+  { status: 'RESULT_AVAILABLE', display: 'PAST', heading: 'Letzte Kontrolle', label: 'Ergebnis verfügbar' },
+] as const)('shows the details for $status / $display', ({ status, display, heading, label }) => {
+  const details: AppointmentDetails = { ...appointment, status, display, windowStart: '09:00', windowEnd: '16:00' }
+  render(<MemoryRouter><InspectionAppointment appointment={details} canReadChecklist /></MemoryRouter>)
+
+  expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
+  expect(screen.getByText('Erstkontrolle').className).toBe('chip inf')
+  if (label) {
+    const timeline = screen.getByRole('list')
+    const steps = within(timeline).getAllByRole('listitem')
+    expect(steps.map((step) => step.textContent)).toEqual(['Angekündigt', 'Ergebnis verfügbar'])
+    expect(within(timeline).getByRole('listitem', { current: 'step' }).textContent).toBe(label)
+    const complete = status === 'RESULT_AVAILABLE'
+    expect(timeline.getAttribute('data-complete')).toBe(String(complete))
+    expect(steps.map((step) => step.getAttribute('data-reached'))).toEqual(['true', String(complete)])
+    expect(screen.getByText(label).closest('.chip')).toBeNull()
+  } else {
+    expect(screen.queryByRole('list')).toBeNull()
+  }
+  expect(screen.queryByText('Durchgeführt')).toBeNull()
+  expect(screen.getByRole('link', { name: 'Checkliste' }).getAttribute('href')).toBe('/student/inspection/checklist')
+  expect(Boolean(screen.queryByRole('button', { name: 'In Kalender übernehmen' }))).toBe(display === 'CURRENT')
+})
+
+it.each([
+  { windowStart: null, windowEnd: null },
+  { windowStart: '09:00', windowEnd: null },
+  { windowStart: '25:00', windowEnd: '16:00' },
+  { windowStart: '16:00', windowEnd: '09:00' },
+])('omits the arrival notice for invalid or incomplete windows (%j)', (window) => {
+  const details: AppointmentDetails = { ...appointment, ...window, display: 'UPCOMING', status: 'ANNOUNCED' }
+  render(<InspectionAppointment appointment={details} />)
+  expect(screen.queryByText(/Die Objektbetreuung kommt zwischen/)).toBeNull()
+})
+
+it('translates the announcement and its time window in English', async () => {
+  const details: AppointmentDetails = {
+    ...appointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00',
+  }
+  render(<InspectionAppointment appointment={details} />)
+
+  await act(async () => { await i18n.changeLanguage('en') })
+  expect(screen.getByText('Announced')).toBeTruthy()
+  expect(screen.getByText('Result available')).toBeTruthy()
+  expect(screen.getByText('The caretaker will come between 09:00 and 16:00.')).toBeTruthy()
+})
+
+it('keeps the change label on the summary card without showing the timeline', () => {
+  const details: AppointmentDetails = {
+    ...rescheduledAppointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00',
+  }
+  const { rerender } = render(
+    <MemoryRouter><InspectionAppointment appointment={details} variant="summary" /></MemoryRouter>,
+  )
+  expect(screen.getByText('Termin geändert').className).toBe('chip wr')
+  expect(screen.queryByRole('list')).toBeNull()
+
+  rerender(<MemoryRouter><InspectionAppointment appointment={details} /></MemoryRouter>)
+  expect(screen.getByText('Termin geändert').className).toBe('chip wr')
+  expect(screen.getByRole('list')).toBeTruthy()
 })

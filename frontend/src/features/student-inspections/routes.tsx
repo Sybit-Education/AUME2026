@@ -1,18 +1,10 @@
 import { redirect, type RouteObject } from 'react-router'
 import { protectedLoader } from '@/lib/auth/loaders'
-import InspectionDetailsPage from './InspectionDetailsPage'
 import InspectionResultPage, { type InspectionResultData } from './InspectionResultPage'
 import { loadAppointment, loadLatestResult } from './api'
 import './inspection-result.css'
 
 export const studentInspectionRoutes: RouteObject[] = [{
-  path: 'appointment',
-  Component: InspectionDetailsPage,
-  loader: protectedLoader(undefined, async ({ request }, user) => {
-    if (!user.roles.includes('STUDENT')) throw redirect('/forbidden')
-    return { appointment: await loadAppointment(user, request.signal) }
-  }),
-}, {
   // US-38: Reiter „Ergebnis“. Der Termin wird nur für den Leerzustand gebraucht.
   path: 'result',
   Component: InspectionResultPage,

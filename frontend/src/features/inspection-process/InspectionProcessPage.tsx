@@ -1,10 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLoaderData } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import type { InspectionInfo } from './api'
-
-export type InspectionProcessData = { info: InspectionInfo }
+import './inspection-process.css'
 
 type SectionKey = keyof InspectionInfo
 
@@ -22,20 +20,25 @@ const costPattern = /kosten|€|euro|gebühr|cost|fee|charge/i
  * Ablauf und Konsequenzen einer Kontrolle (US-23). Bewusst ohne Zeitstrahl: aufklappbare Bereiche
  * im Stil der Checkliste. Die Texte pflegt die Sachbearbeitung unter „Informationen“.
  */
-export default function InspectionProcessPage() {
+export default function InspectionProcessPage({
+  info, loadFailed,
+}: { info?: InspectionInfo; loadFailed?: boolean }) {
   const { t, i18n } = useTranslation()
-  const data = useLoaderData<InspectionProcessData | null>()
-  if (!data) return <LoadingPage />
 
   return (
-    <>
-      <Link className="back" to="/student/inspection/checklist">‹ {t('inspectionProcess.back')}</Link>
-      <div className="ch"><h2>{t('inspectionProcess.title')}</h2></div>
-      {i18n.resolvedLanguage !== 'de' && <p className="mut xs">{t('inspectionProcess.germanOnly')}</p>}
-      {sections.map(({ key, important }) => (
-        <InfoSection key={key} id={key} title={t(`inspectionProcess.${key}`)} text={data.info[key]} important={important} />
-      ))}
-    </>
+    <section className="card inspection-process-card" aria-labelledby="inspection-process">
+      <h2 id="inspection-process" className="inspection-process-title">{t('inspectionProcess.title')}</h2>
+      {loadFailed ? <p className="err" role="alert">{t('errors.infoPages')}</p> : !info ? <LoadingPage /> : (
+        <>
+          {i18n.resolvedLanguage !== 'de' && <p className="mut xs">{t('inspectionProcess.germanOnly')}</p>}
+          <div className="process-sections">
+            {sections.map(({ key, important }) => (
+              <InfoSection key={key} id={key} title={t(`inspectionProcess.${key}`)} text={info[key]} important={important} />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
   )
 }
 
@@ -43,14 +46,14 @@ function InfoSection({ id, title, text, important = false }: { id: SectionKey; t
   const { t } = useTranslation()
   const [open, setOpen] = useState(important)
   const bodyId = `inspection-process-${id}`
-  const classes = ['card', 'process-section', important && 'important', open && 'open'].filter(Boolean).join(' ')
+  const classes = ['process-section', important && 'important', open && 'open'].filter(Boolean).join(' ')
 
   return (
     <section className={classes} aria-labelledby={`${bodyId}-title`}>
       <h3 id={`${bodyId}-title`}>
         <button type="button" className="process-toggle" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((value) => !value)}>
-          <span>
-            {title}
+          <span className="process-toggle-label">
+            <span>{title}</span>
             {important && <span className="process-badge">{t('inspectionProcess.important')}</span>}
           </span>
           <svg className="process-chevron" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor"

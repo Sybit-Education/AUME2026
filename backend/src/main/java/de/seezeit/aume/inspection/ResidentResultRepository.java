@@ -10,4 +10,7 @@ interface ResidentResultRepository extends Repository<InspectionEntity, Long> {
 
     List<InspectionEntity> findByFlatIdAndStatusAndPublishedAtGreaterThanEqualOrderByPublishedAtDesc(Long flatId,
         InspectionEntity.Status status, Instant notBefore);
+
+    boolean existsByIdAndFlatIdAndStatusAndPublishedAtGreaterThanEqual(Long id, Long flatId,
+        InspectionEntity.Status status, Instant notBefore);
 }

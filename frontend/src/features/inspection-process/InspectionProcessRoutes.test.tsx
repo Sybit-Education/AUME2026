@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 // eslint-disable-next-line no-restricted-imports -- Exercise the real app in routing integration tests.
 import App from '@/app/App'
@@ -27,7 +27,8 @@ const info = {
   updatedAt: '2026-11-20T10:00:00Z',
 }
 let signedIn: LoggedInUser | null
-let infoResponse: () => Response
+let infoResponse: () => Response | Promise<Response>
+let appointmentResponse: () => Response | Promise<Response>
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
 function mount(path: string) {
@@ -39,18 +40,22 @@ function mount(path: string) {
 
 const infoCalls = () => vi.mocked(api).mock.calls.filter(([path]) => path === '/api/info-pages')
 const section = (name: string | RegExp) => screen.getByRole('button', { name })
+const appointmentPath = '/student/inspection/appointment'
+const processPath = '/student/inspection/process'
 
 beforeEach(async () => {
   vi.resetAllMocks()
   invalidateSession()
   signedIn = student
   infoResponse = () => Response.json(info)
+  appointmentResponse = () => new Response(null, { status: 204 })
   await i18n.changeLanguage('de')
   vi.mocked(login).mockImplementation(async () => { signedIn = student })
   vi.mocked(logout).mockImplementation(async () => { signedIn = null })
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
     if (path === '/api/info-pages') return infoResponse()
+    if (path === '/api/student/inspection-appointment?view=details') return appointmentResponse()
     if (path === '/api/checklist') return Response.json({ version: 1, areas: [] })
     throw new Error(`Unexpected API call: ${path}`)
   })
@@ -61,29 +66,41 @@ afterEach(() => {
   routers = []
 })
 
-it('opens the page from the link below the checklist and loads the three texts from the backend', async () => {
-  const router = mount('/student/inspection/checklist')
-  fireEvent.click(await screen.findByRole('link', { name: /Ablauf und Konsequenzen/ }))
-  await screen.findByRole('heading', { name: 'Ablauf und Konsequenzen', level: 2 })
-  expect(router.state.location.pathname).toBe('/student/inspection/process')
+it('redirects an old process link to the embedded backend texts even without an appointment', async () => {
+  const router = mount(processPath)
+  await screen.findByRole('button', { name: /Was passiert bei Mängeln\?/ })
+  expect(router.state.location.pathname).toBe(appointmentPath)
+  expect(router.state.location.hash).toBe('#inspection-process')
+  expect(await screen.findByText('Keine Kontrolle angekündigt.')).toBeTruthy()
   expect(infoCalls()).toHaveLength(1)
 
   const tabs = within(screen.getByRole('navigation', { name: 'Kontrollbereich' }))
   expect(tabs.getAllByRole('link')).toHaveLength(4)
-  expect(tabs.getByRole('link', { name: 'Checkliste' }).getAttribute('aria-current')).toBe('page')
+  expect(tabs.getByRole('link', { name: 'Termin' }).getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', { name: 'Kontrolle' }).getAttribute('aria-current')).toBe('page')
 
-  for (const name of [/Ablauf einer Kontrolle/, /Konsequenzen und Kosten/, /Sauberkeitsstandards/]) {
-    expect(section(name)).toBeDefined()
+  const infoCard = screen.getByRole('region', { name: 'Ablauf und Konsequenzen' })
+  expect(infoCard.classList.contains('card')).toBe(true)
+  expect(infoCard.querySelector('.card')).toBeNull()
+  expect(within(infoCard).getByRole('heading', { name: 'Ablauf und Konsequenzen' })).toBeDefined()
+  for (const name of [/So läuft die Kontrolle ab/, /Was passiert bei Mängeln\?/, /Sauberkeitsstandards/]) {
+    expect(within(infoCard).getByRole('button', { name })).toBeDefined()
   }
   // Zeilenumbrüche bleiben als eigene Absätze erhalten.
   expect(screen.getByText('1. Ihr bekommt eine Ankündigung.', { exact: false }).closest('p')?.textContent)
     .not.toContain('2. Die Objektbetreuung')
 })
 
+it('does not show a second entry point or load information from the checklist', async () => {
+  mount('/student/inspection/checklist')
+  await screen.findByText('Diese Kriterien nutzt auch die Objektbetreuung bei der Kontrolle.')
+  expect(screen.queryByRole('link', { name: /Ablauf und Konsequenzen/ })).toBeNull()
+  expect(infoCalls()).toHaveLength(0)
+})
+
 it('highlights consequences: open by default, marked as important and costs emphasised', async () => {
   mount('/student/inspection/process')
-  const consequences = await screen.findByRole('button', { name: /Konsequenzen und Kosten/ })
+  const consequences = await screen.findByRole('button', { name: /Was passiert bei Mängeln\?/ })
   expect(consequences.getAttribute('aria-expanded')).toBe('true')
   expect(within(consequences).getByText('Wichtig')).toBeDefined()
   expect(consequences.closest('section')?.className).toContain('important')
@@ -94,7 +111,7 @@ it('highlights consequences: open by default, marked as important and costs emph
 
 it('expands and collapses a section with the green arrow header', async () => {
   mount('/student/inspection/process')
-  const process = await screen.findByRole('button', { name: /Ablauf einer Kontrolle/ })
+  const process = await screen.findByRole('button', { name: /So läuft die Kontrolle ab/ })
   const body = screen.getByText('1. Ihr bekommt eine Ankündigung.', { exact: false }).closest('[id]') as HTMLElement
   expect(process.getAttribute('aria-expanded')).toBe('false')
   expect(body.hidden).toBe(true)
@@ -108,8 +125,8 @@ it('expands and collapses a section with the green arrow header', async () => {
 it('shows "Noch keine Informationen" for empty texts', async () => {
   infoResponse = () => Response.json({ process: '', consequences: '  ', standards: 'Gleich für alle.', updatedAt: null })
   mount('/student/inspection/process')
-  await screen.findByRole('button', { name: /Konsequenzen und Kosten/ })
-  fireEvent.click(section(/Ablauf einer Kontrolle/))
+  await screen.findByRole('button', { name: /Was passiert bei Mängeln\?/ })
+  fireEvent.click(section(/So läuft die Kontrolle ab/))
   expect(screen.getAllByText('Noch keine Informationen.')).toHaveLength(2)
   expect(screen.getByText('Gleich für alle.')).toBeDefined()
 })
@@ -117,26 +134,49 @@ it('shows "Noch keine Informationen" for empty texts', async () => {
 it('shows the page in English and notes that the texts are German only', async () => {
   await i18n.changeLanguage('en')
   mount('/student/inspection/process')
-  await screen.findByRole('heading', { name: 'Procedure and consequences', level: 2 })
-  for (const name of [/How an inspection works/, /Consequences and costs/, /Cleanliness standards/]) {
+  await screen.findByRole('button', { name: /How the inspection works/ })
+  for (const name of [/How the inspection works/, /What happens if issues are found\?/, /Cleanliness standards/]) {
     expect(section(name)).toBeDefined()
   }
-  expect(within(section(/Consequences and costs/)).getByText('Important')).toBeDefined()
+  expect(within(section(/What happens if issues are found\?/)).getByText('Important')).toBeDefined()
   expect(screen.getByText('Seezeit provides these texts in German only.')).toBeDefined()
-  expect(screen.getByRole('link', { name: /Back to the checklist/ })).toBeDefined()
+  expect(screen.queryByRole('link', { name: /Back to the checklist/ })).toBeNull()
 })
 
-it('shows the error layout when the texts cannot be loaded', async () => {
-  infoResponse = () => new Response(null, { status: 500 })
-  mount('/student/inspection/process')
+it.each([403, 500])('keeps the appointment state when the info request returns %s', async (status) => {
+  infoResponse = () => new Response(null, { status })
+  mount(appointmentPath)
   await screen.findByText('Die Informationen konnten nicht geladen werden.')
+  expect(await screen.findByText('Keine Kontrolle angekündigt.')).toBeTruthy()
 })
 
-it('hides the link and blocks the page without INFO_PAGE_READ', async () => {
+it('shows the information while the appointment is pending and after it fails', async () => {
+  let complete!: (response: Response) => void
+  appointmentResponse = () => new Promise((resolve) => { complete = resolve })
+  mount(appointmentPath)
+  await screen.findByRole('button', { name: /Was passiert bei Mängeln\?/ })
+  const card = within(screen.getByRole('region', { name: 'Kontrolle' }))
+  expect(card.getByRole('status')).toBeTruthy()
+  await act(async () => { complete(new Response(null, { status: 500 })) })
+  await screen.findByText('Der Kontrolltermin konnte nicht geladen werden.')
+  expect(screen.getByRole('button', { name: /Was passiert bei Mängeln\?/ })).toBeTruthy()
+})
+
+it('shows the appointment state while information is pending', async () => {
+  let complete!: (response: Response) => void
+  infoResponse = () => new Promise((resolve) => { complete = resolve })
+  mount(appointmentPath)
+  await screen.findByText('Keine Kontrolle angekündigt.')
+  expect(screen.getByRole('status')).toBeTruthy()
+  await act(async () => { complete(Response.json(info)) })
+  await screen.findByRole('button', { name: /Was passiert bei Mängeln\?/ })
+})
+
+it('omits the information on the appointment page and blocks the old route without INFO_PAGE_READ', async () => {
   signedIn = { ...student, privileges: ['GREETING_READ', 'CHECKLIST_READ'] }
-  mount('/student/inspection/checklist')
-  await screen.findByText('Diese Kriterien nutzt auch die Objektbetreuung bei der Kontrolle.')
-  expect(screen.queryByRole('link', { name: /Ablauf und Konsequenzen/ })).toBeNull()
+  mount(appointmentPath)
+  await screen.findByText('Keine Kontrolle angekündigt.')
+  expect(screen.queryByRole('heading', { name: 'Ablauf und Konsequenzen' })).toBeNull()
   cleanup()
 
   const router = mount('/student/inspection/process')

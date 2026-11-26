@@ -77,6 +77,8 @@ Der erste Release-Vorschlag des User Teams umfasst eine Wohnanlage von der Ankü
 5. Der Worker verarbeitet Versandaufträge mit Wiederholungen. Wiederholte Aufrufe dürfen kein zweites fachliches Ergebnis erzeugen. Ein E-Mail-Ausfall verändert das veröffentlichte Ergebnis nicht.
 6. Berechtigte WG-Mitglieder sehen das Ergebnis nach Anmeldung. Eine Benachrichtigung enthält einen Verweis auf das geschützte Ergebnis.
 
+Die Studierenden-Terminansicht leitet den sichtbaren Kontrollstatus aus der Ankündigung und dem Veröffentlichungsstand derselben Kontrolle ab. Sie prüft die aktive WG-Mitgliedschaft serverseitig und zeigt den Ergebnisstatus nur bei einer Veröffentlichung derselben Kontroll-ID ab Einzugstag. Der Status wird nicht gespeichert. Der [Detailvertrag](../features/student-inspections/README.md#kontrollstatus-auf-der-terminseite-us-67) beschreibt die Auswahl und Leerfälle.
+
 Zu prüfen sind falsche WG-Zugehörigkeit, fehlende Personalzuständigkeit, doppelte Veröffentlichungsaufrufe, konkurrierende Entwürfe, Netzabbruch und Versandfehler. Änderungen an aktuellen Standards dürfen historische Kontrollen nicht verändern.
 
 ## 6. Deployment und Betrieb

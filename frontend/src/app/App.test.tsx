@@ -47,7 +47,10 @@ beforeEach(async () => {
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
     if (path === '/api/greeting') return new Response(i18n.resolvedLanguage === 'en' ? 'Hello Alex, welcome to Sonne.' : 'Hallo Alex, willkommen in Sonne.')
-    if (path === '/api/student/inspection-appointment') return new Response(null, { status: 204 })
+    if (path === '/api/student/inspection-appointment' || path === '/api/student/inspection-appointment?view=details') {
+      return new Response(null, { status: 204 })
+    }
+    if (path === '/api/info-pages') return Response.json({ process: '', consequences: '', standards: '' })
     if (path === '/api/student/inspection-results/latest') return new Response(null, { status: 204 })
     if (path === '/api/checklist') return Response.json(i18n.resolvedLanguage === 'en' ? checklistEn : checklistDe)
     if (path.startsWith('/api/residences/my-assignments?')) return Response.json({
