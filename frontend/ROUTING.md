@@ -7,7 +7,8 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | URL | Anmeldung / Berechtigung | Inhalt |
 | --- | --- | --- |
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
-| `/` | Angemeldet | Übersicht; Gruß mit `GREETING_READ`, Link zu Wohnanlagen mit `RESIDENCE_READ` |
+| `/` | Angemeldet | Mit `CLERK_INSPECTION_OVERVIEW_READ` erscheint die Kontrollübersicht je Wohnanlage mit den Filtern `?state=` und `?kind=`. Sonst erscheint das Dashboard mit Gruß bei `GREETING_READ`, Wohnanlagen-Link bei `RESIDENCE_READ` und unabhängig ladender Kontrollterminkarte für `STUDENT`. |
+| `/inspection-overview/<id>` | Angemeldet, `CLERK_INSPECTION_OVERVIEW_READ` | Kontrollrunden und offene Einzel-WG-Kontrollen einer Wohnanlage |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
@@ -19,8 +20,9 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/student/inspection/process` | Angemeldet, Rolle `STUDENT`, `INFO_PAGE_READ` | Ablauf und Konsequenzen (US-23), Link unter der Checkliste; Reiter „Checkliste“ bleibt markiert |
 | `/student/inspection/result` | Angemeldet, Rolle `STUDENT` | Reiter „Ergebnis“: neuestes veröffentlichtes Ergebnis der eigenen WG mit Mängeln (US-38) |
 | `/student/inspection/history` | Angemeldet, Rolle `STUDENT` | Reiter „Verlauf“: Platzhalter für den eigenen Kontrollverlauf |
-| `/student/cleaning-plan` | Angemeldet | Platzhalter, bis das Putzplan-Feature die Route übernimmt |
+| `/student/cleaning-plan` | Angemeldet, `WG_MEMBERSHIP` | Putzplan der eigenen WG |
 | `/student/more` | Angemeldet | Weitere Studierenden-Funktionen, gruppiert |
+| `/student/flat` | Angemeldet, `WG_MEMBERSHIP` | Meine WG mit Mitgliedern, Beitritt und Austritt |
 | `/student/settings` | Angemeldet | Sprache wählen (US-26); unterer Tab „Mehr“ bleibt markiert |
 | `/forbidden` | Angemeldet | Fehlende Berechtigung |
 | Andere URLs | Öffentlich | Seite nicht gefunden |

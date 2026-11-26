@@ -52,8 +52,8 @@ class ApplicationTests {
     @Autowired private EntityManager entities;
 
     @ParameterizedTest
-    @CsvSource({"student,STUDENT,GREETING_READ", "caretaker,CARETAKER,INSPECTION_PERFORM",
-        "clerk,CLERK,RESIDENCE_ASSIGN_STAFF"})
+    @CsvSource({"student,STUDENT,GREETING_READ", "student,STUDENT,WG_MEMBERSHIP", "caretaker,CARETAKER,INSPECTION_PERFORM",
+        "clerk,CLERK,RESIDENCE_ASSIGN_STAFF", "clerk,CLERK,CLERK_INSPECTION_OVERVIEW_READ"})
     void mockUsersReceiveTheirOwnRolesAndPrivileges(String key, String role, String privilege) throws Exception {
         var session = login(key);
         mvc.perform(get("/api/me").session(session))
@@ -182,7 +182,7 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/me").session(session))
             .andExpect(jsonPath("$.roles.length()").value(3))
-            .andExpect(jsonPath("$.privileges.length()").value(11));
+            .andExpect(jsonPath("$.privileges.length()").value(12));
         mvc.perform(get("/api/greeting").session(session)).andExpect(status().isOk());
         mvc.perform(get("/api/residences").session(session)).andExpect(status().isOk());
     }
@@ -209,7 +209,7 @@ class ApplicationTests {
         assertThat(flats.count()).isEqualTo(9);
         assertThat(staffAssignments.count()).isEqualTo(8);
         assertThat(roles.count()).isEqualTo(3);
-        assertThat(privileges.count()).isEqualTo(11);
+        assertThat(privileges.count()).isEqualTo(12);
     }
 
     @Test
@@ -235,8 +235,13 @@ class ApplicationTests {
         assertThat(flat.getResidence().getName()).isEqualTo("Wohnanlage Sonne");
 
         var inspections = entities.createQuery("""
-            select i from InspectionEntity i where i.flat = :flat and i.period is not null and i.round = 0
-            """, InspectionEntity.class).setParameter("flat", flat).getResultList();
+            select i from InspectionEntity i join i.period p
+            where i.flat = :flat and i.round = 0 and p.startsOn = :startsOn and p.endsOn = :endsOn
+            """, InspectionEntity.class)
+            .setParameter("flat", flat)
+            .setParameter("startsOn", LocalDate.of(2026, 12, 7))
+            .setParameter("endsOn", LocalDate.of(2026, 12, 11))
+            .getResultList();
         assertThat(inspections).hasSize(1);
         var inspection = inspections.getFirst();
         assertThat(inspection.getId()).isEqualTo(originalId);

@@ -10,12 +10,11 @@ import StudentControlLayout from './routes/StudentControlLayout'
 import LoadingPage from '@/components/LoadingPage'
 import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
-import { dashboardRoutes } from '@/features/dashboard/routes'
-import DashboardPage from '@/features/dashboard/DashboardPage'
-import StudentInspectionDashboardCard from '@/features/student-inspections/DashboardInspection'
+import { homeRoutes } from './homeRoute'
 import { studentInspectionRoutes } from '@/features/student-inspections/routes'
 import { residenceRoutes } from '@/features/residences/routes'
 import { inspectionPlanningRoutes } from '@/features/inspection-planning/routes'
+import { inspectionOverviewRoutes } from '@/features/inspection-overview/routes'
 import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
@@ -36,10 +35,6 @@ const legacyStudentRedirects: RouteObject[] = Object.entries({
   'mehr/einstellungen': '/student/settings',
 }).map(([path, to]) => ({ path, element: createElement(Navigate, { to, replace: true }) }))
 
-function DashboardWithStudentInspection() {
-  return createElement(DashboardPage, null, createElement(StudentInspectionDashboardCard))
-}
-
 export function createAppRoutes(): RouteObject[] {
   return [{
     id: 'root',
@@ -53,9 +48,7 @@ export function createAppRoutes(): RouteObject[] {
       {
         Component: RequireAuth,
         children: [
-          ...dashboardRoutes.map((route) => route.index
-            ? { ...route, Component: DashboardWithStudentInspection }
-            : route),
+          ...homeRoutes,
           {
             // Studierenden-Adressen mit Präfix „student/“, damit sie nicht mit den
             // „inspections“-Seiten der Objektbetreuung kollidieren.
@@ -82,6 +75,7 @@ export function createAppRoutes(): RouteObject[] {
           ...standardsRoutes,
           ...inspectionRoutes,
           ...inspectionPlanningRoutes,
+          ...inspectionOverviewRoutes,
           { path: 'forbidden', Component: ForbiddenPage },
         ],
       },

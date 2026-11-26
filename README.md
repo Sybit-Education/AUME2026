@@ -150,9 +150,9 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei 
 
 | Nutzer | Rolle | Berechtigung |
 | --- | --- | --- |
-| `student` | `STUDENT` | `GREETING_READ`, `INFO_PAGE_READ`, `CHECKLIST_READ` |
+| `student` | `STUDENT` | `GREETING_READ`, `INFO_PAGE_READ`, `CHECKLIST_READ`, `WG_MEMBERSHIP` |
 | `caretaker` | `CARETAKER` | `RESIDENCE_READ`, `INSPECTION_PERIOD_RESPOND`, `INSPECTION_PERFORM` |
-| `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF`, `INSPECTION_PLAN`, `INFO_PAGE_READ`, `INFO_PAGE_EDIT`, `STANDARDS_VIEW` |
+| `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF`, `INSPECTION_PLAN`, `INFO_PAGE_READ`, `INFO_PAGE_EDIT`, `STANDARDS_VIEW`, `CLERK_INSPECTION_OVERVIEW_READ` |
 
 
 `clerk` ist Sonne und Egg zugeordnet, nicht Petershausen. Weitere Nutzer in `SampleData` (`caretaker2`, `caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
