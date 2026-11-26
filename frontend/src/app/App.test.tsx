@@ -16,6 +16,7 @@ vi.mock('@/lib/auth/client', () => ({
   logout: vi.fn(),
 }))
 
+const caretaker: LoggedInUser = { userKey: 'caretaker', name: 'Jordan', roles: ['CARETAKER'], privileges: ['RESIDENCE_READ'] }
 const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['GREETING_READ', 'CHECKLIST_READ', 'WG_MEMBERSHIP'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
 const checklistDe = { version: 1, areas: [
@@ -49,6 +50,13 @@ beforeEach(async () => {
     if (path === '/api/student/inspection-appointment') return new Response(null, { status: 204 })
     if (path === '/api/student/inspection-results/latest') return new Response(null, { status: 204 })
     if (path === '/api/checklist') return Response.json(i18n.resolvedLanguage === 'en' ? checklistEn : checklistDe)
+    if (path.startsWith('/api/residences/my-assignments?')) return Response.json({
+      content: [
+        { id: 2, name: 'Petershausen', kind: 'DEPUTY', flats: ['4.12', '4.13'] },
+        { id: 1, name: 'Sonne', kind: 'CARETAKER', flats: ['S-01', 'S-02'] },
+      ],
+      page: { number: 0, size: 100, totalPages: 1, totalElements: 2 },
+    })
     if (path === '/api/wg/tasks') return Response.json({ code: 'not_member' }, { status: 404 })
     if (path.startsWith('/api/residences?')) {
       const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
@@ -119,6 +127,20 @@ it('restores an existing session when opening a protected page directly', async 
   mount('/residences')
   await screen.findByText('Sonne')
   expect(login).not.toHaveBeenCalled()
+})
+
+it('shows caretaker assignments, roles and shared flats on the profile', async () => {
+  signedIn = caretaker
+  mount('/profile')
+  await screen.findByText('Petershausen')
+  expectHtwgLegalLinks()
+  const summary = screen.getByRole('group', { name: 'Profilübersicht' })
+  expect(within(summary).getByText('2', { exact: true })).toBeDefined()
+  expect(within(summary).getByText('4', { exact: true })).toBeDefined()
+  expect(screen.getByText('Vertretung', { exact: true })).toBeDefined()
+  expect(screen.getByText('4.12, 4.13')).toBeDefined()
+  expect(screen.getByText('Sonne')).toBeDefined()
+  expect(screen.getByText('S-01, S-02')).toBeDefined()
 })
 
 it('does not call protected APIs before login or with a missing privilege', async () => {

@@ -65,6 +65,36 @@ public class ResidenceService {
     /** Bisherige Antwort für Sichten außer der Sachbearbeitung. */
     public record ResidenceSummary(Long id, String name) {}
 
+    /** Anlagen, für die eine Objektbetreuung als Betreuung oder Vertretung eingetragen ist. */
+    public Page<StaffResidenceView> listCaretakerAssignments(String userKey, Pageable pageable) {
+        var user = users.requireUser(userKey);
+        if (!(user instanceof CaretakerEntity)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        var sorted = pageable.getSort().isSorted() ? pageable
+            : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("name", "id"));
+        var page = residences.findAssignedByKinds(user.getId(), StaffKind.CARETAKING, sorted);
+        var residenceIds = page.getContent().stream().map(ResidenceEntity::getId).toList();
+        var flatLabels = flatLabelsByResidence(residenceIds);
+        var kindsByResidence = new HashMap<Long, StaffKind>();
+        if (!residenceIds.isEmpty()) {
+            staff.findByResidenceIdInAndKindIn(residenceIds, StaffKind.CARETAKING).stream()
+                .filter(assignment -> assignment.getUser().getId().equals(user.getId()))
+                .forEach(assignment -> kindsByResidence.put(
+                    assignment.getResidence().getId(), assignment.getKind()));
+        }
+
+        return page.map(residence -> {
+            var kind = kindsByResidence.get(residence.getId());
+            if (kind == null) {
+                throw new IllegalStateException("Assigned residence is missing its caretaker assignment");
+            }
+            return new StaffResidenceView(residence.getId(), residence.getName(), kind,
+                flatLabels.getOrDefault(residence.getId(), List.of()));
+        });
+    }
+
     /** Auswahlliste für Betreuung und Vertretung: nur Objektbetreuung, nur ID und Anzeigename. */
     public Page<StaffView> listCaretakers(Pageable pageable) {
         var sorted = pageable.getSort().isSorted() ? pageable

@@ -82,6 +82,7 @@
     "main": "Main navigation",
     "dashboard": "Dashboard",
     "residences": "Residences",
+    "profile": "Profile",
     "standards": "Standards",
     "inspections": "Inspections",
     "start": "Home",
@@ -320,6 +321,20 @@
     "important": "Important",
     "empty": "No information yet.",
     "germanOnly": "Seezeit provides these texts in German only."
+  },
+  "profile": {
+    "account": "My profile",
+    "signedIn": "Signed in",
+    "name": "Name",
+    "role": "Role",
+    "userKey": "User ID",
+    "permissions": "Permissions",
+    "noPermissions": "No permissions assigned.",
+    "signedInAs": "Signed in as",
+    "responsibility": "Responsibility",
+    "residences": "Residences",
+    "summary": "Profile summary",
+    "noAssignments": "No residences are assigned to you."
   },
   "inspections": {
     "title": "Inspection · Flat {{label}}",

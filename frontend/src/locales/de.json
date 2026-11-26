@@ -82,6 +82,7 @@
     "main": "Hauptnavigation",
     "dashboard": "Übersicht",
     "residences": "Wohnanlagen",
+    "profile": "Profil",
     "standards": "Standards",
     "inspections": "Kontrollen",
     "start": "Start",
@@ -320,6 +321,20 @@
     "important": "Wichtig",
     "empty": "Noch keine Informationen.",
     "germanOnly": "Seezeit stellt diese Texte nur auf Deutsch bereit."
+  },
+  "profile": {
+    "account": "Mein Profil",
+    "signedIn": "Angemeldet",
+    "name": "Name",
+    "role": "Rolle",
+    "userKey": "Nutzerkennung",
+    "permissions": "Berechtigungen",
+    "noPermissions": "Keine Berechtigungen vorhanden.",
+    "signedInAs": "Angemeldet als",
+    "responsibility": "Zuständigkeit",
+    "residences": "Anlagen",
+    "summary": "Profilübersicht",
+    "noAssignments": "Dir sind keine Wohnanlagen zugewiesen."
   },
   "inspections": {
     "title": "Kontrolle · WG {{label}}",

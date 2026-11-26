@@ -13,6 +13,7 @@ import { authRoutes } from '@/features/auth/routes'
 import { homeRoutes } from './homeRoute'
 import { studentInspectionRoutes } from '@/features/student-inspections/routes'
 import { residenceRoutes } from '@/features/residences/routes'
+import { profileRoutes } from '@/features/profile/routes'
 import { inspectionPlanningRoutes } from '@/features/inspection-planning/routes'
 import { inspectionOverviewRoutes } from '@/features/inspection-overview/routes'
 import { inspectionRoutes } from '@/features/inspections/routes'
@@ -72,6 +73,7 @@ export function createAppRoutes(): RouteObject[] {
             ],
           },
           ...residenceRoutes,
+          ...profileRoutes,
           ...standardsRoutes,
           ...inspectionRoutes,
           ...inspectionPlanningRoutes,
