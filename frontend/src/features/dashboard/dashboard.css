@@ -1,0 +1,7 @@
+.dashboard-header {
+  padding-bottom: 6px;
+}
+
+.dashboard-header > p {
+  margin: 0;
+}

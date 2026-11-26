@@ -155,7 +155,7 @@ it('shows the information while the appointment is pending and after it fails', 
   appointmentResponse = () => new Promise((resolve) => { complete = resolve })
   mount(appointmentPath)
   await screen.findByRole('button', { name: /Was passiert bei Mängeln\?/ })
-  const card = within(screen.getByRole('region', { name: 'Kontrolle' }))
+  const card = within(screen.getByRole('region', { name: 'Kontrolltermin' }))
   expect(card.getByRole('status')).toBeTruthy()
   await act(async () => { complete(new Response(null, { status: 500 })) })
   await screen.findByText('Der Kontrolltermin konnte nicht geladen werden.')

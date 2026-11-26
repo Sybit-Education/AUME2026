@@ -23,7 +23,7 @@ export default function InspectionAppointment({
   const { t, i18n } = useTranslation()
   const headingId = useId()
   const summary = variant === 'summary'
-  const detail = !summary && appointment && 'display' in appointment ? appointment : undefined
+  const detail = appointment && 'display' in appointment ? appointment : undefined
   const resultAvailable = detail?.status === 'RESULT_AVAILABLE'
   const heading = summary || detail?.display === 'UPCOMING' ? t('studentInspections.title')
     : resultAvailable ? t('studentInspections.lastTitle')
@@ -58,7 +58,7 @@ export default function InspectionAppointment({
           {!summary && <p className="lbl">{t('studentInspections.period')}</p>}
           <p className="big">{formatInspectionPeriod(appointment.startsOn, appointment.endsOn, i18n.resolvedLanguage)}</p>
           {showWindow && <p className="mut sm2">{t('studentInspections.window', { start: windowStart, end: windowEnd })}</p>}
-          {!loadFailed && detail?.status && (
+          {!summary && !loadFailed && detail?.status && (
             <ol className="inspection-status-timeline" role="list" data-complete={resultAvailable}>
               <li className="inspection-status-step" data-reached="true" aria-current={resultAvailable ? undefined : 'step'}>
                 {t('studentInspections.announced')}

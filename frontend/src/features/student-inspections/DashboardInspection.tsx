@@ -6,10 +6,10 @@ import { SessionExpired } from '@/lib/auth/response'
 import { forgetUser, getSession, subscribe } from '@/lib/auth/session'
 import { UiError } from '@/lib/errors'
 import InspectionAppointment from './InspectionAppointment'
-import { loadAppointment } from './api'
+import { loadAppointmentDetails, type AppointmentDetails } from './api'
 
 type AppointmentResult = { user: LoggedInUser } & (
-  | { status: 'loaded'; appointment: Awaited<ReturnType<typeof loadAppointment>> }
+  | { status: 'loaded'; appointment: AppointmentDetails | null }
   | { status: 'error' }
 )
 
@@ -31,7 +31,9 @@ export default function DashboardInspection() {
 
     async function load(currentStudent: LoggedInUser) {
       try {
-        const appointment = await loadAppointment(currentStudent, signal)
+        const details = await loadAppointmentDetails(signal)
+        // Die Startseite zeigt nur angekündigte Kontrollen, ohne Kontrollstatus (#99).
+        const appointment = details?.status === 'ANNOUNCED' ? details : null
         if (!signal.aborted) setResult({ user: currentStudent, status: 'loaded', appointment })
       } catch (cause) {
         if (signal.aborted || cause instanceof SessionExpired) return

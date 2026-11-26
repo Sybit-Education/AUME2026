@@ -2,7 +2,9 @@
   "app": {
     "name": "Seezeit",
     "language": "Language",
-    "loading": "Loading …"
+    "loading": "Loading …",
+    "back": "Back",
+    "close": "Close"
   },
   "auth": {
     "mockLogin": "Sign in as a test user",
@@ -85,7 +87,9 @@
     "requestStartPassed": "The period has already started. You can no longer agree, please propose a new period.",
     "requestAnswered": "This request has already been answered or announced. The list has been updated.",
     "requestGone": "This request no longer exists. The administrative staff withdrew it or assigned it to someone else.",
-    "inspectionNotStarted": "The inspection can only be started once its period has begun."
+    "inspectionNotStarted": "The inspection can only be started once its period has begun.",
+    "selfCheck": "The self-check could not be loaded.",
+    "selfCheckSave": "The self-check could not be saved."
   },
   "navigation": {
     "main": "Main navigation",
@@ -250,7 +254,7 @@
   },
   "studentInspections": {
     "title": "Next inspection",
-    "detailsTitle": "Inspection",
+    "detailsTitle": "Inspection appointment",
     "periodTitle": "Inspection period",
     "lastTitle": "Last inspection",
     "announced": "Announced",
@@ -301,6 +305,19 @@
     "comingSoon": "Coming soon",
     "comingSoonDescription": "This feature is being developed."
   },
+  "home": {
+    "hello": "Hello, {{name}}",
+    "membership": "Your flat",
+    "flat": "Flat {{flat}}",
+    "noFlat": "You are not assigned to a flat yet.",
+    "joinFlat": "Join a flat",
+    "week": "This week",
+    "noTasks": "You have no task this week.",
+    "openPlan": "Open the full cleaning rota",
+    "consequenceTitle": "Important: consequences of unresolved issues",
+    "consequenceText": "If issues found during an inspection are not fixed despite a request, Seezeit may hire a cleaning company. This can lead to costs for the flat. The contractual terms and Seezeit's notice apply.",
+    "consequenceLink": "View inspection procedure and consequences"
+  },
   "more": {
     "title": "More",
     "account": "Account and privacy",
@@ -322,7 +339,20 @@
     "less": "Less",
     "explanation": "Explanation:",
     "empty": "Seezeit has not published a checklist yet.",
-    "emptyHint": "As soon as it is published, you will see all criteria here."
+    "emptyHint": "As soon as it is published, you will see all criteria here.",
+    "selfCheck": "Self-check",
+    "selfCheckIntro": "Go through the checklist together. Only your flat can see this and it does not count towards the rating.",
+    "selfCheckProgress": "{{done}} / {{total}} done",
+    "selfCheckProgressLabel": "Self-check progress",
+    "selfCheckDone": "Done: {{title}}",
+    "selfCheckNoFlat": "Join your flat to tick off the checklist together.",
+    "selfCheckJoin": "Join a flat",
+    "reset": "Reset",
+    "resetConfirm": "All ticks of your flat will be removed. Your flatmates will see this too.",
+    "resetYes": "Reset",
+    "resetNo": "Cancel",
+    "resetHint": "The self-check starts again after every inspection.",
+    "resetTitle": "Reset the self-check?"
   },
   "inspectionProcess": {
     "title": "Procedure and consequences",
@@ -489,17 +519,17 @@
     "members": "Flatmates",
     "leave": "Leave flat",
     "leaving": "Leaving …",
-    "leaveYes": "Yes, leave flat",
+    "leaveYes": "Leave",
     "leaveNo": "Cancel",
-    "leaveConfirm": "Do you really want to leave this flat? You will lose access immediately and need a new code to return."
+    "leaveConfirm": "Do you really want to leave this flat? You will lose access immediately and need a new code to return.",
+    "leaveTitle": "Leave the flat?"
   },
   "plan": {
     "noFlat": "Join your flat first to see the cleaning plan.",
     "week": "Week {{week}} · {{from}} to {{to}}",
     "previousWeek": "Previous week",
     "nextWeek": "Next week",
-    "add": "+ Task",
-    "closeSheet": "Close",
+    "add": "Add",
     "addTask": "Add task",
     "editTask": "Edit task",
     "editFor": "Edit {{title}}",

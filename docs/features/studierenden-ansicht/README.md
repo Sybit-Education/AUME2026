@@ -8,7 +8,7 @@ Feature-Team 2, Sprint 1. Umgesetzte Stories:
 | US-26 App-Inhalte auf Englisch oder Deutsch | #28 | umgesetzt |
 | US-21 Checkliste je Bereich ansehen | #21 | umgesetzt |
 | US-22 Erklärung je Kriterium lesen | #22 | umgesetzt (Anzeige; Pflege durch die Sachbearbeitung folgt mit US-24) |
-| US-84 Selbstcheck mit der Checkliste | #24 | offen, braucht die WG-Mitgliedschaft aus US-01 |
+| US-84 Selbstcheck mit der Checkliste | #24 | umgesetzt |
 
 ## Navigation (US-X)
 
@@ -21,11 +21,53 @@ Studierende ohne Personalrolle sehen die App-Ansicht aus dem Wireframe mit den u
 - `/student/cleaning-plan` zeigt den Putzplan der eigenen WG (US-06/US-07, siehe [Feature-Doku](../putzplan/README.md)).
 - `/student/inspection` öffnet den Untertab **Termin**. Die oberen Untertabs **Termin**, **Checkliste**, **Ergebnis** und **Verlauf** stehen als gleich breite Segmente in einer Reihe und gehören zum selben Bereich; jeder hat eine eigene Adresse, sodass Neuladen und „Zurück“ im Browser funktionieren. Alte Adressen wie `/kontrolle` leiten weiter (siehe `frontend/ROUTING.md`). Der untere Tab **Kontrolle** bleibt auf allen vier Seiten aktiv. **Checkliste** setzt `CHECKLIST_READ` voraus. **Ergebnis** zeigt das Kontrollergebnis der eigenen WG (US-38, siehe `docs/features/student-inspections/README.md`), **Verlauf** einen Platzhalter.
 
+## Startseite (#99)
+
+Die Startseite `/` bündelt für Studierende bereits vorhandene Funktionen, ohne neue Schnittstellen. Jeder Bereich lädt und scheitert für sich, die übrigen bleiben nutzbar (`frontend/src/app/studentHome.ts`).
+
+| Bereich | Quelle | Voraussetzung |
+| --- | --- | --- |
+| Seitenkopf „Hallo, Name“ statt Begrüßungskarte, darunter WG und Wohnanlage als Chips, ohne WG ein Link zu `/student/flat`. Den Gruß aus `/api/greeting` lädt die Startseite für Studierende nicht. | `GET /api/memberships/me` | `WG_MEMBERSHIP` |
+| Kontrollkarte mit Zeitraum, Uhrzeitfenster, „Termin geändert“/„Erstkontrolle“, Buttons „Details“ und „Checkliste“ | `GET /api/student/inspection-appointment?view=details`, nur Kontrollen mit Status `ANNOUNCED`; den Kontrollstatus zeigt erst die Termin-Seite | Rolle `STUDENT`, Checkliste mit `CHECKLIST_READ` |
+| „Diese Woche“: eigene Putzaufgaben abhaken, Link zum Putzplan | `GET /api/wg/tasks`, Abhaken über die Action der Startseite (`toggleTaskAction`) | `WG_MEMBERSHIP` und eine WG |
+| Konsequenzhinweis, Link zu `/student/inspection/appointment#inspection-process` | fester Text (DE/EN) | Rolle `STUDENT`, Link mit `INFO_PAGE_READ` |
+
+Nicht enthalten sind Kontrollstatus, Nachrichten, Glockensymbol, „Tipp des Monats“ und „Alles an einem Ort“.
+
+## Einheitliches Design
+
+Für alle Seiten der Studierenden-App gelten dieselben Regeln (`frontend/src/app/App.css`, Abschnitt „einheitlicher Seitenaufbau“):
+
+- Oben steht eine schlanke App-Kopfleiste (`.st-top`, 56px, beim Scrollen fixiert) wie im Wireframe: links der Zurück-Pfeil auf Unterseiten, in der Mitte der Seitentitel als `h1`, rechts „Abmelden“ als Symbol. App-Name und Rolle stehen dort nicht. Titel und Zurück-Ziel setzt jede Route über `handle: pageHandle({ title, back })` (`frontend/src/lib/pageHandle.ts`), die tiefste Route gewinnt: „Hallo, Name“, „Putzplan“, „Kontrolle“ (gemeinsam für Termin, Checkliste, Ergebnis und Verlauf), „Mehr“, „Meine WG“ und „Einstellungen“ (beide mit Zurück zu „Mehr“). Die Seiten selbst haben keine eigene Seitenüberschrift mehr.
+- Fließtext 15px, Nebentexte und Chips mindestens 13px.
+- Buttons, Links mit Button-Optik, Untertabs, Checkboxen mit Beschriftung und Textlinks wie „Kontrollablauf und Konsequenzen ansehen“ sind mindestens 44px hoch, reine Symbol-Buttons auch 44px breit.
+
+Die Regeln gelten nur innerhalb von `.st-wrap`. Die Seiten für Objektbetreuung und Sachbearbeitung bleiben unverändert.
+
 ## Sprache (US-26)
 
 Studierende wählen die Sprache unter **Mehr → Einstellungen → Sprache** (`/student/settings`). In der Studierenden-Ansicht gibt es deshalb keine Sprachauswahl im Kopfbereich mehr. Die Schaltflächen nutzen die gemeinsame i18next-Instanz (`lib/i18n.ts`): Die Auswahl wird unter `aume.language` gespeichert, gilt sofort für alle Texte und bleibt nach dem Neuladen erhalten. Das Layout lädt nach dem Wechsel die Daten der Seite neu, damit auch Texte aus dem Backend wechseln.
 
 Die Sprachauswahl gibt es nur an dieser einen Stelle (`components/LanguageSwitch.tsx`). Die Checkliste zeigt keinen eigenen Umschalter mehr, sondern folgt der gewählten Sprache.
+
+## Selbstcheck (US-84)
+
+Über der Checkliste (`/student/inspection/checklist`) steht für WG-Mitglieder die Karte **Selbstcheck**: Fortschrittsbalken, Zähler „4 / 10 erledigt“ und, sobald etwas abgehakt ist, „Zurücksetzen“ mit Rückfrage. Vor jedem Kriterium steht eine Checkbox (Trefferfläche 44px). Haken, Zähler und Balken reagieren sofort und werden danach mit dem Server abgeglichen.
+
+- Der Stand gehört der WG, nicht der Person: alle Mitglieder sehen und ändern dieselben Haken. Die WG kommt immer aus der aktiven Mitgliedschaft, nie aus der Anfrage. Andere WGs, Objektbetreuung und Sachbearbeitung haben keinen Zugriff.
+- Die Einträge fließen nicht in die offizielle Bewertung ein.
+- Nach jedem veröffentlichten Kontrollergebnis der WG beginnt der Selbstcheck neu: Haken von davor zählen nicht mehr (`InspectionResultService.latestPublication`).
+- Gezählt werden nur Kriterien der aktuell veröffentlichten Checkliste.
+- Ohne WG zeigt die Karte einen Hinweis mit Link „WG beitreten“; schlägt das Laden fehl, bleibt die Checkliste ohne Checkboxen lesbar.
+
+| Methode | Pfad | Wirkung |
+| --- | --- | --- |
+| `GET` | `/api/wg/self-check` | `{ "checkedCriterionIds": [...] }`, `404 not_member` ohne WG |
+| `PUT` | `/api/wg/self-check/{criterionId}` | abhaken, `400 invalid_criterion` für Kriterien außerhalb der aktuellen Checkliste |
+| `DELETE` | `/api/wg/self-check/{criterionId}` | Haken entfernen |
+| `DELETE` | `/api/wg/self-check` | alle Haken der eigenen WG entfernen |
+
+Alle Endpunkte setzen `WG_MEMBERSHIP` und `CHECKLIST_READ` voraus.
 
 ## Checkliste (US-21, US-22)
 

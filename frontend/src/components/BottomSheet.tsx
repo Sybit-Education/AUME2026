@@ -1,5 +1,6 @@
 import { useId, useLayoutEffect, useRef, type KeyboardEvent, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
+import './bottom-sheet.css'
 
 interface BottomSheetProps {
   title: string
@@ -34,7 +35,7 @@ function fitToFrame(backdrop: HTMLElement) {
   })
 }
 
-/** Sheet that slides up from the bottom. */
+/** Sheet that slides up from the bottom; actions go into a `.sheet-actions` row. */
 export default function BottomSheet({ title, busy = false, onClose, children }: PropsWithChildren<BottomSheetProps>) {
   const { t } = useTranslation()
   const titleId = useId()
@@ -83,13 +84,13 @@ export default function BottomSheet({ title, busy = false, onClose, children }: 
   }
 
   return (
-    <div ref={backdrop} className="plan-sheet-bg" onClick={(event) => { if (event.target === event.currentTarget) close() }}>
-      <div ref={sheet} className="plan-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}
+    <div ref={backdrop} className="sheet-bg" onClick={(event) => { if (event.target === event.currentTarget) close() }}>
+      <div ref={sheet} className="sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}
         tabIndex={-1} onKeyDown={onKeyDown}>
-        <div className="plan-sheet-grip" aria-hidden="true" />
-        <div className="plan-sheet-head">
+        <div className="sheet-grip" aria-hidden="true" />
+        <div className="sheet-head">
           <h3 id={titleId}>{title}</h3>
-          <button className="btn sm gh" type="button" disabled={busy} aria-label={t('plan.closeSheet')} onClick={close}>×</button>
+          <button className="btn sm gh" type="button" disabled={busy} aria-label={t('app.close')} onClick={close}>×</button>
         </div>
         {children}
       </div>

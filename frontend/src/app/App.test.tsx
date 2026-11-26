@@ -60,6 +60,8 @@ beforeEach(async () => {
       ],
       page: { number: 0, size: 100, totalPages: 1, totalElements: 2 },
     })
+    if (path === '/api/memberships/me') return new Response(null, { status: 204 })
+    if (path === '/api/wg/self-check') return Response.json({ code: 'not_member' }, { status: 404 })
     if (path === '/api/wg/tasks') return Response.json({ code: 'not_member' }, { status: 404 })
     if (path.startsWith('/api/residences?')) {
       const page = Number(new URL(path, 'http://localhost').searchParams.get('page'))
@@ -109,7 +111,7 @@ it('shows HTWG legal links at the bottom of login and of every dashboard', async
   expect(router.state.location.pathname).toBe('/forbidden')
   const tabs = await screen.findByRole('navigation', { name: 'Navigation der Studierenden' })
   fireEvent.click(within(tabs).getByRole('link', { name: 'Start' }))
-  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  await screen.findByRole('heading', { name: 'Hallo, Alex' })
   expect(router.state.location.pathname).toBe('/')
   expectHtwgLegalLinks()
   expect(screen.getByRole('navigation', { name: 'Navigation der Studierenden' })).toBeDefined()
@@ -181,7 +183,7 @@ it('switches UI language and reloads the greeting without signing in again', asy
 it('lets students switch the language under More, Settings, Language and keeps it after reloading', async () => {
   const router = mount()
   fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
-  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  await screen.findByRole('heading', { name: 'Hallo, Alex' })
   expect(screen.queryByRole('combobox', { name: 'Sprache' })).toBeNull()
   fireEvent.click(screen.getByRole('link', { name: 'Mehr' }))
   fireEvent.click(await screen.findByRole('link', { name: /Einstellungen/ }))
@@ -193,7 +195,7 @@ it('lets students switch the language under More, Settings, Language and keeps i
   expect(document.documentElement.lang).toBe('en')
   expect(window.localStorage.getItem('aume.language')).toBe('en')
   fireEvent.click(screen.getByRole('link', { name: 'Home' }))
-  await screen.findByText('Hello Alex, welcome to Sonne.')
+  await screen.findByRole('heading', { name: 'Hello, Alex' })
   expect(login).toHaveBeenCalledTimes(1)
 })
 
@@ -296,7 +298,7 @@ it('redirects the student index to the dashboard and highlights Start', async ()
   signedIn = student
   const router = mount('/student')
 
-  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  await screen.findByRole('heading', { name: 'Hallo, Alex' })
   expect(router.state.location.pathname).toBe('/')
   const tabs = within(screen.getByRole('navigation', { name: 'Navigation der Studierenden' }))
   expect(tabs.getByRole('link', { name: 'Start' }).getAttribute('aria-current')).toBe('page')
@@ -309,7 +311,7 @@ it('returns to the student index after sign-in and opens the dashboard', async (
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/student')
   fireEvent.click(signIn)
 
-  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  await screen.findByRole('heading', { name: 'Hallo, Alex' })
   expect(login).toHaveBeenCalledWith('student', '/student')
   expect(router.state.location.pathname).toBe('/')
   const tabs = within(screen.getByRole('navigation', { name: 'Navigation der Studierenden' }))
@@ -337,6 +339,22 @@ it('keeps the bottom tab More highlighted on the settings page', async () => {
   const bottom = within(await screen.findByRole('navigation', { name: 'Navigation der Studierenden' }))
   await screen.findByRole('heading', { name: 'Einstellungen' })
   expect(bottom.getByRole('link', { name: 'Mehr' }).getAttribute('aria-current')).toBe('page')
+})
+
+it('shows the page title, a back link on sub pages and sign-out in the student app bar', async () => {
+  signedIn = student
+  const router = mount('/student/settings')
+  const bar = within(await screen.findByRole('banner'))
+  expect(bar.getByRole('heading', { level: 1, name: 'Einstellungen' })).toBeDefined()
+  expect(bar.getByRole('link', { name: 'Zurück' }).getAttribute('href')).toBe('/student/more')
+  expect(bar.getByRole('button', { name: 'Abmelden' })).toBeDefined()
+  expect(screen.queryByRole('heading', { name: 'Seezeit' })).toBeNull()
+
+  fireEvent.click(bar.getByRole('link', { name: 'Zurück' }))
+  await waitFor(() => expect(router.state.location.pathname).toBe('/student/more'))
+  const moreBar = within(screen.getByRole('banner'))
+  expect(moreBar.getByRole('heading', { level: 1, name: 'Mehr' })).toBeDefined()
+  expect(moreBar.queryByRole('link', { name: 'Zurück' })).toBeNull()
 })
 
 it('keeps the control index as the login destination and redirects to the appointment after sign-in', async () => {

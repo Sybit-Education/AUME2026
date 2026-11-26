@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router'
 import { protectedLoader } from '@/lib/auth/loaders'
 import RequirePrivilege from '@/lib/auth/RequirePrivilege'
+import { pageHandle } from '@/lib/pageHandle'
 import WgPage from './WgPage'
 import { wgAction } from './actions'
 import { getMembership, type Membership } from './api'
@@ -11,6 +12,7 @@ export interface WgData {
 
 export const wgRoutes: RouteObject[] = [{
   path: 'flat',
+  handle: pageHandle({ title: 'wg.title', back: '/student/more' }),
   element: <RequirePrivilege privilege="WG_MEMBERSHIP"><WgPage /></RequirePrivilege>,
   loader: protectedLoader('WG_MEMBERSHIP', async ({ request }): Promise<WgData> => ({
     membership: await getMembership(request.signal),
