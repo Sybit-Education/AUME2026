@@ -30,9 +30,10 @@ public class SecurityData implements CommandLineRunner {
         var checklist = privilege("CHECKLIST_READ");
         var plan = privilege("INSPECTION_PLAN");
         var respond = privilege("INSPECTION_PERIOD_RESPOND");
+        var inspectionOverview = privilege("CLERK_INSPECTION_OVERVIEW_READ");
         role("STUDENT", Set.of(greeting, infoRead, checklist));
         role("CARETAKER", Set.of(residence, inspection, respond));
-        role("CLERK", Set.of(residence, infoRead, infoEdit, standards, assignStaff, plan));
+        role("CLERK", Set.of(residence, infoRead, infoEdit, standards, assignStaff, plan, inspectionOverview));
 
     }
 

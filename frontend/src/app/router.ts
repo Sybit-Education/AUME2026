@@ -8,9 +8,10 @@ import ComingSoonPage from './routes/ComingSoonPage'
 import LoadingPage from '@/components/LoadingPage'
 import { ensureSession } from '@/lib/auth/session'
 import { authRoutes } from '@/features/auth/routes'
-import { dashboardRoutes } from '@/features/dashboard/routes'
+import { homeRoutes } from './homeRoute'
 import { residenceRoutes } from '@/features/residences/routes'
 import { inspectionPlanningRoutes } from '@/features/inspection-planning/routes'
+import { inspectionOverviewRoutes } from '@/features/inspection-overview/routes'
 import { inspectionRoutes } from '@/features/inspections/routes'
 import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
@@ -29,13 +30,14 @@ export function createAppRoutes(): RouteObject[] {
       {
         Component: RequireAuth,
         children: [
-          ...dashboardRoutes,
+          ...homeRoutes,
           ...residenceRoutes,
           ...standardsRoutes,
           ...inspectionRoutes,
           ...checklistRoutes,
           ...moreRoutes,
           ...inspectionPlanningRoutes,
+          ...inspectionOverviewRoutes,
           // Platzhalter, bis das Putzplan-Feature (US-06/US-07) seine Route registriert.
           { path: 'putzplan', Component: ComingSoonPage },
           { path: 'forbidden', Component: ForbiddenPage },
