@@ -1,0 +1,99 @@
+/* Auswahlliste im App-Design (components/Select.tsx); Knopf wie ein Eingabefeld, Liste wie das Filter-Menü. */
+.sel {
+  position: relative;
+  width: 100%;
+}
+
+.sel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd9da;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sel-btn:hover {
+  border-color: #9fc4c5;
+}
+
+.sel-btn:focus-visible,
+.sel-btn[aria-expanded=true] {
+  outline: 2px solid #9fd0d1;
+  border-color: var(--t);
+}
+
+.sel-btn:disabled {
+  background: #f3f6f6;
+  color: var(--mut);
+  cursor: not-allowed;
+}
+
+.sel-empty .sel-text {
+  color: var(--mut);
+}
+
+.sel-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sel-arrow {
+  flex: none;
+  color: var(--mut);
+  transition: transform .15s;
+}
+
+.sel-btn[aria-expanded=true] .sel-arrow {
+  transform: rotate(180deg);
+}
+
+.sel-pop {
+  position: fixed;
+  z-index: 80;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--ln);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(20, 50, 55, .16);
+  outline: none;
+}
+
+.sel-opt {
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.sel-opt.act {
+  background: var(--tl);
+}
+
+.sel-opt.on {
+  color: var(--td);
+  font-weight: 700;
+}
+
+.sel-opt.on::after {
+  content: "✓";
+  float: right;
+  margin-left: 8px;
+}
+
+.sel-opt.off {
+  color: var(--mut);
+  cursor: not-allowed;
+}

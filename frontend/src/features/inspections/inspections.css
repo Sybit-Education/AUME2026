@@ -138,6 +138,36 @@
   box-shadow:0 8px 24px rgba(20,50,55,.16);
   padding:12px;
 }
+.ins-pop-opts {
+  display:grid;
+  gap:2px;
+}
+.ins-pop-opt {
+  border:0;
+  background:none;
+  color:var(--ink);
+  font:inherit;
+  font-size:14px;
+  text-align:left;
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.ins-pop-opt:hover {
+  background:var(--tl);
+}
+.ins-pop-opt.on {
+  background:var(--tl);
+  color:var(--td);
+  font-weight:700;
+}
+.ins-pop-opt.on::after {
+  content:"✓";
+  float:right;
+}
+.ins-pop-opt:focus-visible {
+  outline:2px solid #9fd0d1;
+}
 .ins-active {
   display:flex;
   flex-wrap:wrap;
@@ -191,4 +221,44 @@
   border:0;
   opacity:0;
   pointer-events:none;
+}
+.ins-period {
+  white-space:nowrap;
+}
+.ins-section {
+  position:relative;
+  margin-top:16px;
+}
+.ins-section > h3 {
+  margin-bottom:8px;
+}
+/* Höchstens etwa fünf Zeilen sichtbar, weitere durch Scrollen in der Tabelle; die Kopfzeile bleibt stehen. */
+.ins-scroll {
+  max-height:340px;
+  overflow-y:auto;
+}
+.ins-scroll thead th {
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:#f3f8f8;
+}
+/*
+ * Feste Spaltenbreiten (über <colgroup>), damit die Tabelle beim Filtern nicht springt. Unter der Mindestbreite
+ * scrollt der Rahmen seitlich; lange Werte brechen innerhalb ihrer Spalte um.
+ */
+.ins-fixed {
+  table-layout:fixed;
+  min-width:760px;
+}
+.ins-fixed td {
+  overflow-wrap:anywhere;
+}
+.ins-fixed th {
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+/* Erfasster Mangel im aufgeklappten Kriterium, unter der Beschreibung */
+.ins-defect {
+  margin:8px 0 4px;
 }

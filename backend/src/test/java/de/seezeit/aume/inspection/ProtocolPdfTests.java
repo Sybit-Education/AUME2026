@@ -60,9 +60,11 @@ class ProtocolPdfTests {
 
         var text = text(response.getContentAsByteArray());
         assertThat(text).contains("Kontrollprotokoll", "Wohnanlage Sonne", "S-01", "Erstkontrolle",
-            "25.10.2026, 09:15 Uhr", "Nachkontrolle erforderlich",
+            "25.10.2026", "Nachkontrolle erforderlich",
             "Herd & Backofen", "Schwer", "Eingebrannte Fettschicht",
             "Mülltrennung", "Vor Ort geklärt", "Abfluss vor Ort gereinigt.");
+        // Plätze gehören nicht ins Protokoll, und geprüft wird nur mit Datum, ohne Uhrzeit.
+        assertThat(text).doesNotContain("Plätze", "25.10.2026, 09:15");
     }
 
     @Test

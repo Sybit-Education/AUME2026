@@ -76,7 +76,15 @@
     "planAssignee": "Bitte wähle eine Person aus deiner WG aus.",
     "planNotAssignee": "Nur die zugeteilte Person kann diese Aufgabe abhaken.",
     "planNotDue": "Diese Aufgabe ist in dieser Woche nicht fällig.",
-    "planCriterion": "Dieser Vorschlag ist nicht mehr in der aktuellen Checkliste."
+    "planCriterion": "Dieser Vorschlag ist nicht mehr in der aktuellen Checkliste.",
+    "inspectionRequests": "Die Kontroll-Anfragen konnten nicht geladen werden.",
+    "inspectionRequestSave": "Die Antwort konnte nicht gesendet werden.",
+    "requestReasonRequired": "Bitte gib einen Grund an.",
+    "requestReasonTooLong": "Die Begründung ist zu lang. Bitte höchstens 2000 Zeichen.",
+    "requestStartPassed": "Der Zeitraum hat schon begonnen. Zustimmen geht nicht mehr, bitte schlage einen neuen Zeitraum vor.",
+    "requestAnswered": "Diese Anfrage ist schon beantwortet oder angekündigt. Die Liste ist aktualisiert.",
+    "requestGone": "Diese Anfrage gibt es nicht mehr. Die Sachbearbeitung hat sie zurückgezogen oder einer anderen Person zugeordnet.",
+    "inspectionNotStarted": "Die Kontrolle kann erst ab Beginn des Zeitraums gestartet werden."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -325,7 +333,7 @@
     "title": "Kontrolle · WG {{label}}",
     "summaryTitle": "Abschluss · WG {{label}}",
     "flat": "WG {{label}}",
-    "none": "Keine offenen Kontrollen in deiner Wohnanlage.",
+    "none": "Keine anstehenden Kontrollen. Kontrollen erscheinen hier, sobald ihr Zeitraum angekündigt ist.",
     "start": "Kontrolle starten",
     "continue": "Kontrolle fortsetzen",
     "started": "Kontrolle gestartet.",
@@ -391,7 +399,6 @@
       "PASSED": "Bestanden",
       "FAILED": "Nachkontrolle erforderlich"
     },
-    "tabOpen": "Offen",
     "tabHistory": "Historie",
     "history": {
       "title": "Kontroll-Historie",
@@ -413,20 +420,21 @@
       "invalidDate": "Bitte das Datum als TT.MM.JJJJ eingeben, z. B. 28.03.2026.",
       "pickDate": "{{field}}: Datum im Kalender wählen",
       "invalidRange": "Das „Von“-Datum liegt nach dem „Bis“-Datum.",
-      "hint": "Auf eine Überschrift tippen sortiert die Tabelle, das Trichter-Symbol filtert.",
       "activeFilters": "Aktive Filter",
       "removeFilter": "Filter entfernen: {{filter}}",
       "sortBy": "Nach {{column}} sortieren",
       "filterBy": "Nach {{column}} filtern",
       "filterActive": "Filter für {{column}} aktiv, ändern",
-      "flatContains": "WG enthält",
-      "clear": "Entfernen"
+      "clear": "Entfernen",
+      "contains": "{{column}} enthält",
+      "withDefects": "Mit Mängeln",
+      "withoutDefects": "Ohne Mängel"
     },
     "protocol": {
       "title": "Protokoll",
       "inspectedOn": "Geprüft am {{date}}",
       "inspectedBy": "von {{name}}",
-      "backToHistory": "← Zur Kontroll-Historie",
+      "backToHistory": "Zur Historie",
       "download": "Als PDF herunterladen",
       "downloading": "PDF wird erstellt …"
     },
@@ -438,7 +446,18 @@
       "noDefects": "Keine Mängel.",
       "earlier": "früher auffällig · {{date}}",
       "earlierNote": "Zuletzt notiert: {{note}}"
-    }
+    },
+    "period": "Zeitraum",
+    "statusLabel": "Status",
+    "noPeriod": "ohne Zeitraum",
+    "announced": "Angekündigt",
+    "upcomingTitle": "Anstehende Kontrollen",
+    "startsFrom": "ab {{date}}",
+    "residence": "Wohnanlage",
+    "tabCurrent": "Aktuell",
+    "ready": "Startbereit",
+    "defectLabel": "Mangel",
+    "defectOf": "Mangel bei {{criterion}}"
   },
   "wg": {
     "title": "Meine WG",
@@ -493,5 +512,43 @@
     "progress": "{{done}} von {{total}} Aufgaben erledigt",
     "onlyCurrentWeek": "Nur die aktuelle Woche lässt sich abhaken.",
     "fromChecklist": "Aus der Checkliste"
+  },
+  "inspectionRequests": {
+    "title": "Anfragen",
+    "none": "Keine Anfragen.",
+    "flats_one": "{{count}} WG",
+    "flats_other": "{{count}} WGs",
+    "agree": "Zustimmen",
+    "agreeHint": "Mit Zustimmung kann die Sachbearbeitung die Kontrolle ankündigen.",
+    "counter": "Anderen Zeitraum vorschlagen",
+    "counterTitle": "Gegenvorschlag · {{name}}",
+    "startsOn": "Zeitraum von",
+    "endsOn": "Zeitraum bis",
+    "reason": "Grund",
+    "sendCounter": "Gegenvorschlag senden",
+    "cancel": "Abbrechen",
+    "yourProposal": "Dein Vorschlag",
+    "status": {
+      "WAITING_FOR_CARETAKER": "Offen",
+      "COUNTER_PROPOSED": "Gegenvorschlag gesendet",
+      "AGREED": "Abgestimmt"
+    },
+    "saved": {
+      "agreed": "Zugestimmt. Die Sachbearbeitung wird informiert.",
+      "countered": "Gegenvorschlag an die Sachbearbeitung gesendet."
+    },
+    "residence": "Wohnanlage",
+    "period": "Zeitraum",
+    "statusLabel": "Status",
+    "answer": "Beantworten",
+    "answerFor": "Vorschlag für {{name}} beantworten",
+    "answerTitle": "Vorschlag · {{name}}",
+    "close": "Schließen",
+    "kindLabel": "Kontrolle",
+    "kind": {
+      "REGULAR": "Reguläre Kontrolle"
+    },
+    "time": "Uhrzeit",
+    "flatsLabel": "WGs"
   }
 }
