@@ -72,6 +72,8 @@ Vorgeschichte: Liste von `{id, inspectedAt, round, overallResult, defects}`; `de
 - Backend: `InspectionHistoryTests` (Rechte, Standardsortierung, Sortieren nach jeder Spalte, unbekannte Spalten, alle Filter, Platzhalterzeichen, ungültige Filter, fremde Wohnanlage, Detailansicht, frisch abgeschlossene Kontrolle erscheint in der Historie)
 - Backend: `ProtocolPdfTests` (Rechte, Inhalt und Dateiname, Sprache, offene Kontrolle 409, fremde Wohnanlage und unbekannte ID)
 - Backend: `PreviousFindingsTests` (Rechte, Reihenfolge und Inhalt, nur frühere Kontrollen derselben WG, höchstens drei, gestartete Kontrolle, fremde Wohnanlage und unbekannte ID)
+
+Historien- und Vorgeschichtstests legen pro Test eigene Wohnanlagen, Kontrollen und Checklisten in ihrer jeweiligen transaktionalen In-Memory-H2-Datenbank an. Sortierung und Auswahl werden anhand der IDs dieser Kontrollen geprüft. Die gemeinsamen Dev-Beispieldaten bleiben für die manuelle Prüfung verfügbar.
 - Frontend: `features/inspections/history.test.ts` (Filter und Sortierung aus der Adresse lesen, ungültige Werte verwerfen, Zeitraum prüfen, Klick auf Überschrift, Filter setzen und entfernen, Datum als Tag/Monat/Jahr lesen und anzeigen)
 - Frontend: `features/inspections/previous.test.ts` (jüngster früherer Befund je Kriterium, Zuordnung über Bereich und Titel)
 
