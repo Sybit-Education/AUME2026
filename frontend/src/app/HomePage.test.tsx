@@ -8,6 +8,7 @@ import { api, type LoggedInUser } from '@/lib/auth/client'
 import { ensureSession, invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
 import type { ResidenceDetail, ResidenceRow } from '@/features/inspection-overview/api'
+import type { CaretakerOverview } from '@/features/overview/api'
 import { inspectionOverviewRoutes } from '@/features/inspection-overview/routes'
 import { homeRoutes } from './homeRoute'
 
@@ -20,6 +21,15 @@ vi.mock('@/lib/auth/client', () => ({
 
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['CLERK_INSPECTION_OVERVIEW_READ'] }
 const student: LoggedInUser = { userKey: 'student', name: 'Lea', roles: ['STUDENT'], privileges: ['GREETING_READ'] }
+const caretaker: LoggedInUser = {
+  userKey: 'caretaker', name: 'Fischer', roles: ['CARETAKER'], privileges: ['INSPECTION_OVERVIEW_READ', 'RESIDENCE_READ'],
+}
+const caretakerOverview: CaretakerOverview = {
+  proposals: 1, announced: 1, followUps: 1, openDamages: null,
+  upcoming: [
+    { id: 7, flatLabel: '4.12', residenceName: 'Sonne', kind: 'INITIAL', round: 0, state: 'ANNOUNCED', periodId: 2, canRespond: false, startsOn: '2026-11-18', endsOn: '2026-11-20', dueOn: null },
+  ],
+}
 const appointmentPath = '/api/student/inspection-appointment'
 const page = (content: unknown[]) => ({ content, page: { number: 0, size: 20, totalElements: content.length, totalPages: 1 } })
 let signedIn: LoggedInUser
@@ -71,6 +81,7 @@ beforeEach(async () => {
     if (path === '/api/inspection-overview/counts') return Response.json({ counterProposed: 1, agreedNotAnnounced: 1 })
     if (String(path).startsWith('/api/inspection-overview?')) return Response.json(page(rows))
     if (String(path) === '/api/inspection-overview/3') return Response.json(detail)
+    if (path === '/api/overview/caretaker') return Response.json(caretakerOverview)
     throw new Error(`Unexpected API call: ${path}`)
   })
 })
@@ -154,5 +165,13 @@ it('keeps the dashboard for users without the overview privilege', async () => {
   const appointment = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
   expect(await appointment.findByText('Erstkontrolle')).toBeDefined()
   expect(appointment.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/student/inspection/appointment')
+  expect(overviewCalls()).toEqual([])
+})
+
+it('shows the caretaker overview for users with the caretaker privilege', async () => {
+  signedIn = caretaker
+  mount()
+  expect(await screen.findByRole('heading', { name: 'Hallo Fischer' })).toBeDefined()
+  expect(screen.queryByText('Willkommen, Fischer.')).toBeNull()
   expect(overviewCalls()).toEqual([])
 })

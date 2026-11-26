@@ -7,7 +7,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | URL | Anmeldung / Berechtigung | Inhalt |
 | --- | --- | --- |
 | `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
-| `/` | Angemeldet | Mit `CLERK_INSPECTION_OVERVIEW_READ` erscheint die Kontrollübersicht je Wohnanlage mit den Filtern `?state=` und `?kind=`. Sonst erscheint das Dashboard mit Gruß bei `GREETING_READ`, Wohnanlagen-Link bei `RESIDENCE_READ` und unabhängig ladender Kontrollterminkarte für `STUDENT`. |
+| `/` | Angemeldet | Mit `CLERK_INSPECTION_OVERVIEW_READ` erscheint die Kontrollübersicht je Wohnanlage mit den Filtern `?state=` und `?kind=`. Mit `INSPECTION_OVERVIEW_READ` erscheint die Übersicht der Objektbetreuung (Kennzahlen, anstehende Kontrollen). Sonst erscheint das Dashboard mit Gruß bei `GREETING_READ`, Wohnanlagen-Link bei `RESIDENCE_READ` und unabhängig ladender Kontrollterminkarte für `STUDENT`. |
 | `/inspection-overview/<id>` | Angemeldet, `CLERK_INSPECTION_OVERVIEW_READ` | Kontrollrunden und offene Einzel-WG-Kontrollen einer Wohnanlage |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
