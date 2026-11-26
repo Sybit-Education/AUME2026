@@ -43,6 +43,7 @@
     "inspections": "The inspections could not be loaded.",
     "inspection": "The inspection could not be loaded.",
     "inspectionSave": "The change could not be saved. Please try again.",
+    "protocolDownload": "The report could not be downloaded.",
     "inspectionConflict": "The inspection was changed in the meantime. The current state has been reloaded.",
     "infoPages": "The information could not be loaded.",
     "infoPagesSave": "The information could not be saved.",
@@ -342,7 +343,6 @@
     "tabHistory": "History",
     "history": {
       "title": "Inspection history",
-      "filter": "Filter history",
       "flat": "Flat",
       "kind": "Inspection",
       "all": "All",
@@ -358,13 +358,34 @@
       "viewOf": "View inspection of flat {{label}} on {{date}}",
       "empty": "There are no completed inspections in your residence yet.",
       "noMatch": "No inspections match this selection.",
-      "invalidRange": "The “from” date is after the “to” date."
+      "invalidDate": "Please enter the date as DD/MM/YYYY, e.g. 28/03/2026.",
+      "pickDate": "{{field}}: choose a date in the calendar",
+      "invalidRange": "The “from” date is after the “to” date.",
+      "hint": "Tap a heading to sort the table; the funnel icon filters it.",
+      "activeFilters": "Active filters",
+      "removeFilter": "Remove filter: {{filter}}",
+      "sortBy": "Sort by {{column}}",
+      "filterBy": "Filter by {{column}}",
+      "filterActive": "Filter for {{column}} active, change",
+      "flatContains": "Flat contains",
+      "clear": "Remove"
     },
     "protocol": {
       "title": "Report",
       "inspectedOn": "Inspected on {{date}}",
       "inspectedBy": "by {{name}}",
-      "backToHistory": "← Back to inspection history"
+      "backToHistory": "← Back to inspection history",
+      "download": "Download as PDF",
+      "downloading": "Creating PDF …"
+    },
+    "previous": {
+      "title": "History of this flat",
+      "none": "No earlier inspections of this flat.",
+      "summary_one": "Last completed inspection",
+      "summary_other": "Last {{count}} completed inspections",
+      "noDefects": "No defects.",
+      "earlier": "previously flagged · {{date}}",
+      "earlierNote": "Last note: {{note}}"
     }
   },
   "wg": {
