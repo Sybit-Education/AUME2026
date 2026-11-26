@@ -50,8 +50,16 @@ public class InspectionHistoryService {
         var user = users.requireUser(userKey);
         validate(filter);
         // Nur die Spalten aus HistoryOrder sind sortierbar; ein `sort`-Parameter des Clients wird ignoriert.
-        var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), order.toSort());
-        var result = inspections.findAll(matching(user.getResidence().getId(), filter), page);
+        var spec = matching(user.getResidence().getId(), filter);
+        Page<InspectionEntity> result;
+        if (order.by() == OrderBy.DEFECTS) {
+            // Die Zahl der Mängel steht nicht in einer Spalte; die Abfrage sortiert selbst danach.
+            var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            result = inspections.findAll(spec.and(byDefects(order.direction())), page);
+        } else {
+            var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), order.toSort());
+            result = inspections.findAll(spec, page);
+        }
 
         var ids = result.getContent().stream().map(InspectionEntity::getId).toList();
         var deficiencies = ids.isEmpty() ? Map.<Long, Long>of()
@@ -60,7 +68,7 @@ public class InspectionHistoryService {
                 .collect(Collectors.groupingBy(finding -> finding.getInspection().getId(), Collectors.counting()));
 
         return result.map(inspection -> new HistoryEntry(inspection.getId(), inspection.getFlat().getLabel(),
-            inspection.getInspectedAt(), inspection.getRound(), inspection.getStatus(),
+            inspection.getFlat().getResidence().getName(), inspection.getInspectedAt(), inspection.getRound(), inspection.getStatus(),
             inspection.getOverallResult(), deficiencies.getOrDefault(inspection.getId(), 0L),
             nameOf(inspection)));
     }
@@ -68,6 +76,9 @@ public class InspectionHistoryService {
     private static void validate(HistoryFilter filter) {
         if (filter.flat() != null && filter.flat().length() > MAX_FLAT_FILTER) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Flat filter is too long");
+        }
+        if (filter.residence() != null && filter.residence().length() > MAX_FLAT_FILTER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Residence filter is too long");
         }
         if (filter.from() != null && filter.to() != null && filter.from().isAfter(filter.to())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'from' must not be after 'to'");
@@ -84,8 +95,19 @@ public class InspectionHistoryService {
                 predicates.add(cb.like(cb.lower(flat.get("label")),
                     "%" + escapeLike(filter.flat().strip().toLowerCase()) + "%", '\\'));
             }
+            if (StringUtils.hasText(filter.residence())) {
+                predicates.add(cb.like(cb.lower(flat.get("residence").get("name")),
+                    "%" + escapeLike(filter.residence().strip().toLowerCase()) + "%", '\\'));
+            }
             if (filter.result() != null) {
                 predicates.add(cb.equal(root.get("overallResult"), filter.result()));
+            }
+            if (filter.defects() != null) {
+                var defect = query.subquery(Long.class);
+                var finding = defect.from(FindingEntity.class);
+                defect.select(cb.literal(1L)).where(cb.equal(finding.get("inspection"), root),
+                    cb.equal(finding.get("rating"), Rating.DEFICIENT));
+                predicates.add(filter.defects() ? cb.exists(defect) : cb.not(cb.exists(defect)));
             }
             if (filter.followUp() != null) {
                 predicates.add(filter.followUp() ? cb.greaterThan(root.get("round"), 0) : cb.equal(root.get("round"), 0));
@@ -97,6 +119,22 @@ public class InspectionHistoryService {
                 predicates.add(cb.lessThan(root.<Instant>get("inspectedAt"), startOf(filter.to().plusDays(1))));
             }
             return cb.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
+    /** Sortiert nach der Zahl der Mängel ({@code DEFICIENT}); bei gleicher Zahl neueste zuerst. */
+    private static Specification<InspectionEntity> byDefects(Sort.Direction direction) {
+        return (root, query, cb) -> {
+            // Die Zählabfrage der Seite braucht keine Sortierung.
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                var count = query.subquery(Long.class);
+                var finding = count.from(FindingEntity.class);
+                count.select(cb.count(finding)).where(cb.equal(finding.get("inspection"), root),
+                    cb.equal(finding.get("rating"), Rating.DEFICIENT));
+                query.orderBy(direction == Sort.Direction.ASC ? cb.asc(count) : cb.desc(count),
+                    cb.desc(root.get("inspectedAt")), cb.desc(root.get("id")));
+            }
+            return null;
         };
     }
 
@@ -114,7 +152,8 @@ public class InspectionHistoryService {
 
     /** Sortierbare Spalten der Historie. */
     public enum OrderBy {
-        DATE("inspectedAt"), FLAT("flat.label"), KIND("round"), RESULT("overallResult"), INSPECTOR("inspector.name");
+        DATE("inspectedAt"), RESIDENCE("flat.residence.name"), FLAT("flat.label"), KIND("round"),
+        RESULT("overallResult"), DEFECTS(null), INSPECTOR("inspector.name");
 
         private final String property;
 
@@ -140,8 +179,10 @@ public class InspectionHistoryService {
     }
 
     /** Alle Felder sind optional. {@code from}/{@code to} sind Kalendertage (Europe/Berlin), beide inklusive. */
-    public record HistoryFilter(String flat, Result result, Boolean followUp, LocalDate from, LocalDate to) {}
+    /** {@code defects}: {@code true} nur Kontrollen mit mindestens einem Mangel, {@code false} nur ohne. */
+    public record HistoryFilter(String residence, String flat, Result result, Boolean followUp, Boolean defects,
+        LocalDate from, LocalDate to) {}
 
-    public record HistoryEntry(Long id, String flatLabel, Instant inspectedAt, int round, Status status,
-        Result overallResult, long deficiencies, String inspectorName) {}
+    public record HistoryEntry(Long id, String flatLabel, String residenceName, Instant inspectedAt, int round,
+        Status status, Result overallResult, long deficiencies, String inspectorName) {}
 }

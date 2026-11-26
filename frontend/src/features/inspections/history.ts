@@ -1,12 +1,15 @@
 import type { OverallResult } from './api'
 
-export type SortColumn = 'date' | 'flat' | 'kind' | 'result' | 'inspector'
+export type SortColumn = 'residence' | 'flat' | 'kind' | 'date' | 'result' | 'defects' | 'inspector'
 export type SortDirection = 'asc' | 'desc'
 
 export interface HistoryFilter {
+  residence: string
   flat: string
   result: OverallResult | ''
   followUp: 'true' | 'false' | ''
+  /** 'true' nur mit Mängeln, 'false' nur ohne */
+  defects: 'true' | 'false' | ''
   from: string
   to: string
   sort: SortColumn
@@ -15,7 +18,7 @@ export interface HistoryFilter {
 }
 
 const results: readonly string[] = ['PASSED', 'FAILED']
-const columns: readonly string[] = ['date', 'flat', 'kind', 'result', 'inspector']
+const columns: readonly string[] = ['residence', 'flat', 'kind', 'date', 'result', 'defects', 'inspector']
 const isoDate = /^\d{4}-\d{2}-\d{2}$/
 
 /** Neueste zuerst; bei allen anderen Spalten beginnt ein Klick aufsteigend. */
@@ -33,14 +36,17 @@ function validDate(value: string | null): string {
 export function readHistoryFilter(params: URLSearchParams): HistoryFilter {
   const result = params.get('result') ?? ''
   const followUp = params.get('followUp') ?? ''
+  const defects = params.get('defects') ?? ''
   const sortParam = params.get('sort') ?? ''
   const sort = columns.includes(sortParam) ? sortParam as SortColumn : 'date'
   const dirParam = params.get('dir')
   const page = Number(params.get('page') ?? '0')
   return {
+    residence: (params.get('residence') ?? '').trim().slice(0, 80),
     flat: (params.get('flat') ?? '').trim().slice(0, 80),
     result: results.includes(result) ? result as OverallResult : '',
     followUp: followUp === 'true' || followUp === 'false' ? followUp : '',
+    defects: defects === 'true' || defects === 'false' ? defects : '',
     from: validDate(params.get('from')),
     to: validDate(params.get('to')),
     sort,
@@ -55,13 +61,13 @@ export function invalidRange(filter: HistoryFilter): boolean {
 }
 
 const orderBy: Record<SortColumn, string> = {
-  date: 'DATE', flat: 'FLAT', kind: 'KIND', result: 'RESULT', inspector: 'INSPECTOR',
+  residence: 'RESIDENCE', flat: 'FLAT', kind: 'KIND', date: 'DATE', result: 'RESULT', defects: 'DEFECTS', inspector: 'INSPECTOR',
 }
 
 /** Query für das Backend: nur gesetzte Filter, Sortierung, feste Seitengröße. */
 export function historyQuery(filter: HistoryFilter): URLSearchParams {
   const query = new URLSearchParams({ page: String(filter.page), size: '20' })
-  for (const key of ['flat', 'result', 'followUp', 'from', 'to'] as const) {
+  for (const key of ['residence', 'flat', 'result', 'followUp', 'defects', 'from', 'to'] as const) {
     if (filter[key]) query.set(key, filter[key])
   }
   query.set('orderBy', orderBy[filter.sort])
@@ -70,7 +76,7 @@ export function historyQuery(filter: HistoryFilter): URLSearchParams {
 }
 
 export function hasFilter(filter: HistoryFilter): boolean {
-  return Boolean(filter.flat || filter.result || filter.followUp || filter.from || filter.to)
+  return Boolean(filter.residence || filter.flat || filter.result || filter.followUp || filter.defects || filter.from || filter.to)
 }
 
 /**
@@ -92,7 +98,9 @@ export function toggleSort(params: URLSearchParams, current: HistoryFilter, colu
 }
 
 /** Setzt oder entfernt Filterwerte (leer = entfernen) und springt auf Seite 1. */
-export function withFilter(params: URLSearchParams, values: Partial<Record<'flat' | 'result' | 'followUp' | 'from' | 'to', string>>): URLSearchParams {
+export type FilterKey = 'residence' | 'flat' | 'result' | 'followUp' | 'defects' | 'from' | 'to'
+
+export function withFilter(params: URLSearchParams, values: Partial<Record<FilterKey, string>>): URLSearchParams {
   const next = new URLSearchParams(params)
   for (const [key, value] of Object.entries(values)) {
     if (value && value.trim()) next.set(key, value.trim())
