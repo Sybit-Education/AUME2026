@@ -10,8 +10,14 @@ export type Severity = 'LIGHT' | 'SEVERE'
 export interface InspectionSummary {
   id: number
   flatLabel: string
+  residenceName: string
   status: InspectionStatus
   round: number
+  /** Angekündigter Zeitraum und Uhrzeit; leer bei Kontrollen ohne Zeitraum, z. B. Nachkontrollen. */
+  startsOn: string | null
+  endsOn: string | null
+  windowStart: string | null
+  windowEnd: string | null
 }
 
 export interface InspectionPage {
@@ -52,6 +58,7 @@ export interface Inspection {
 export interface HistoryEntry {
   id: number
   flatLabel: string
+  residenceName: string
   inspectedAt: string | null
   round: number
   status: InspectionStatus
@@ -92,8 +99,9 @@ export interface FindingInput {
 
 const json = { 'Content-Type': 'application/json' }
 
-export async function listInspections(page: number, signal: AbortSignal): Promise<InspectionPage> {
-  const response = requireOk(await api(`/api/inspections?page=${page}&size=20`, { signal }), 'errors.inspections')
+/** Alle anstehenden Kontrollen auf einmal (höchstens 100); die Tabelle scrollt ab fünf Zeilen. */
+export async function listInspections(signal: AbortSignal): Promise<InspectionPage> {
+  const response = requireOk(await api('/api/inspections?size=100', { signal }), 'errors.inspections')
   return (await response.json()) as InspectionPage
 }
 
@@ -139,8 +147,12 @@ async function change(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: un
     headers: body === undefined ? undefined : json,
     body: body === undefined ? undefined : JSON.stringify(body),
   })
-  // 409: Die Kontrolle wurde inzwischen anderweitig geändert (gestartet, abgeschlossen, …).
-  if (raw.status === 409) throw new UiError('errors.inspectionConflict')
+  // 409: Die Kontrolle wurde inzwischen anderweitig geändert (gestartet, abgeschlossen, …), oder ihr Zeitraum
+  // hat noch nicht begonnen.
+  if (raw.status === 409) {
+    const error = (await raw.json().catch(() => null)) as { code?: string } | null
+    throw new UiError(error?.code === 'period_not_started' ? 'errors.inspectionNotStarted' : 'errors.inspectionConflict')
+  }
   const response = requireOk(raw, 'errors.inspectionSave')
   return (await response.json()) as Inspection
 }

@@ -1,0 +1,59 @@
+.requests-dialog:focus {
+  outline: none;
+}
+
+.requests-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.requests-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  color: var(--mut);
+  text-decoration: none;
+}
+
+.requests-close:hover {
+  background: var(--tl);
+  color: var(--td);
+}
+
+.requests-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 12px;
+}
+
+.requests-facts dt {
+  color: var(--mut);
+}
+
+.requests-facts dd {
+  margin: 0;
+}
+
+.requests-required {
+  color: #c0392b;
+}
+
+.fld textarea.requests-invalid {
+  border-color: #c0392b;
+  outline-color: #c0392b;
+}
+
+.requests-field-error {
+  margin: 2px 0 0;
+  color: #c0392b;
+  font-size: 13px;
+  font-weight: 600;
+}

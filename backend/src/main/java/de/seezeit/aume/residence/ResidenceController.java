@@ -28,6 +28,12 @@ public class ResidenceController {
         return new PagedModel<>(residences.list(principal.getName(), pageable));
     }
 
+    @GetMapping("/api/residences/my-assignments")
+    @PreAuthorize("hasAuthority('RESIDENCE_READ')")
+    public PagedModel<StaffResidenceView> myAssignments(Principal principal, Pageable pageable) {
+        return new PagedModel<>(residences.listCaretakerAssignments(principal.getName(), pageable));
+    }
+
     @GetMapping("/api/caretakers")
     @PreAuthorize("hasAuthority('RESIDENCE_ASSIGN_STAFF')")
     public PagedModel<StaffView> caretakers(Pageable pageable) {

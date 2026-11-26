@@ -4,17 +4,17 @@ Die Objektbetreuung sieht die abgeschlossenen Kontrollen ihrer Wohnanlage, kann 
 
 ## Ablauf
 
-1. Unter **Kontrollen** gibt es die Reiter **Offen** (`/inspections`, wie bisher) und **Historie** (`/inspections/history`).
-2. Die Historie listet Kontrollen im Status `FINALIZED` oder `PUBLISHED`, neueste zuerst: Datum, WG, Erst- oder Nachkontrolle, Gesamtergebnis, Anzahl der Mängel (`DEFICIENT`; vor Ort geklärte zählen nicht) und prüfende Person.
+1. Unter **Kontrollen** gibt es die Reiter **Aktuell** (`/inspections`, mit den Tabellen [Anfragen](../kontroll-anfragen/README.md) und Anstehende Kontrollen) und **Historie** (`/inspections/history`).
+2. Die Historie listet Kontrollen im Status `FINALIZED` oder `PUBLISHED`, neueste zuerst. Die Spalten folgen demselben Schema wie die Tabellen unter Aktuell: Wohnanlage, WG, Kontrolle (Erst- oder Nachkontrolle), Datum, Ergebnis, Mängel (Anzahl `DEFICIENT`; vor Ort geklärte zählen nicht) und prüfende Person.
 3. Sortieren und Filtern direkt in der Kopfzeile der Tabelle:
-   - Ein Klick auf eine Überschrift (Datum, WG, Kontrolle, Ergebnis, Geprüft von) sortiert nach dieser Spalte; ein zweiter Klick dreht die Richtung. Datum beginnt mit „neueste zuerst“, alle anderen aufsteigend. „Mängel“ ist nicht sortierbar, weil die Zahl erst nach dem Laden berechnet wird.
-   - Das Trichter-Symbol neben Datum, WG, Kontrolle und Ergebnis öffnet ein kleines Menü mit dem Filter dieser Spalte: Zeitraum (von/bis, beide Tage inklusive; Eingabe als Tag/Monat/Jahr, z. B. `28.03.2026`, oder über den Kalender-Knopf), Teil der WG-Bezeichnung, Erst- oder Nachkontrolle, Ergebnis. Ein gefüllter Trichter zeigt einen aktiven Filter.
+   - Ein Klick auf eine Überschrift (alle Spalten außer „Ansehen“) sortiert nach dieser Spalte; ein zweiter Klick dreht die Richtung. Datum beginnt mit „neueste zuerst“, alle anderen aufsteigend. „Mängel“ sortiert nach der Anzahl der Mängel; das Backend zählt sie dafür in der Abfrage.
+   - Das Trichter-Symbol neben Wohnanlage, WG, Kontrolle, Datum, Ergebnis und Mängel öffnet ein kleines Menü mit dem Filter dieser Spalte: Teil des Namens der Wohnanlage, Teil der WG-Bezeichnung, Erst- oder Nachkontrolle, Zeitraum (von/bis, beide Tage inklusive; Eingabe als Tag/Monat/Jahr, z. B. `28.03.2026`, oder über den Kalender-Knopf), Ergebnis, mit oder ohne Mängel. Bei „Kontrolle“, „Ergebnis“ und „Mängel“ stehen die Optionen als Liste im App-Design (kein `<select>`, dessen Liste der Browser zeichnet); ein Klick filtert sofort. Ein gefüllter Trichter zeigt einen aktiven Filter.
    - Aktive Filter stehen zusätzlich als Chips über der Tabelle; ein Klick entfernt den jeweiligen Filter, „Zurücksetzen“ alle.
-   - Filter und Sortierung stehen in der Adresse (`flat`, `result`, `followUp`, `from`, `to`, `sort`, `dir`) und bleiben beim Neuladen und Teilen des Links erhalten. Ungültige Werte werden ignoriert; liegt „von“ nach „bis“, erscheint ein Hinweis.
+   - Filter und Sortierung stehen in der Adresse (`residence`, `flat`, `result`, `followUp`, `defects`, `from`, `to`, `sort`, `dir`) und bleiben beim Neuladen und Teilen des Links erhalten. Ungültige Werte werden ignoriert; liegt „von“ nach „bis“, erscheint ein Hinweis.
 
-   Abweichung vom Wireframe: Dort steht eine Filterleiste über der Tabelle. Auf Wunsch des Teams sitzen Sortierung und Filter in der Kopfzeile.
+   Abweichung vom Wireframe: Dort steht eine Filterleiste über der Tabelle. Auf Wunsch des Teams sitzen Sortierung und Filter in der Kopfzeile. Die Bausteine dafür (`tableControls.tsx`, `tableState.ts`) nutzen auch die Tabellen Anfragen und Anstehend; dort wird im Browser gefiltert, weil die Listen vollständig geladen sind.
 4. **Ansehen** öffnet `/inspections/{id}`. Bei abgeschlossenen Kontrollen zeigt die Seite zusätzlich Prüfdatum, prüfende Person und das **Protokoll**: je Bereich die Mängel mit Schwere, Notiz, „vor Ort geklärt“ und Gebäudeursache. Die Seite ist dann nur lesend. Die Bereichsübersicht („Zusammenfassung“) entfällt dort, weil das Protokoll die Bereiche schon zeigt.
-5. **Als PDF herunterladen** lädt das Protokoll als Datei `Kontrollprotokoll_<WG>_<Datum>.pdf`: Wohnanlage, WG, Art der Kontrolle, Prüfdatum und -zeit, prüfende Person, Plätze, Zahl der Mängel, Gesamtergebnis und je Bereich alle Kriterien mit Bewertung, Schwere, Notiz und Gebäudeursache. Sprache wie in der Oberfläche (de/en).
+5. **Als PDF herunterladen** lädt das Protokoll als Datei `Kontrollprotokoll_<WG>_<Datum>.pdf`: Wohnanlage, WG, Art der Kontrolle, Prüfdatum (ohne Uhrzeit), prüfende Person, Zahl der Mängel, Gesamtergebnis und je Bereich alle Kriterien mit Bewertung, Schwere, Notiz und Gebäudeursache. Sprache wie in der Oberfläche (de/en).
 
 Datumsangaben stehen überall als Tag/Monat/Jahr, auch auf Englisch (`28/03/2026`). Das Datumsfeld im Filter ist deshalb ein Textfeld statt `type="date"`, dessen Format vom Browser abhängt; in der Adresse bleibt das Datum ISO (`from=2026-03-28`).
 
@@ -41,7 +41,7 @@ Keine neuen Tabellen. Für das PDF kommt die Bibliothek OpenPDF (`com.github.lib
 
 | Methode und Pfad | Zweck |
 | --- | --- |
-| `GET /api/inspections/history?page=&size=&flat=&result=&followUp=&from=&to=&orderBy=&direction=` | abgeschlossene Kontrollen der eigenen Wohnanlage, paginiert |
+| `GET /api/inspections/history?page=&size=&residence=&flat=&result=&followUp=&defects=&from=&to=&orderBy=&direction=` | abgeschlossene Kontrollen der eigenen Wohnanlage mit `residenceName`, paginiert; `orderBy` = `DATE`, `RESIDENCE`, `FLAT`, `KIND`, `RESULT`, `DEFECTS`, `INSPECTOR` |
 | `GET /api/inspections/{id}` | wie bisher; liefert zusätzlich `inspectedAt` und `inspectorName` |
 | `GET /api/inspections/{id}/previous-findings` | Vorgeschichte: bis zu drei abgeschlossene Kontrollen derselben WG vor dieser Kontrolle, neueste zuerst |
 | `GET /api/inspections/{id}/protocol.pdf` | Protokoll als PDF (`Content-Disposition: attachment`, `Cache-Control: no-store`); Sprache aus `Accept-Language`. Nur abgeschlossene Kontrollen, sonst 409; Zugriff wie bei `GET /api/inspections/{id}` |

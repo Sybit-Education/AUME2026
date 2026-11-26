@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData, useSearchParams } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import type { HistoryPage as HistoryData } from './api'
 import {
-  dayPlaceholder, formatDate, formatDay, hasFilter, parseDay, toggleSort, withFilter, type HistoryFilter, type SortColumn,
+  formatDate, hasFilter, toggleSort, withFilter, type FilterKey, type HistoryFilter, type SortColumn,
 } from './history'
 import InspectionTabs from './InspectionTabs'
+import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
+import { useFilterMenu, type FilterSpec, type FilterValues } from './tableState'
+import './inspections.css'
 
 export interface HistoryLoaderData {
   filter: HistoryFilter
@@ -14,28 +17,25 @@ export interface HistoryLoaderData {
   data: HistoryData | null
 }
 
-type FilterColumn = 'date' | 'flat' | 'kind' | 'result'
+type FilterColumn = 'residence' | 'flat' | 'kind' | 'date' | 'result' | 'defects'
 
-interface OpenFilter {
-  column: FilterColumn
-  left: number
-  top: number
-  button: HTMLButtonElement
-}
-
-const POPOVER_WIDTH = 250
-
+// Gleicher Aufbau wie Anfragen und Anstehend: Wohnanlage, WG, Kontrolle, Datum, Ergebnis, Mängel, Geprüft von.
 export default function HistoryPage() {
   const { t, i18n } = useTranslation()
   const loaded = useLoaderData<HistoryLoaderData | null>()
   const [params, setParams] = useSearchParams()
-  const [open, setOpen] = useState<OpenFilter | null>(null)
   const section = useRef<HTMLElement>(null)
+  const menu = useFilterMenu<FilterColumn>(section)
 
   if (!loaded) return <LoadingPage />
   const { filter, data } = loaded
   const date = (value: string | null) => formatDate(value, i18n.resolvedLanguage)
   const rows = data?.content ?? []
+  const label: Record<FilterColumn, string> = {
+    residence: t('inspections.residence'), flat: t('inspections.history.flat'), kind: t('inspections.history.kind'),
+    date: t('inspections.history.date'), result: t('inspections.result'), defects: t('inspections.defects'),
+  }
+  const all = t('inspections.history.all')
 
   function goToPage(page: number) {
     const next = new URLSearchParams(params)
@@ -43,55 +43,61 @@ export default function HistoryPage() {
     setParams(next)
   }
 
-  function applyFilter(values: Parameters<typeof withFilter>[1]) {
+  function update(values: Partial<Record<FilterKey, string>>) {
     setParams(withFilter(params, values))
-    closeFilter()
   }
 
-  function closeFilter() {
-    open?.button.focus()
-    setOpen(null)
+  const spec: Record<FilterColumn, FilterSpec> = {
+    residence: { kind: 'text', label: label.residence, value: filter.residence },
+    flat: { kind: 'text', label: label.flat, value: filter.flat },
+    kind: { kind: 'options', label: label.kind, value: filter.followUp, options: [
+      ['', all], ['false', t('inspections.history.initial')], ['true', t('inspections.history.followUp')],
+    ] },
+    date: { kind: 'dates', label: label.date, from: filter.from, to: filter.to },
+    result: { kind: 'options', label: label.result, value: filter.result, options: [
+      ['', all], ['PASSED', t('inspections.overall.PASSED')], ['FAILED', t('inspections.overall.FAILED')],
+    ] },
+    defects: { kind: 'options', label: label.defects, value: filter.defects, options: [
+      ['', all], ['true', t('inspections.history.withDefects')], ['false', t('inspections.history.withoutDefects')],
+    ] },
   }
 
-  function openFilter(column: FilterColumn, button: HTMLButtonElement) {
-    if (open?.column === column) {
-      closeFilter()
-      return
-    }
-    // Das Menü liegt außerhalb des horizontal scrollenden Tabellenrahmens, sonst würde es abgeschnitten.
-    const box = section.current?.getBoundingClientRect()
-    const anchor = button.getBoundingClientRect()
-    if (!box) return
-    const left = Math.max(8, Math.min(anchor.left - box.left, box.width - POPOVER_WIDTH - 8))
-    setOpen({ column, left, top: anchor.bottom - box.top + 6, button })
+  function apply(column: FilterColumn, values: FilterValues) {
+    if (column === 'residence') update({ residence: values.text ?? '' })
+    else if (column === 'flat') update({ flat: values.text ?? '' })
+    else if (column === 'kind') update({ followUp: values.value ?? '' })
+    else if (column === 'date') update({ from: values.from ?? '', to: values.to ?? '' })
+    else if (column === 'result') update({ result: values.value ?? '' })
+    else update({ defects: values.value ?? '' })
+    menu.close()
   }
 
-  const active: { key: string; label: string; clear: Parameters<typeof withFilter>[1] }[] = []
-  if (filter.flat) active.push({ key: 'flat', label: `${t('inspections.history.flat')}: ${filter.flat}`, clear: { flat: '' } })
+  const active: ActiveFilter[] = []
+  const chip = (key: string, text: string, clear: Partial<Record<FilterKey, string>>) =>
+    active.push({ key, label: text, clear: () => update(clear) })
+  if (filter.residence) chip('residence', `${label.residence}: ${filter.residence}`, { residence: '' })
+  if (filter.flat) chip('flat', `${label.flat}: ${filter.flat}`, { flat: '' })
   if (filter.followUp) {
-    active.push({
-      key: 'followUp',
-      label: `${t('inspections.history.kind')}: ${t(filter.followUp === 'true' ? 'inspections.history.followUp' : 'inspections.history.initial')}`,
-      clear: { followUp: '' },
-    })
-  }
-  if (filter.result) {
-    active.push({ key: 'result', label: `${t('inspections.result')}: ${t(`inspections.overall.${filter.result}`)}`, clear: { result: '' } })
+    chip('kind', `${label.kind}: ${t(filter.followUp === 'true' ? 'inspections.history.followUp' : 'inspections.history.initial')}`, { followUp: '' })
   }
   if (filter.from || filter.to) {
-    active.push({
-      key: 'date',
-      label: `${t('inspections.history.date')}: ${filter.from ? date(filter.from) : '…'} – ${filter.to ? date(filter.to) : '…'}`,
-      clear: { from: '', to: '' },
-    })
+    chip('date', `${label.date}: ${filter.from ? date(filter.from) : '…'} – ${filter.to ? date(filter.to) : '…'}`, { from: '', to: '' })
+  }
+  if (filter.result) chip('result', `${label.result}: ${t(`inspections.overall.${filter.result}`)}`, { result: '' })
+  if (filter.defects) {
+    chip('defects', `${label.defects}: ${t(filter.defects === 'true' ? 'inspections.history.withDefects' : 'inspections.history.withoutDefects')}`, { defects: '' })
   }
 
-  const header = (column: SortColumn, label: string, filterColumn?: FilterColumn, filtered = false) => (
-    <HeaderCell label={label} column={column} filter={filter}
+  const filtered: Record<FilterColumn, boolean> = {
+    residence: Boolean(filter.residence), flat: Boolean(filter.flat), kind: Boolean(filter.followUp),
+    date: Boolean(filter.from || filter.to), result: Boolean(filter.result), defects: Boolean(filter.defects),
+  }
+  const header = (column: SortColumn, text: string, filterColumn?: FilterColumn) => (
+    <SortHeader label={text} sorted={filter.sort === column ? filter.dir : null}
       onSort={() => setParams(toggleSort(params, filter, column))}
       filterButton={filterColumn && (
-        <FilterButton label={label} active={filtered} expanded={open?.column === filterColumn}
-          onClick={(button) => openFilter(filterColumn, button)} />
+        <FilterButton label={text} active={filtered[filterColumn]} expanded={menu.open?.column === filterColumn}
+          onClick={(button) => menu.toggle(filterColumn, button)} />
       )} />
   )
 
@@ -99,31 +105,30 @@ export default function HistoryPage() {
     <section className="card obm ins-history" ref={section}>
       <InspectionTabs />
       <h2>{t('inspections.history.title')}</h2>
-      <p className="xs mut">{t('inspections.history.hint')}</p>
 
-      {active.length > 0 && (
-        <div className="ins-active" aria-label={t('inspections.history.activeFilters')}>
-          {active.map((entry) => (
-            <button key={entry.key} type="button" className="chip inf ins-active-chip"
-              aria-label={t('inspections.history.removeFilter', { filter: entry.label })}
-              onClick={() => setParams(withFilter(params, entry.clear))}>
-              {entry.label} <span aria-hidden="true">✕</span>
-            </button>
-          ))}
-          <Link className="btn sm gh" to="/inspections/history">{t('inspections.history.reset')}</Link>
-        </div>
-      )}
+      <ActiveFilters filters={active} onReset={() => setParams(new URLSearchParams())} />
       {!data && <p className="err" role="alert">{t('inspections.history.invalidRange')}</p>}
 
       <div className="tw">
-        <table className="tbl">
+        <table className="tbl ins-fixed" aria-label={t('inspections.history.title')}>
+          <colgroup>
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '9%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '10%' }} />
+          </colgroup>
           <thead>
             <tr>
-              {header('date', t('inspections.history.date'), 'date', Boolean(filter.from || filter.to))}
-              {header('flat', t('inspections.history.flat'), 'flat', Boolean(filter.flat))}
-              {header('kind', t('inspections.history.kind'), 'kind', Boolean(filter.followUp))}
-              {header('result', t('inspections.result'), 'result', Boolean(filter.result))}
-              <th>{t('inspections.defects')}</th>
+              {header('residence', label.residence, 'residence')}
+              {header('flat', label.flat, 'flat')}
+              {header('kind', label.kind, 'kind')}
+              {header('date', label.date, 'date')}
+              {header('result', label.result, 'result')}
+              {header('defects', label.defects, 'defects')}
               {header('inspector', t('inspections.history.inspector'))}
               <th><span className="ins-sr">{t('inspections.history.view')}</span></th>
             </tr>
@@ -131,16 +136,17 @@ export default function HistoryPage() {
           <tbody>
             {data && rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="mut">
+                <td colSpan={8} className="mut">
                   {t(hasFilter(filter) ? 'inspections.history.noMatch' : 'inspections.history.empty')}
                 </td>
               </tr>
             )}
             {rows.map((entry) => (
               <tr key={entry.id}>
-                <td>{date(entry.inspectedAt)}</td>
+                <td>{entry.residenceName}</td>
                 <td><b>{entry.flatLabel}</b></td>
                 <td>{entry.round > 0 ? t('inspections.round', { round: entry.round }) : t('inspections.history.initial')}</td>
+                <td>{date(entry.inspectedAt)}</td>
                 <td>
                   {entry.overallResult
                     ? <span className={`chip ${entry.overallResult === 'PASSED' ? 'ok' : 'bad'}`}>{t(`inspections.overall.${entry.overallResult}`)}</span>
@@ -148,7 +154,7 @@ export default function HistoryPage() {
                 </td>
                 <td>{entry.deficiencies}</td>
                 <td>{entry.inspectorName ?? '–'}</td>
-                <td>
+                <td className="r">
                   <Link className="btn sm gh" to={`/inspections/${entry.id}`}
                     aria-label={t('inspections.history.viewOf', { label: entry.flatLabel, date: date(entry.inspectedAt) })}>
                     {t('inspections.history.view')}
@@ -160,9 +166,9 @@ export default function HistoryPage() {
         </table>
       </div>
 
-      {open && (
-        <FilterPopover key={open.column} column={open.column} filter={filter} left={open.left} top={open.top}
-          onApply={applyFilter} onClose={closeFilter} />
+      {menu.open && (
+        <FilterMenu key={menu.open.column} spec={spec[menu.open.column]} left={menu.open.left} top={menu.open.top}
+          onApply={(values) => apply(menu.open!.column, values)} onClose={menu.close} />
       )}
 
       {data && data.page.totalPages > 1 && (
@@ -172,206 +178,5 @@ export default function HistoryPage() {
         </nav>
       )}
     </section>
-  )
-}
-
-interface HeaderCellProps {
-  label: string
-  column: SortColumn
-  filter: HistoryFilter
-  onSort: () => void
-  filterButton?: ReactNode
-}
-
-function HeaderCell({ label, column, filter, onSort, filterButton }: HeaderCellProps) {
-  const { t } = useTranslation()
-  const sorted = filter.sort === column
-  const arrow = !sorted ? '↕' : filter.dir === 'asc' ? '↑' : '↓'
-  return (
-    <th aria-sort={sorted ? (filter.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-      <span className="ins-th">
-        <button type="button" className={`ins-th-sort${sorted ? ' on' : ''}`} onClick={onSort}
-          title={t('inspections.history.sortBy', { column: label })}>
-          {label} <span aria-hidden="true" className="ins-th-arrow">{arrow}</span>
-        </button>
-        {filterButton}
-      </span>
-    </th>
-  )
-}
-
-interface FilterButtonProps {
-  label: string
-  active: boolean
-  expanded: boolean
-  onClick: (button: HTMLButtonElement) => void
-}
-
-function FilterButton({ label, active, expanded, onClick }: FilterButtonProps) {
-  const { t } = useTranslation()
-  return (
-    <button type="button" className={`ins-th-filter${active ? ' on' : ''}`} aria-haspopup="dialog" aria-expanded={expanded}
-      aria-label={t(active ? 'inspections.history.filterActive' : 'inspections.history.filterBy', { column: label })}
-      onClick={(event) => onClick(event.currentTarget)}>
-      <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
-        <path d="M1.5 2h13l-5 6.2V13l-3 1.5V8.2z" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-      </svg>
-    </button>
-  )
-}
-
-interface FilterPopoverProps {
-  column: FilterColumn
-  filter: HistoryFilter
-  left: number
-  top: number
-  onApply: (values: Parameters<typeof withFilter>[1]) => void
-  onClose: () => void
-}
-
-function FilterPopover({ column, filter, left, top, onApply, onClose }: FilterPopoverProps) {
-  const { t } = useTranslation()
-  const box = useRef<HTMLFormElement>(null)
-  const [invalid, setInvalid] = useState<'from' | 'to' | null>(null)
-  // Immer die aktuelle Funktion aufrufen, ohne Fokus und Listener bei jedem Rendern neu zu setzen.
-  const close = useRef(onClose)
-  useEffect(() => { close.current = onClose })
-
-  useEffect(() => {
-    box.current?.querySelector<HTMLElement>('input, select')?.focus()
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') close.current() }
-    const onPointer = (event: PointerEvent) => {
-      const target = event.target as Element | null
-      // Klick auf einen Filter-Knopf schaltet selbst um; sonst schließt jeder Klick außerhalb.
-      if (box.current && target && !box.current.contains(target) && !target.closest('.ins-th-filter')) close.current()
-    }
-    document.addEventListener('keydown', onKey)
-    document.addEventListener('pointerdown', onPointer)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPointer)
-    }
-  }, [])
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    const value = (name: string) => String(data.get(name) ?? '')
-    if (column === 'date') {
-      const from = parseDay(value('from'))
-      const to = parseDay(value('to'))
-      const invalid = from === null ? 'from' : to === null ? 'to' : null
-      setInvalid(invalid)
-      if (invalid) box.current?.querySelector<HTMLInputElement>(`#history-${invalid}`)?.focus()
-      else onApply({ from: from ?? '', to: to ?? '' })
-    }
-    else if (column === 'flat') onApply({ flat: value('flat') })
-    else if (column === 'kind') onApply({ followUp: value('followUp') })
-    else onApply({ result: value('result') })
-  }
-
-  const clear = column === 'date' ? { from: '', to: '' }
-    : column === 'flat' ? { flat: '' } : column === 'kind' ? { followUp: '' } : { result: '' }
-  const title = {
-    date: t('inspections.history.date'), flat: t('inspections.history.flat'),
-    kind: t('inspections.history.kind'), result: t('inspections.result'),
-  }[column]
-
-  return (
-    <form ref={box} className="ins-pop" role="dialog" aria-label={t('inspections.history.filterBy', { column: title })}
-      style={{ left, top, width: POPOVER_WIDTH }} onSubmit={submit}>
-      {column === 'date' && (
-        <>
-          <DateField name="from" label={t('inspections.history.from')} initial={filter.from} invalid={invalid === 'from'} />
-          <DateField name="to" label={t('inspections.history.to')} initial={filter.to} invalid={invalid === 'to'} />
-          {invalid && <p className="err xs" role="alert" style={{ margin: '0 0 8px' }}>{t('inspections.history.invalidDate')}</p>}
-        </>
-      )}
-      {column === 'flat' && (
-        <div className="fld">
-          <label htmlFor="history-flat">{t('inspections.history.flatContains')}</label>
-          <input id="history-flat" name="flat" maxLength={80} defaultValue={filter.flat} placeholder="S-01" />
-        </div>
-      )}
-      {column === 'kind' && (
-        <div className="fld">
-          <label htmlFor="history-kind">{t('inspections.history.kind')}</label>
-          <select id="history-kind" name="followUp" defaultValue={filter.followUp}>
-            <option value="">{t('inspections.history.all')}</option>
-            <option value="false">{t('inspections.history.initial')}</option>
-            <option value="true">{t('inspections.history.followUp')}</option>
-          </select>
-        </div>
-      )}
-      {column === 'result' && (
-        <div className="fld">
-          <label htmlFor="history-result">{t('inspections.result')}</label>
-          <select id="history-result" name="result" defaultValue={filter.result}>
-            <option value="">{t('inspections.history.all')}</option>
-            <option value="PASSED">{t('inspections.overall.PASSED')}</option>
-            <option value="FAILED">{t('inspections.overall.FAILED')}</option>
-          </select>
-        </div>
-      )}
-      <div className="acts" style={{ marginTop: 0 }}>
-        <button className="btn sm" type="submit">{t('inspections.history.apply')}</button>
-        <button className="btn sm gh" type="button" onClick={() => onApply(clear)}>{t('inspections.history.clear')}</button>
-      </div>
-    </form>
-  )
-}
-
-interface DateFieldProps {
-  name: 'from' | 'to'
-  label: string
-  /** Kalendertag als JJJJ-MM-TT oder leer. */
-  initial: string
-  invalid: boolean
-}
-
-/**
- * Datumsfeld im Format Tag/Monat/Jahr, unabhängig von der Spracheinstellung des Browsers. Der Kalender-Knopf
- * öffnet die Datumsauswahl des Browsers und schreibt den gewählten Tag ins Textfeld.
- */
-function DateField({ name, label, initial, invalid }: DateFieldProps) {
-  const { t, i18n } = useTranslation()
-  const language = i18n.resolvedLanguage
-  const text = useRef<HTMLInputElement>(null)
-  const picker = useRef<HTMLInputElement>(null)
-  const id = `history-${name}`
-
-  function openPicker() {
-    const input = picker.current
-    if (!input) return
-    input.value = parseDay(text.current?.value ?? '') ?? ''
-    try {
-      input.showPicker()
-    } catch {
-      // Ältere Browser ohne showPicker: Eingabe bleibt über das Textfeld möglich.
-      text.current?.focus()
-    }
-  }
-
-  return (
-    <div className="fld">
-      <label htmlFor={id}>{label}</label>
-      <div className="ins-date">
-        <input ref={text} id={id} name={name} inputMode="numeric" autoComplete="off" maxLength={10}
-          placeholder={dayPlaceholder(language)} defaultValue={formatDay(initial, language)}
-          aria-invalid={invalid || undefined} aria-describedby={`${id}-hint`} />
-        <span id={`${id}-hint`} className="ins-sr">{dayPlaceholder(language)}</span>
-        <button type="button" className="ins-date-btn" onClick={openPicker}
-          aria-label={t('inspections.history.pickDate', { field: label })}>
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            <rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </button>
-        <input ref={picker} type="date" className="ins-date-picker" tabIndex={-1} aria-hidden="true"
-          onChange={(event) => {
-            if (text.current && event.target.value) text.current.value = formatDay(event.target.value, language)
-          }} />
-      </div>
-    </div>
   )
 }

@@ -7,18 +7,21 @@ const read = (query: string) => readHistoryFilter(new URLSearchParams(query))
 
 describe('inspection history filter', () => {
   it('keeps valid filters and passes only those to the backend', () => {
-    const filter = read('flat=%204.12%20&result=FAILED&followUp=true&from=2026-01-01&to=2026-02-28&sort=flat&dir=desc&page=2')
+    const filter = read('residence=Sonne&flat=%204.12%20&result=FAILED&followUp=true&defects=true&from=2026-01-01&to=2026-02-28&sort=defects&dir=desc&page=2')
     expect(filter).toEqual({
-      flat: '4.12', result: 'FAILED', followUp: 'true', from: '2026-01-01', to: '2026-02-28', sort: 'flat', dir: 'desc', page: 2,
+      residence: 'Sonne', flat: '4.12', result: 'FAILED', followUp: 'true', defects: 'true', from: '2026-01-01', to: '2026-02-28',
+      sort: 'defects', dir: 'desc', page: 2,
     })
     expect(historyQuery(filter).toString()).toBe(
-      'page=2&size=20&flat=4.12&result=FAILED&followUp=true&from=2026-01-01&to=2026-02-28&orderBy=FLAT&direction=DESC')
+      'page=2&size=20&residence=Sonne&flat=4.12&result=FAILED&followUp=true&defects=true&from=2026-01-01&to=2026-02-28&orderBy=DEFECTS&direction=DESC')
     expect(hasFilter(filter)).toBe(true)
   })
 
   it('drops invalid values instead of sending them', () => {
-    const filter = read('result=MAYBE&followUp=yes&from=2026-02-30&to=gestern&sort=password&dir=up&page=-1')
-    expect(filter).toEqual({ flat: '', result: '', followUp: '', from: '', to: '', sort: 'date', dir: 'desc', page: 0 })
+    const filter = read('result=MAYBE&followUp=yes&defects=many&from=2026-02-30&to=gestern&sort=password&dir=up&page=-1')
+    expect(filter).toEqual({
+      residence: '', flat: '', result: '', followUp: '', defects: '', from: '', to: '', sort: 'date', dir: 'desc', page: 0,
+    })
     expect(historyQuery(filter).toString()).toBe('page=0&size=20&orderBy=DATE&direction=DESC')
     expect(hasFilter(filter)).toBe(false)
   })

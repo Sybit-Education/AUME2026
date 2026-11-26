@@ -30,14 +30,16 @@ public class InspectionHistoryController {
 
     @GetMapping
     public PagedModel<HistoryEntry> list(Principal principal, Pageable pageable,
+            @RequestParam(required = false) String residence,
             @RequestParam(required = false) String flat,
             @RequestParam(required = false) Result result,
             @RequestParam(required = false) Boolean followUp,
+            @RequestParam(required = false) Boolean defects,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) OrderBy orderBy,
             @RequestParam(required = false) Sort.Direction direction) {
-        var filter = new HistoryFilter(flat, result, followUp, from, to);
+        var filter = new HistoryFilter(residence, flat, result, followUp, defects, from, to);
         var order = new HistoryOrder(orderBy, direction);
         return new PagedModel<>(history.history(principal.getName(), filter, order, pageable));
     }

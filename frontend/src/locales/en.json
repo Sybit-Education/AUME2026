@@ -77,12 +77,21 @@
     "planNotAssignee": "Only the assigned person can tick off this task.",
     "planNotDue": "This task is not due this week.",
     "planCriterion": "This suggestion is no longer in the current checklist.",
-    "overview": "The overview could not be loaded."
+    "overview": "The overview could not be loaded.",
+    "inspectionRequests": "The inspection requests could not be loaded.",
+    "inspectionRequestSave": "The answer could not be sent.",
+    "requestReasonRequired": "Please enter a reason.",
+    "requestReasonTooLong": "The reason is too long. Please use at most 2000 characters.",
+    "requestStartPassed": "The period has already started. You can no longer agree, please propose a new period.",
+    "requestAnswered": "This request has already been answered or announced. The list has been updated.",
+    "requestGone": "This request no longer exists. The administrative staff withdrew it or assigned it to someone else.",
+    "inspectionNotStarted": "The inspection can only be started once its period has begun."
   },
   "navigation": {
     "main": "Main navigation",
     "dashboard": "Dashboard",
     "residences": "Residences",
+    "profile": "Profile",
     "standards": "Standards",
     "inspections": "Inspections",
     "start": "Home",
@@ -322,11 +331,25 @@
     "empty": "No information yet.",
     "germanOnly": "Seezeit provides these texts in German only."
   },
+  "profile": {
+    "account": "My profile",
+    "signedIn": "Signed in",
+    "name": "Name",
+    "role": "Role",
+    "userKey": "User ID",
+    "permissions": "Permissions",
+    "noPermissions": "No permissions assigned.",
+    "signedInAs": "Signed in as",
+    "responsibility": "Responsibility",
+    "residences": "Residences",
+    "summary": "Profile summary",
+    "noAssignments": "No residences are assigned to you."
+  },
   "inspections": {
     "title": "Inspection · Flat {{label}}",
     "summaryTitle": "Completion · Flat {{label}}",
     "flat": "Flat {{label}}",
-    "none": "No open inspections in your residence.",
+    "none": "No upcoming inspections. Inspections appear here once their period has been announced.",
     "start": "Start inspection",
     "continue": "Continue inspection",
     "started": "Inspection started.",
@@ -392,7 +415,6 @@
       "PASSED": "Passed",
       "FAILED": "Follow-up required"
     },
-    "tabOpen": "Open",
     "tabHistory": "History",
     "history": {
       "title": "Inspection history",
@@ -414,20 +436,21 @@
       "invalidDate": "Please enter the date as DD/MM/YYYY, e.g. 28/03/2026.",
       "pickDate": "{{field}}: choose a date in the calendar",
       "invalidRange": "The “from” date is after the “to” date.",
-      "hint": "Tap a heading to sort the table; the funnel icon filters it.",
       "activeFilters": "Active filters",
       "removeFilter": "Remove filter: {{filter}}",
       "sortBy": "Sort by {{column}}",
       "filterBy": "Filter by {{column}}",
       "filterActive": "Filter for {{column}} active, change",
-      "flatContains": "Flat contains",
-      "clear": "Remove"
+      "clear": "Remove",
+      "contains": "{{column}} contains",
+      "withDefects": "With defects",
+      "withoutDefects": "Without defects"
     },
     "protocol": {
       "title": "Report",
       "inspectedOn": "Inspected on {{date}}",
       "inspectedBy": "by {{name}}",
-      "backToHistory": "← Back to inspection history",
+      "backToHistory": "Back to history",
       "download": "Download as PDF",
       "downloading": "Creating PDF …"
     },
@@ -439,7 +462,18 @@
       "noDefects": "No defects.",
       "earlier": "previously flagged · {{date}}",
       "earlierNote": "Last note: {{note}}"
-    }
+    },
+    "period": "Period",
+    "statusLabel": "Status",
+    "noPeriod": "no period",
+    "announced": "Announced",
+    "upcomingTitle": "Upcoming inspections",
+    "startsFrom": "from {{date}}",
+    "residence": "Residence",
+    "tabCurrent": "Current",
+    "ready": "Ready to start",
+    "defectLabel": "Defect",
+    "defectOf": "Defect for {{criterion}}"
   },
   "wg": {
     "title": "My shared flat",
@@ -537,5 +571,43 @@
       "AGREED": "Waiting for the announcement"
     },
     "missing": "Missing: answering proposals"
+  },
+  "inspectionRequests": {
+    "title": "Requests",
+    "none": "No requests.",
+    "flats_one": "{{count}} flat",
+    "flats_other": "{{count}} flats",
+    "agree": "Agree",
+    "agreeHint": "Once you agree, the administrative staff can announce the inspection.",
+    "counter": "Propose another period",
+    "counterTitle": "Counter proposal · {{name}}",
+    "startsOn": "Period from",
+    "endsOn": "Period to",
+    "reason": "Reason",
+    "sendCounter": "Send counter proposal",
+    "cancel": "Cancel",
+    "yourProposal": "Your proposal",
+    "status": {
+      "WAITING_FOR_CARETAKER": "Open",
+      "COUNTER_PROPOSED": "Counter proposal sent",
+      "AGREED": "Agreed"
+    },
+    "saved": {
+      "agreed": "Agreed. The administrative staff will be informed.",
+      "countered": "Counter proposal sent to the administrative staff."
+    },
+    "residence": "Residence",
+    "period": "Period",
+    "statusLabel": "Status",
+    "answer": "Answer",
+    "answerFor": "Answer the proposal for {{name}}",
+    "answerTitle": "Proposal · {{name}}",
+    "close": "Close",
+    "kindLabel": "Inspection",
+    "kind": {
+      "REGULAR": "Regular inspection"
+    },
+    "time": "Time",
+    "flatsLabel": "Flats"
   }
 }

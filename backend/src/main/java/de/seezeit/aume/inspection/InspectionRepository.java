@@ -15,8 +15,23 @@ import org.springframework.data.repository.query.Param;
 
 public interface InspectionRepository extends JpaRepository<InspectionEntity, Long>,
         JpaSpecificationExecutor<InspectionEntity> {
-    Page<InspectionEntity> findByFlat_Residence_IdAndStatusIn(Long residenceId,
-        Collection<InspectionEntity.Status> statuses, Pageable pageable);
+    /**
+     * Kontrollen, die die Objektbetreuung jetzt durchführen kann: begonnene immer, geplante nur, wenn ihr Zeitraum
+     * angekündigt ist oder sie keinen Zeitraum haben (z. B. Nachkontrollen). Nach Beginn des Zeitraums sortiert,
+     * Kontrollen ohne Zeitraum zuletzt.
+     */
+    @Query(value = """
+        select i from InspectionEntity i left join i.period p
+        where i.flat.residence.id = :residenceId
+          and (i.status = :started or (i.status = :planned and (p is null or p.announcedAt is not null)))
+        order by case when p.startsOn is null then 1 else 0 end, p.startsOn, i.flat.label, i.id""",
+        countQuery = """
+        select count(i) from InspectionEntity i left join i.period p
+        where i.flat.residence.id = :residenceId
+          and (i.status = :started or (i.status = :planned and (p is null or p.announcedAt is not null)))""")
+    Page<InspectionEntity> findDue(@Param("residenceId") Long residenceId,
+        @Param("planned") InspectionEntity.Status planned, @Param("started") InspectionEntity.Status started,
+        Pageable pageable);
 
     /**
      * Sperrt die Kontrolle bis zum Ende der Transaktion. Alle Änderungen an einer Kontrolle und

@@ -87,9 +87,9 @@ public class ProtocolPdfService {
         table.setWidthPercentage(100);
         row(table, labels.kind, inspection.round() == 0 ? labels.firstInspection
             : labels.followUp + " " + inspection.round());
-        row(table, labels.inspectedOn, inspection.inspectedAt() == null ? "–" : format(inspection.inspectedAt(), labels));
+        row(table, labels.inspectedOn, inspection.inspectedAt() == null ? "–"
+            : labels.date.format(inspection.inspectedAt().atZone(BERLIN)));
         row(table, labels.inspectedBy, inspection.inspectorName() == null ? "–" : inspection.inspectorName());
-        row(table, labels.places, String.valueOf(inspection.capacity()));
         long defects = inspection.findings().stream().filter(f -> f.rating() == Rating.DEFICIENT).count();
         row(table, labels.defects, String.valueOf(defects));
         row(table, labels.resultLabel, inspection.overallResult() == null ? "–" : labels.result(inspection.overallResult()));
@@ -165,24 +165,26 @@ public class ProtocolPdfService {
 
     /** Beschriftungen wie im Frontend (de/en). */
     private record Labels(String title, String flat, String kind, String firstInspection, String followUp,
-            String inspectedOn, String inspectedBy, String places, String defects, String resultLabel,
+            String inspectedOn, String inspectedBy, String defects, String resultLabel,
             String criterion, String rating, String severity, String note, String buildingCause, String created,
-            Map<String, String> values, DateTimeFormatter dateTime) {
+            Map<String, String> values, DateTimeFormatter date, DateTimeFormatter dateTime) {
 
         static Labels of(Locale locale) {
             if ("en".equals(locale == null ? null : locale.getLanguage())) {
                 return new Labels("Inspection report", "Flat", "Type", "First inspection", "Follow-up",
-                    "Inspected on", "Inspected by", "Places", "Defects", "Overall result",
+                    "Inspected on", "Inspected by", "Defects", "Overall result",
                     "Criterion", "Rating", "Severity", "Note", "Building cause suspected", "Created on",
                     Map.of("OK", "In order", "DEFICIENT", "Defect", "RESOLVED_ON_SITE", "Resolved on site",
                         "LIGHT", "Normal", "SEVERE", "Severe", "PASSED", "Passed", "FAILED", "Follow-up required"),
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH),
                     DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm", Locale.ENGLISH));
             }
             return new Labels("Kontrollprotokoll", "WG", "Art", "Erstkontrolle", "Nachkontrolle",
-                "Geprüft am", "Geprüft von", "Plätze", "Mängel", "Gesamtergebnis",
+                "Geprüft am", "Geprüft von", "Mängel", "Gesamtergebnis",
                 "Kriterium", "Bewertung", "Schwere", "Notiz", "Verdacht auf Gebäudeursache", "Erstellt am",
                 Map.of("OK", "In Ordnung", "DEFICIENT", "Mangel", "RESOLVED_ON_SITE", "Vor Ort geklärt",
                     "LIGHT", "Normal", "SEVERE", "Schwer", "PASSED", "Bestanden", "FAILED", "Nachkontrolle erforderlich"),
+                DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMAN),
                 DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm 'Uhr'", Locale.GERMAN));
         }
 

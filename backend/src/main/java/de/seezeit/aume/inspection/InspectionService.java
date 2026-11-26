@@ -1,10 +1,13 @@
 package de.seezeit.aume.inspection;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,7 +30,7 @@ import de.seezeit.aume.user.UserEntity;
 @Service
 @Transactional
 public class InspectionService {
-    private static final Set<Status> OPEN = Set.of(Status.PLANNED, Status.DRAFT);
+    private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
 
     private final InspectionRepository inspections;
     private final FindingRepository findings;
@@ -45,9 +48,16 @@ public class InspectionService {
     @Transactional(readOnly = true)
     public Page<InspectionSummary> listOpen(String userKey, Pageable pageable) {
         var user = users.requireUser(userKey);
-        return inspections.findByFlat_Residence_IdAndStatusIn(user.getResidence().getId(), OPEN, pageable)
-            .map(inspection -> new InspectionSummary(inspection.getId(), inspection.getFlat().getLabel(),
-                inspection.getStatus(), inspection.getRound()));
+        // Die Reihenfolge legt die Abfrage fest, eine Sortierung aus der Anfrage wird nicht angewendet.
+        var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return inspections.findDue(user.getResidence().getId(), Status.PLANNED, Status.DRAFT, page)
+            .map(inspection -> {
+                var period = inspection.getPeriod();
+                return new InspectionSummary(inspection.getId(), inspection.getFlat().getLabel(),
+                    inspection.getFlat().getResidence().getName(), inspection.getStatus(), inspection.getRound(),
+                    period == null ? null : period.getStartsOn(), period == null ? null : period.getEndsOn(),
+                    period == null ? null : period.getWindowStart(), period == null ? null : period.getWindowEnd());
+            });
     }
 
     @Transactional(readOnly = true)
@@ -61,6 +71,11 @@ public class InspectionService {
         var inspection = requireLocked(user, id);
         if (inspection.getStatus() != Status.PLANNED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Inspection was already started");
+        }
+        // Vor Beginn des angekündigten Zeitraums wird nicht kontrolliert. Ohne Zeitraum (z. B. Nachkontrolle) gilt keine Grenze.
+        var period = inspection.getPeriod();
+        if (period != null && period.getStartsOn().isAfter(LocalDate.now(BERLIN))) {
+            throw new PeriodNotStartedException();
         }
         var version = checklists.currentPublished().orElseThrow(() ->
             new ResponseStatusException(HttpStatus.CONFLICT, "No published checklist"));
@@ -189,7 +204,12 @@ public class InspectionService {
             inspection.getInspectedAt(), inspector == null ? null : inspector.getName(), criteria, rated);
     }
 
-    public record InspectionSummary(Long id, String flatLabel, Status status, int round) {}
+    /** Die Kontrolle gehört zu einem Zeitraum, der noch nicht begonnen hat. */
+    public static class PeriodNotStartedException extends RuntimeException {}
+
+    /** Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. */
+    public record InspectionSummary(Long id, String flatLabel, String residenceName, Status status, int round,
+        LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd) {}
 
     public record InspectionView(Long id, String flatLabel, String residenceName, int capacity, int round,
         Status status, Result overallResult, Instant inspectedAt, String inspectorName,
