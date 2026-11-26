@@ -7,12 +7,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import de.seezeit.aume.InspectionSampleData;
+import de.seezeit.aume.planning.InspectionPeriodEntity;
+import de.seezeit.aume.planning.InspectionPeriodRepository;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
 import de.seezeit.aume.standard.ChecklistVersionEntity;
 import de.seezeit.aume.standard.ChecklistVersionRepository;
+import de.seezeit.aume.user.UserRepository;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +42,8 @@ class InspectionTests {
     @Autowired private FlatRepository flats;
     @Autowired private ChecklistVersionRepository versions;
     @Autowired private InspectionSampleData sampleData;
+    @Autowired private InspectionPeriodRepository periods;
+    @Autowired private UserRepository users;
 
     @Test
     void onlyCaretakersMayPerformInspections() throws Exception {
@@ -98,6 +106,46 @@ class InspectionTests {
             .andExpect(jsonPath("$.overallResult").value("FAILED"));
         mvc.perform(delete("/api/inspections/" + id + "/findings/" + stove).session(session).with(csrf()))
             .andExpect(status().isConflict());
+    }
+
+    @Test
+    void openListShowsOnlyAnnouncedPeriodsAndInspectionsWithoutPeriod() throws Exception {
+        var sonne = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var clerk = users.findByUserKey("clerk").orElseThrow();
+        var proposed = periods.save(new InspectionPeriodEntity(sonne, LocalDate.of(2027, 1, 10), LocalDate.of(2027, 1, 12), clerk));
+        var announced = new InspectionPeriodEntity(sonne, LocalDate.of(2027, 1, 3), LocalDate.of(2027, 1, 5), clerk);
+        announced.setWindowStart(LocalTime.of(9, 0));
+        announced.setWindowEnd(LocalTime.of(16, 0));
+        announced.setAnnouncedAt(Instant.now());
+        periods.save(announced);
+        var waiting = inspections.save(new InspectionEntity(flats.save(new FlatEntity(sonne, "S-03", 2)), proposed));
+        inspections.save(new InspectionEntity(flats.save(new FlatEntity(sonne, "S-04", 2)), announced));
+
+        var session = login("caretaker");
+        // S-01 und S-02 haben keinen Zeitraum und bleiben sichtbar, S-03 wartet noch auf die Ankündigung.
+        mvc.perform(get("/api/inspections").session(session))
+            .andExpect(jsonPath("$.page.totalElements").value(3))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-03')]").isEmpty())
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].startsOn").value("2027-01-03"))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].endsOn").value("2027-01-05"))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].residenceName").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].windowStart").value("09:00:00"))
+            // Ohne Zeitraum ganz unten
+            .andExpect(jsonPath("$.content[2].flatLabel").value("S-02"))
+            .andExpect(jsonPath("$.content[2].startsOn").isEmpty());
+
+        // Vor Beginn des Zeitraums lässt sich die angekündigte Kontrolle noch nicht starten.
+        var future = inspections.findAll().stream().filter(i -> i.getFlat().getLabel().equals("S-04")).findFirst().orElseThrow();
+        mvc.perform(post("/api/inspections/" + future.getId() + "/start").session(session).with(csrf()))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value("period_not_started"));
+
+        // Eine schon begonnene Kontrolle bleibt sichtbar, auch wenn ihr Zeitraum nicht angekündigt ist.
+        waiting.setStatus(InspectionEntity.Status.DRAFT);
+        inspections.saveAndFlush(waiting);
+        mvc.perform(get("/api/inspections").session(session))
+            .andExpect(jsonPath("$.page.totalElements").value(4))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-03')].status").value("DRAFT"));
     }
 
     @Test
@@ -184,10 +232,20 @@ class InspectionTests {
             .contentType(MediaType.APPLICATION_JSON).content(body);
     }
 
+    /**
+     * Geplante Kontrolle von S-01, startbereit: Die Studierenden-Testdaten hängen sie an einen angekündigten
+     * Zeitraum in der Zukunft; vor dessen Beginn ließe sie sich nicht starten (period_not_started).
+     */
     private Long firstInspection() {
-        return inspections.findAll().stream()
+        var inspection = inspections.findAll().stream()
             .filter(i -> i.getFlat().getLabel().equals("S-01") && i.getStatus() == InspectionEntity.Status.PLANNED)
-            .findFirst().orElseThrow().getId();
+            .findFirst().orElseThrow();
+        var period = inspection.getPeriod();
+        if (period != null && period.getStartsOn().isAfter(LocalDate.now().minusDays(1))) {
+            period.setStartsOn(LocalDate.now().minusDays(1));
+            periods.saveAndFlush(period);
+        }
+        return inspection.getId();
     }
 
     private MockHttpSession login(String key) throws Exception {

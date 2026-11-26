@@ -124,6 +124,8 @@ cd backend
 
 Das Backend läuft unter http://localhost:8080. Spring Boot DevTools startet die Anwendung neu, sobald die IDE die Klassen neu baut. Maven selbst beobachtet die Quellen nicht. Bei einem Start direkt aus der IDE die Hauptklasse `de.seezeit.aume.Application`, JDK 21 und das Spring-Profil `dev` verwenden, zum Beispiel mit dem Programmargument `--spring.profiles.active=dev`. Ohne dieses Profil werden die Keycloak-Einstellungen benötigt.
 
+Für Vorführungen gibt es zusätzlich das Profil `demo` (`"-Dspring-boot.run.profiles=dev,demo"`). Es legt für die Objektbetreuung `caretaker` in „Wohnanlage Sonne“ drei weitere WGs an: S-03 mit einer offenen Anfrage, S-04 angekündigt ab nächster Woche, S-05 angekündigt und bereits laufend. Die Tests nutzen nur `dev` und bleiben davon unberührt.
+
 ### Terminal 2: Frontend
 
 Windows (PowerShell):

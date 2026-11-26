@@ -1,6 +1,7 @@
 package de.seezeit.aume.inspection;
 
 import java.security.Principal;
+import java.util.Map;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
 import de.seezeit.aume.inspection.InspectionService.FindingRequest;
 import de.seezeit.aume.inspection.InspectionService.InspectionSummary;
@@ -8,6 +9,8 @@ import de.seezeit.aume.inspection.InspectionService.InspectionView;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,4 +67,10 @@ public class InspectionController {
     public record MarkOkRequest(String area) {}
 
     public record FinalizeRequest(Result overallResult) {}
+
+    /** 409 mit Code, damit das Frontend „erst ab Beginn des Zeitraums“ statt eines allgemeinen Konflikts zeigt. */
+    @ExceptionHandler(InspectionService.PeriodNotStartedException.class)
+    public ResponseEntity<Map<String, String>> periodNotStarted() {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("code", "period_not_started"));
+    }
 }

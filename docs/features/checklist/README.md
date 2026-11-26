@@ -4,13 +4,13 @@ Die Objektbetreuung arbeitet bei einer Kontrolle die veröffentlichte Checkliste
 
 ## Ablauf
 
-1. **Kontrollen** (`/inspections`) listet die geplanten und laufenden Kontrollen der eigenen Wohnanlage.
-2. **Kontrolle starten** bindet die aktuell veröffentlichte Checkliste unveränderlich an die Kontrolle (ADR-0007) und setzt den Status von `PLANNED` auf `DRAFT`.
+1. **Kontrollen → Aktuell** (`/inspections`) listet unter **Anstehende Kontrollen** (unter der Tabelle Anfragen) als Tabelle (Wohnanlage, WG, Erst- oder Nachkontrolle, Zeitraum mit Uhrzeit darunter, Status *Angekündigt*, *Geplant* oder *In Bearbeitung*) die Kontrollen der eigenen Wohnanlage, die jetzt durchgeführt werden können: begonnene (`DRAFT`) immer, geplante (`PLANNED`) nur, wenn ihr Zeitraum angekündigt ist oder sie keinen Zeitraum haben (z. B. Nachkontrollen). Sortiert nach Beginn des Zeitraums, Kontrollen ohne Zeitraum zuletzt. Noch nicht angekündigte Zeiträume stehen unter [Kontroll-Anfragen](../kontroll-anfragen/README.md). Angekündigte Kontrollen, deren Zeitraum noch nicht begonnen hat, stehen zum Planen schon in der Liste, statt „Kontrolle starten“ steht dort aber „ab TT.MM.“; starten lassen sie sich erst ab dem ersten Tag des Zeitraums.
+2. **Kontrolle starten** in der Liste startet die Kontrolle direkt und öffnet die Checkliste (Adresse `/inspections/{id}?start=1`, danach ohne den Parameter, damit Neuladen nicht erneut startet; klappt der Start nicht, öffnet die Seite mit dem Hinweis). Der Start bindet die aktuell veröffentlichte Checkliste unveränderlich an die Kontrolle (ADR-0007) und setzt den Status von `PLANNED` auf `DRAFT`.
 3. Je Bereich (Küche, Boden, Treppe, Bad) zeigt die Seite die Kriterien mit Beschreibung. Bewertet wird über:
    - **Bereich in Ordnung**: alle noch unbewerteten Kriterien des Bereichs auf `OK`
    - **Alles in Ordnung**: alle noch unbewerteten Kriterien der Kontrolle auf `OK`
    - **+ Mangel erfassen**: Kriterium, Schwere (Normal = `LIGHT`, Schwer = `SEVERE`) und Notiz (Pflicht) → `DEFICIENT`
-   - je Mangel **Vor Ort geklärt** (`RESOLVED_ON_SITE`), **Gebäudeursache** (`buildingCauseSuspected`) und **Löschen**
+   - Der erfasste Mangel steht direkt unter seinem Kriterium in der Checkliste, mit Schwere, Notiz und den Knöpfen **Vor Ort geklärt** (`RESOLVED_ON_SITE`), **Gebäudeursache** (`buildingCauseSuspected`) und **Löschen**
 4. **Zum Abschluss** zeigt den Stand je Bereich. Das Gesamtergebnis (Bestanden = `PASSED`, Nachkontrolle erforderlich = `FAILED`) wählt die prüfende Person; vorgeschlagen wird `FAILED`, sobald ein offener Mangel existiert (US-34). Abschließen geht erst, wenn alle Kriterien bewertet sind. Es setzt den Status direkt auf `PUBLISHED` (veröffentlicht von der prüfenden Person, `published_by`/`published_at`): Die WG sieht das Ergebnis sofort, eine Freigabe durch die Sachbearbeitung gibt es nicht (Teamentscheidung 24.11.2026). `FINALIZED` wird nicht mehr gesetzt.
 
 ## Rollen und Daten
@@ -30,15 +30,15 @@ Alle Endpunkte verlangen `INSPECTION_PERFORM`. Änderungen sind nur im Status `D
 
 | Methode und Pfad | Zweck |
 | --- | --- |
-| `GET /api/inspections?page=&size=` | offene Kontrollen der eigenen Wohnanlage (paginiert, standardmäßig nach `id` sortiert) |
+| `GET /api/inspections?page=&size=` | durchführbare Kontrollen der eigenen Wohnanlage wie oben, mit `residenceName` sowie `startsOn`, `endsOn`, `windowStart`, `windowEnd` des Zeitraums (leer ohne Zeitraum); paginiert, die Reihenfolge legt das Backend fest |
 | `GET /api/inspections/{id}` | Kontrolle mit Kriterien und Befunden |
-| `POST /api/inspections/{id}/start` | `PLANNED` → `DRAFT`, Checkliste binden; 409 ohne veröffentlichte Checkliste oder wenn sie keine Kriterien hat |
+| `POST /api/inspections/{id}/start` | `PLANNED` → `DRAFT`, Checkliste binden; 409 ohne veröffentlichte Checkliste oder wenn sie keine Kriterien hat; 409 mit `{"code": "period_not_started"}`, solange der Zeitraum der Kontrolle noch nicht begonnen hat |
 | `PUT /api/inspections/{id}/findings/{criterionId}` | Befund setzen: `{rating, severity, note, buildingCauseSuspected}`. Die Notiz wird getrimmt und darf danach höchstens 2000 Zeichen haben; `severity` und `buildingCauseSuspected` werden bei `OK` nicht gespeichert |
 | `DELETE /api/inspections/{id}/findings/{criterionId}` | Befund entfernen |
 | `POST /api/inspections/{id}/mark-ok` | `{area}` oder ohne Body: unbewertete Kriterien auf `OK` |
 | `POST /api/inspections/{id}/finalize` | `{overallResult}`, `DRAFT` → `PUBLISHED`; 409, solange ein Kriterium unbewertet ist oder die Checkliste keine Kriterien hat |
 
-Das Frontend zeigt bei 409 eine eigene Meldung und lädt die Kontrolle neu. Bei 401 leitet es zur Anmeldung weiter (Rückkehr zur Kontrolle), bei 403 auf `/forbidden`. „Kontrolle starten“ erscheint nur, wenn die Checkliste Kriterien hat. Der Mangel-Dialog wählt ein Kriterium ohne bestehenden Mangel vor und weist darauf hin, wenn Speichern einen bestehenden Mangel ersetzt.
+Das Frontend zeigt bei 409 eine eigene Meldung und lädt die Kontrolle neu. Bei 401 leitet es zur Anmeldung weiter (Rückkehr zur Kontrolle), bei 403 auf `/forbidden`. „Kontrolle starten“ erscheint nur, wenn die Checkliste Kriterien hat. Auswahlfelder (Kriterium, Schwere, Gesamtergebnis) nutzen `components/Select.tsx` im App-Design statt `<select>`. Der Mangel-Dialog wählt ein Kriterium ohne bestehenden Mangel vor und weist darauf hin, wenn Speichern einen bestehenden Mangel ersetzt.
 
 ## Entwicklungsdaten
 
