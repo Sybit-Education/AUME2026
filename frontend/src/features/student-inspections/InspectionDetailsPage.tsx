@@ -1,8 +1,15 @@
-import { useLoaderData } from 'react-router'
+import { useAuth } from '@/lib/auth/AuthContext'
 import InspectionAppointment from './InspectionAppointment'
-import type { loadAppointment } from './api'
+import type { AppointmentDetails } from './api'
 
-export default function InspectionDetailsPage() {
-  const data = useLoaderData<{ appointment: Awaited<ReturnType<typeof loadAppointment>> } | null>()
-  return <InspectionAppointment appointment={data?.appointment ?? null} />
+export default function InspectionDetailsPage({
+  appointment = null, loading, loadFailed,
+}: { appointment?: AppointmentDetails | null; loading?: boolean; loadFailed?: boolean }) {
+  const { user } = useAuth()
+  return <InspectionAppointment
+    appointment={appointment}
+    loading={loading}
+    loadFailed={loadFailed}
+    canReadChecklist={user?.privileges.includes('CHECKLIST_READ')}
+  />
 }

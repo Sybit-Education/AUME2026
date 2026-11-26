@@ -1,15 +1,15 @@
 # Kontrolltermin meiner WG sehen (US-15)
 
-Studierende sehen den angekündigten Kontrollzeitraum ihrer WG auf der Startseite. Bei einem vorhandenen Termin führt „Details“ zur direkt aufrufbaren Detailseite `/student/inspection/appointment`.
+Studierende sehen den angekündigten Kontrollzeitraum ihrer WG auf der Startseite. Bei einem vorhandenen Termin führt „Details“ zur direkt aufrufbaren Detailseite `/student/inspection/appointment`. Mit `CHECKLIST_READ` steht daneben „Checkliste“ als direkter Link zu `/student/inspection/checklist`.
 
 **Stand:** Der US-15-Lesepfad einschließlich des Änderungshinweises ist implementiert. Die produktive Anbindung der Terminänderung über US-18 und die Integrationsprüfung mit US-01 stehen aus.
 
-## Regeln
+## Regeln für den bisherigen Abruf
 
 - Das Backend ermittelt die WG aus der aktiven Mitgliedschaft der angemeldeten Person. Sie gilt ab `validFrom` bis vor `validTo`. Ein leeres `validTo` bedeutet, dass kein Ende festgelegt ist. `validTo` ist der erste Tag ohne Zugriff. Eine mitgesendete WG-ID beeinflusst die Auswahl nicht.
 - Die Abfrage berücksichtigt geplante Kontrollen der eigenen WG mit angekündigtem Zeitraum in der zugehörigen Wohnanlage. Der letzte Tag zählt noch zum Zeitraum. Von den passenden Terminen wird der mit dem frühesten Beginn angezeigt.
 - Ohne genau eine aktive WG oder bei mehreren passenden Terminen mit demselben frühesten Beginn liefert die API keinen Termin.
-- Start- und Detailseite zeigen den Kontrollzeitraum im selben lokalisierten Datumsformat. Einzeltage erscheinen einmal, bei einem Jahreswechsel tragen beide Daten das Jahr. Die Anzeige enthält ausschließlich den Zeitraum. Das Backend verwendet für Terminauswahl, Mitgliedschaft und Änderungshinweis das aktuelle Kalenderdatum in `Europe/Berlin`.
+- Start- und Detailseite zeigen den Kontrollzeitraum im selben lokalisierten Datumsformat. Einzeltage erscheinen einmal, bei einem Jahreswechsel tragen beide Daten das Jahr. Das Backend verwendet für Terminauswahl, Mitgliedschaft und Änderungshinweis das aktuelle Kalenderdatum in `Europe/Berlin`.
 - Bei einem nachträglich verschobenen, angekündigten Zeitraum sehen Studierende „Termin geändert“ bis zum Tag vor dem neuen Beginn. Ab dem ersten Tag blendet die Oberfläche den Hinweis beim nächsten API-Abruf aus.
 
 Die Kontrollkarte steht unter der Begrüßung. Die Willkommenszeile verwendet den Namen aus `GET /api/me`. Der zusätzliche Gruß aus `GET /api/greeting` enthält den gespeicherten Namen und die Wohnanlage. Sobald das Dashboard angezeigt wird, lädt die Karte den Termin unabhängig nach und zeigt währenddessen einen Ladezustand. Ein Sprachwechsel übersetzt die Karte und formatiert den vorhandenen Zeitraum neu.
@@ -18,17 +18,17 @@ Die Kontrollkarte steht unter der Begrüßung. Die Willkommenszeile verwendet de
 
 Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabruf auf der Startseite sind auf Personen mit der Rolle `STUDENT` beschränkt. Für `/student/inspection/appointment` prüft der Routen-Loader dieselbe Rolle. Der Backend-Endpunkt prüft `STUDENT` und beschränkt die Daten unabhängig vom Frontend auf die eigene WG.
 
-## API
+## API ohne Ansichtsparameter
 
 `GET /api/student/inspection-appointment` liefert bei einem Treffer `id` (Kontroll-ID), `startsOn` und `endsOn` (Kalenderdaten im Format `YYYY-MM-DD`) sowie die verpflichtenden Booleans `appointmentChanged` und `showInitialInspection`. `appointmentChanged` ist `true`, wenn der Zeitraum angekündigt wurde, `rescheduledAt` gesetzt ist und das Berliner Kalenderdatum vor `startsOn` liegt. `showInitialInspection` ist `true`, wenn die Kontrolle eine Erstkontrolle ist (`round == 0`) und `rescheduledAt` leer ist. Der interne Änderungszeitpunkt bleibt im Backend.
 
 | Ergebnis | Verhalten |
 | --- | --- |
-| `200 OK` mit `id`, `startsOn`, `endsOn`, `appointmentChanged` und `showInitialInspection` | Beide Kartenvarianten zeigen den Zeitraum. In der Kopfzeile erscheint bei `appointmentChanged: true` das gelbe Label „Termin geändert“, sonst bei `showInitialInspection: true` das blaue Label „Erstkontrolle“. Ist beides `false`, erscheint kein Label. Das gilt auch für geänderte Zeiträume ab ihrem Beginn und unveränderte Nachkontrollen. |
+| `200 OK` mit `id`, `startsOn`, `endsOn`, `appointmentChanged` und `showInitialInspection` | Die Startseitenkarte zeigt den Zeitraum. In der Kopfzeile erscheint bei `appointmentChanged: true` das gelbe Label „Termin geändert“, sonst bei `showInitialInspection: true` das blaue Label „Erstkontrolle“. Ist beides `false`, erscheint kein Label. Das gilt auch für geänderte Zeiträume ab ihrem Beginn und unveränderte Nachkontrollen. |
 | `204 No Content` | Die Karte zeigt „Keine Kontrolle angekündigt“. |
 | `401 Unauthorized` | Die bestehende Sitzungsbehandlung führt zum Login und erhält das Rückkehrziel. |
 | `403 Forbidden` | Die Rolle `STUDENT` fehlt. Das Frontend führt zu `/forbidden`. |
-| HTTP `500` oder Netzwerkfehler | Auf der Startseite zeigt nur die Kontrollkarte eine übersetzte Fehlermeldung. Begrüßung und Wohnanlage bleiben sichtbar. Auf `/student/inspection/appointment` greift das gemeinsame Routenfehlerlayout. |
+| HTTP `500` oder Netzwerkfehler | Auf der Startseite zeigt nur die Kontrollkarte eine übersetzte Fehlermeldung. Begrüßung und Wohnanlage bleiben sichtbar. Auf der Terminseite hat die Kontrollkarte einen eigenen Fehlerzustand. |
 
 ## Anbindung an die Sachbearbeitung (US-18)
 
@@ -46,13 +46,49 @@ Die vorhandene Spalte gehört zu `inspection_periods`. Hibernate erzeugt sie im 
 
 ## Kalenderexport
 
-Auf `/student/inspection/appointment` exportiert „In Kalender übernehmen“ den gesamten Kontrollzeitraum als ganztägiges `.ics`-Ereignis einschließlich des letzten Tages.
+Auf `/student/inspection/appointment` exportiert „In Kalender übernehmen“ den anstehenden oder laufenden Kontrollzeitraum als ganztägiges `.ics`-Ereignis einschließlich des letzten Tages.
+
+## Kontrollstatus auf der Terminseite (US-67)
+
+Nur der Reiter **Termin** ruft `GET /api/student/inspection-appointment?view=details` auf. Der Abruf ohne `view` bedient weiterhin die Startseite und den Leerzustand im Ergebnisreiter nach dem bisherigen Vertrag. `INFO_PAGE_READ` schaltet den unabhängig ladenden Abschnitt „Ablauf und Konsequenzen“ frei. Mit `CHECKLIST_READ` führt der Button auf der Terminkarte direkt zur Checkliste.
+
+Die Detailansicht ermittelt die aktive WG serverseitig (Berliner Kalenderdatum, `validFrom` inklusiv und `validTo` exklusiv). Sie betrachtet nur Kontrollen dieser WG mit angekündigtem Zeitraum derselben Wohnanlage. Zuerst zählt bei offenen, noch gültigen Zeiträumen der früheste Beginn. Andernfalls zählt die jüngste Ankündigung, gemessen am Beginn des Kontrollzeitraums. Haben zwei relevante Kontrollen denselben Beginn, liefert die API keinen Treffer.
+
+| Interner Stand der ausgewählten Kontrolle | `status` | `display` |
+| --- | --- | --- |
+| Angekündigt und geplant, Zeitraum gültig | `ANNOUNCED` | `UPCOMING` |
+| Entwurf, Zeitraum gültig | `ANNOUNCED` | `CURRENT` |
+| Entwurf, Zeitraum abgelaufen | `null` | `PAST` |
+| Veröffentlicht und sichtbar | `RESULT_AVAILABLE` | `PAST` |
+
+Ein maßgeblicher abgelaufener geplanter Termin, `FINALIZED` oder ein nicht sichtbares Ergebnis liefert `204`. Es erfolgt kein Rückgriff auf eine ältere Kontrolle. Ein Ergebnis muss zur ausgewählten ID gehören und ab Einzugstag (00:00 Uhr in Berlin) veröffentlicht sein. Veröffentlichte Kontrollen ohne angekündigten Zeitraum sind weiterhin nur im Ergebnisreiter sichtbar, soweit dessen Sichtbarkeitsregeln erfüllt sind.
+
+```json
+{
+  "id": 42,
+  "startsOn": "2026-12-07",
+  "endsOn": "2026-12-11",
+  "appointmentChanged": false,
+  "showInitialInspection": true,
+  "windowStart": "09:00",
+  "windowEnd": "16:00",
+  "status": "ANNOUNCED",
+  "display": "UPCOMING"
+}
+```
+
+Die beiden Zeitgrenzen sind lokale Uhrzeiten (`HH:mm` oder `null`). Die Karte zeigt den Ankunftshinweis, wenn beide Werte gültig und aufsteigend sind und die Darstellung bevorstehend oder laufend ist. Vergangene Entwürfe zeigen „Kontrollzeitraum“, sichtbare Veröffentlichungen „Letzte Kontrolle“. Die vorhandenen Labels „Erstkontrolle“ und „Termin geändert“ folgen weiterhin den oben beschriebenen Regeln.
+
+Auf der Terminseite steht unter dem Zeitraum und dem optionalen Ankunftshinweis der Zeitstrahl mit „Angekündigt“ und „Ergebnis verfügbar“. Bei `ANNOUNCED` ist nur der erste Punkt farbig. Bei `RESULT_AVAILABLE` sind beide Punkte und die Verbindungslinie farbig. Die jeweils aktuelle Station ist fett hervorgehoben. Bei `status: null` entfällt der Zeitstrahl.
+
+Die API liefert `200` mit der Detailansicht, `204` ohne darstellbare Kontrolle, `400` bei unbekannter Ansicht, `401` ohne Sitzung und `403` ohne Rolle `STUDENT`. Die Ansicht setzt `Cache-Control: no-store` für eigene Antworten.
 
 ## Tests
 
 - Im Verzeichnis `frontend` führt `npm test` die Format- und Kalender-Unit-Tests sowie die React- und Routingtests aus. `InspectionAppointment.test.tsx` prüft den Hinweis in DE/EN und den Download mit aktualisierten Kalendergrenzen. `StudentInspectionRoutes.test.tsx` prüft Start- und Detailseite, Details-Link, Änderungshinweis, Leerzustand, Rollen und Sitzungsablauf sowie die sichtbare personalisierte Begrüßung bei Terminfehlern.
 - Im Verzeichnis `backend` führt `./mvnw verify` beziehungsweise `.\mvnw.cmd verify` unter Windows die Backend-Suite aus. `ApplicationTests` prüft mit MockMvc und In-Memory-H2 unter anderem Zugriffsschutz, Terminauswahl und wiederholtes Seeding.
 - `StudentInspectionAppointmentIsolationTests` verwendet eine separate In-Memory-H2-Datenbank (`aume-us15-isolation`). Zwei Studierende in getrennten Sitzungen sehen jeweils nur den Termin ihrer eigenen WG, auch mit fremder WG-ID im Request. Gezielter Aufruf unter Windows: `.\mvnw.cmd "-Dtest=StudentInspectionAppointmentIsolationTests" test`. Unter macOS und Linux lautet der Aufruf `./mvnw -Dtest=StudentInspectionAppointmentIsolationTests test`.
+- Die Detailtests in derselben Backend-Klasse prüfen Statuswechsel, Zeitfenster, konkurrierende Termine, Nachkontrollen, Mitgliedschaft und Veröffentlichungsgrenzen. Die Frontend-Tests zur Karte und zu US-23 prüfen Statusdarstellung, direkte Navigation und unabhängige Ladevorgänge.
 
 ## Ergebnis und Mängel (US-38)
 

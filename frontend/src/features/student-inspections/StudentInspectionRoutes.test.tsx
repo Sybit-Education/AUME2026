@@ -61,11 +61,14 @@ beforeEach(async () => {
         ? `Hello ${name}, welcome to Sonne.`
         : `Hallo ${name}, willkommen in Sonne.`)
     }
-    if (path === '/api/student/inspection-appointment') {
+    if (path === '/api/student/inspection-appointment' || path === '/api/student/inspection-appointment?view=details') {
       if (studentInspectionResponse) return studentInspectionResponse
       if (studentInspectionFailure instanceof Error) throw studentInspectionFailure
       if (studentInspectionFailure !== null) return new Response(null, { status: studentInspectionFailure })
-      return studentInspectionAppointment ? Response.json(studentInspectionAppointment) : new Response(null, { status: 204 })
+      if (!studentInspectionAppointment) return new Response(null, { status: 204 })
+      return Response.json(path.endsWith('?view=details')
+        ? { ...studentInspectionAppointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00' }
+        : studentInspectionAppointment)
     }
     throw new Error(`Unexpected API call: ${path}`)
   })
@@ -87,16 +90,32 @@ it('shows the backend appointment without adding an exact date or change notice'
   expect(screen.getByText(period).textContent).toBe(period)
   expect(screen.queryByText(/Genauer Kontrolltag/)).toBeNull()
   expect(screen.queryByText('Termin geändert')).toBeNull()
+  expect(screen.queryByText('Angekündigt')).toBeNull()
   expect(screen.getByText('Erstkontrolle').parentElement)
     .toBe(screen.getByRole('heading', { name: 'Nächste Kontrolle' }).parentElement)
   expect(screen.queryByText('Beispieltermin für die lokale Entwicklung')).toBeNull()
+  expect(screen.queryByRole('link', { name: 'Checkliste' })).toBeNull()
   expect(screen.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('/student/inspection/appointment')
   fireEvent.click(screen.getByRole('link', { name: 'Details' }))
-  await screen.findByRole('heading', { name: 'Kontrolle' })
+  await screen.findByText('Angekündigt')
   expect(screen.getByText('Erstkontrolle').parentElement)
-    .toBe(screen.getByRole('heading', { name: 'Kontrolle' }).parentElement)
+    .toBe(screen.getByRole('heading', { name: 'Nächste Kontrolle' }).parentElement)
+  expect(screen.getByText('Die Objektbetreuung kommt zwischen 09:00 und 16:00 Uhr.')).toBeTruthy()
+  expect(screen.queryByRole('link', { name: 'Checkliste' })).toBeNull()
   expect(screen.getByText(period).textContent).toBe(period)
   expect(screen.getByRole('button', { name: 'In Kalender übernehmen' })).toBeTruthy()
+})
+
+it('shows the direct checklist link beside Details on the dashboard with CHECKLIST_READ', async () => {
+  signedIn = { ...student, privileges: [...student.privileges, 'CHECKLIST_READ'] }
+  studentInspectionAppointment = unchangedAppointment
+  mount()
+
+  const card = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  const details = await card.findByRole('link', { name: 'Details' })
+  const checklist = card.getByRole('link', { name: 'Checkliste' })
+  expect(checklist.getAttribute('href')).toBe('/student/inspection/checklist')
+  expect(checklist.parentElement).toBe(details.parentElement)
 })
 
 it('shows the rescheduled period and notice on the dashboard and appointment route', async () => {
@@ -117,11 +136,12 @@ it('shows the rescheduled period and notice on the dashboard and appointment rou
   expect(dashboardCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
   fireEvent.click(dashboardCard.getByRole('link', { name: 'Details' }))
 
-  const detailsCard = within(await screen.findByRole('region', { name: 'Kontrolle' }))
+  await screen.findByText('Angekündigt')
+  const detailsCard = within(screen.getByRole('region', { name: 'Nächste Kontrolle' }))
   expect(router.state.location.pathname).toBe('/student/inspection/appointment')
   expect(detailsCard.getByText('Termin geändert')).toBeTruthy()
   expect(detailsCard.getByText('Termin geändert').parentElement)
-    .toBe(detailsCard.getByRole('heading', { name: 'Kontrolle' }).parentElement)
+    .toBe(detailsCard.getByRole('heading', { name: 'Nächste Kontrolle' }).parentElement)
   expect(detailsCard.getByText('Mo 14.12. bis Fr 18.12.2026')).toBeTruthy()
 })
 
@@ -259,7 +279,7 @@ it('returns to the control details after signing in and shows the empty state', 
   fireEvent.click(loginButton)
 
   await screen.findByRole('heading', { name: 'Kontrolle' })
-  expect(screen.getByText('Keine Kontrolle angekündigt.')).toBeTruthy()
+  expect(await screen.findByText('Keine Kontrolle angekündigt.')).toBeTruthy()
   expect(login).toHaveBeenCalledWith('student', '/student/inspection/appointment')
   expect(router.state.location.pathname).toBe('/student/inspection/appointment')
 })
@@ -278,7 +298,25 @@ it('shows a translated error when the control details cannot be loaded', async (
   studentInspectionFailure = 500
   mount('/student/inspection/appointment')
 
-  await screen.findByRole('heading', { name: 'Die Seite konnte nicht geladen werden.' })
-  expect(screen.getByRole('alert').textContent).toBe('Der Kontrolltermin konnte nicht geladen werden.')
+  expect((await screen.findByRole('alert')).textContent).toBe('Der Kontrolltermin konnte nicht geladen werden.')
   expect(screen.queryByText('Keine Kontrolle angekündigt.')).toBeNull()
+})
+
+it('returns to login when the detail request reports an expired session', async () => {
+  signedIn = student
+  studentInspectionFailure = 401
+  const router = mount('/student/inspection/appointment')
+
+  await screen.findByRole('button', { name: 'Studierende' })
+  expect(router.state.location.pathname).toBe('/login')
+  expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/student/inspection/appointment')
+})
+
+it('redirects to forbidden when the detail request is denied', async () => {
+  signedIn = student
+  studentInspectionFailure = 403
+  const router = mount('/student/inspection/appointment')
+
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
 })

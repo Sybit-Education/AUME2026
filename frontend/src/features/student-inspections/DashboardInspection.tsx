@@ -64,6 +64,7 @@ export default function DashboardInspection() {
       loading={!currentResult}
       loadFailed={currentResult?.status === 'error'}
       variant="summary"
+      canReadChecklist={user.privileges.includes('CHECKLIST_READ')}
     />
   )
 }

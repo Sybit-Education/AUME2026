@@ -15,9 +15,9 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/inspection-planning?residence=<id>` | Angemeldet, `INSPECTION_PLAN` | Kontrollzeitraum einer Wohnanlage planen und abstimmen |
 | `/student` | Angemeldet | Leitet zur gemeinsamen Startseite `/` weiter |
 | `/student/inspection` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout der Kontroll-Reiter, Index leitet zu `/student/inspection/appointment` weiter |
-| `/student/inspection/appointment` | Angemeldet, Rolle `STUDENT` | Reiter „Termin“: Kontrolltermin der eigenen WG mit Kalenderexport |
+| `/student/inspection/appointment` | Angemeldet, Rolle `STUDENT` | Reiter „Termin“: Kontrolltermin und Status der eigenen WG mit Kalenderexport für anstehende oder laufende Zeiträume. Ablauf und Konsequenzen laden mit `INFO_PAGE_READ` unabhängig von der Terminkarte. |
 | `/student/inspection/checklist` | Angemeldet, Rolle `STUDENT`, `CHECKLIST_READ` | Reiter „Checkliste“: Kriterien je Bereich mit Erklärungen (US-21, US-22) |
-| `/student/inspection/process` | Angemeldet, Rolle `STUDENT`, `INFO_PAGE_READ` | Ablauf und Konsequenzen (US-23), Link unter der Checkliste; Reiter „Checkliste“ bleibt markiert |
+| `/student/inspection/process` | Angemeldet, Rolle `STUDENT`, `INFO_PAGE_READ` | Ältere Adresse für US-23, leitet nach `/student/inspection/appointment#inspection-process` weiter |
 | `/student/inspection/result` | Angemeldet, Rolle `STUDENT` | Reiter „Ergebnis“: neuestes veröffentlichtes Ergebnis der eigenen WG mit Mängeln (US-38) |
 | `/student/inspection/history` | Angemeldet, Rolle `STUDENT` | Reiter „Verlauf“: Platzhalter für den eigenen Kontrollverlauf |
 | `/student/cleaning-plan` | Angemeldet, `WG_MEMBERSHIP` | Putzplan der eigenen WG |

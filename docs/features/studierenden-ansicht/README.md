@@ -60,14 +60,14 @@ Die Kriterien speichern die deutsche Fassung. Englische Texte stehen in `checkli
 
 ## Ablauf und Konsequenzen (US-23)
 
-`/student/inspection/process` erklärt Studierenden, wie eine Kontrolle abläuft und was bei Mängeln passiert. Erreichbar ist die Seite über den Link **Ablauf und Konsequenzen** unter der Checkliste. Bewusst gibt es keinen fünften Reiter, weil die Navigation genau vier gleich breite Reiter vorsieht. Auf der Seite bleiben der Reiter **Checkliste** und der untere Tab **Kontrolle** markiert. Ein Zurück-Link führt zur Checkliste.
+Unterhalb der Kontrollkarte auf `/student/inspection/appointment` erklärt **Ablauf und Konsequenzen**, wie eine Kontrolle abläuft und was bei Mängeln passiert. Der Abschnitt lädt unabhängig von der Karte und bleibt auch ohne Kontrolltermin erreichbar. Die frühere Adresse `/student/inspection/process` leitet nach der Rechteprüfung zur Abschnittsüberschrift im Reiter **Termin** weiter.
 
-Die Seite zeigt drei aufklappbare Bereiche im Stil der Checkliste (farbiger Kartenkopf, grüner Pfeil, `aria-expanded`). Einen Zeitstrahl gibt es bewusst nicht.
+Die Überschrift und die drei aufklappbaren Bereiche stehen in einer gemeinsamen umrandeten Karte. Die Akkordeons behalten ihre farbigen Köpfe, Pfeile und `aria-expanded`.
 
 | Bereich | Feld aus `GET /api/info-pages` | Darstellung |
 | --- | --- | --- |
-| Ablauf einer Kontrolle | `process` | zugeklappt |
-| Konsequenzen und Kosten | `consequences` | hervorgehoben in weichem Rot (Warnfarben `--warn-*`), Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
+| So läuft die Kontrolle ab | `process` | zugeklappt |
+| Was passiert bei Mängeln? | `consequences` | hervorgehoben in weichem Rot (Warnfarben `--warn-*`), Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
 | Sauberkeitsstandards | `standards` | zugeklappt |
 
 Die Texte pflegt die Sachbearbeitung unter **Informationen** (`/standards/info`). Sie sind reiner Text: Jede Zeile wird ein eigener Absatz. Ist ein Text leer, erscheint „Noch keine Informationen.“ Die Texte gibt es nur auf Deutsch. In der englischen Oberfläche steht deshalb ein kurzer Hinweis darüber.
@@ -80,7 +80,7 @@ Das Feature liegt in `frontend/src/features/inspection-process/` und hat einen e
 | --- | :---: | :---: | :---: | --- |
 | `INFO_PAGE_READ` | ✓ | – | ✓ | Texte lesen; die Seite selbst ist zusätzlich auf die Rolle `STUDENT` beschränkt |
 
-Ohne `INFO_PAGE_READ` fehlt der Link unter der Checkliste, und die Adresse führt zu „Zugriff nicht erlaubt“, ohne die API aufzurufen.
+Ohne `INFO_PAGE_READ` fehlt der Abschnitt auf der Terminseite, und es erfolgt kein Informationsabruf. Ein direkter Aufruf der alten Adresse führt dann zu „Zugriff nicht erlaubt“.
 
 ## Design der Studierenden-App
 
