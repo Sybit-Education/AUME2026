@@ -98,19 +98,16 @@
     "inspectionNotStarted": "The inspection can only be started once its period has begun.",
     "selfCheck": "The self-check could not be loaded.",
     "selfCheckSave": "The self-check could not be saved.",
-<<<<<<< HEAD
     "photoType": "Please choose a photo (JPEG, PNG, WebP or HEIC).",
     "photoTooLarge": "The photo is too large (10 MB at most).",
     "photoUpload": "The photo could not be uploaded. Please try again.",
     "photoLoad": "The photo could not be loaded.",
     "photoTooMany": "This defect already has 5 photos.",
-    "photoNeedsDefect": "Photos can only be added to a defect."
-=======
+    "photoNeedsDefect": "Photos can only be added to a defect.",
     "periodOccasionRequired": "Please choose an occasion.",
     "periodFlatsRequired": "Please choose at least one flat.",
     "periodUnknownFlat": "A selected flat does not belong to this residence.",
     "periodFlatOpen": "A selected flat now has an open inspection. Please check your selection."
->>>>>>> origin/develop
   },
   "navigation": {
     "main": "Main navigation",

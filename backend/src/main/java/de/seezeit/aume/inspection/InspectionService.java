@@ -310,7 +310,6 @@ public class InspectionService {
     /** Die Kontrolle gehört zu einem Zeitraum, der noch nicht begonnen hat. */
     public static class PeriodNotStartedException extends RuntimeException {}
 
-<<<<<<< HEAD
     /** Foto passt nicht zum Mangel (400); {@code code} zeigt die Oberfläche als eigene Meldung an. */
     public static class PhotoRejectedException extends RuntimeException {
         private final String code;
@@ -325,13 +324,10 @@ public class InspectionService {
         }
     }
 
-    /** Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. */
-=======
     /**
      * Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. {@code periodKind}
      * unterscheidet reguläre von individuellen Kontrollen (US-18b).
      */
->>>>>>> origin/develop
     public record InspectionSummary(Long id, String flatLabel, String residenceName, Status status, int round,
         LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
         InspectionPeriodEntity.Kind periodKind) {}
