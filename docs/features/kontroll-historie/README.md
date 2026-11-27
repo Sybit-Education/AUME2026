@@ -4,8 +4,8 @@ Die Objektbetreuung sieht die abgeschlossenen Kontrollen ihrer Wohnanlage, kann 
 
 ## Ablauf
 
-1. Unter **Kontrollen** gibt es die Reiter **Aktuell** (`/inspections`, mit den Tabellen [Anfragen](../kontroll-anfragen/README.md) und Anstehende Kontrollen) und **Historie** (`/inspections/history`).
-2. Die Historie listet Kontrollen im Status `FINALIZED` oder `PUBLISHED`, neueste zuerst. Die Spalten folgen demselben Schema wie die Tabellen unter Aktuell: Wohnanlage, WG, Kontrolle (Erst- oder Nachkontrolle), Datum, Ergebnis, Mängel (Anzahl `DEFICIENT`; vor Ort geklärte zählen nicht) und prüfende Person.
+1. Die Hauptnavigation der Objektbetreuung hat die Reiter **Kontrollen** (`/inspections`, mit den Tabellen [Anfragen](../kontroll-anfragen/README.md) und Anstehende Kontrollen) und **Historie** (`/inspections/history`). In einer einzelnen Kontrolle bleibt „Kontrollen“ markiert.
+2. Die Historie listet Kontrollen im Status `FINALIZED` oder `PUBLISHED`, neueste zuerst. Die Spalten folgen demselben Schema wie die Tabellen unter Kontrollen: Wohnanlage, WG, Kontrolle (Erst- oder Nachkontrolle), Datum, Ergebnis, Mängel (Anzahl `DEFICIENT`; vor Ort geklärte zählen nicht) und prüfende Person.
 3. Sortieren und Filtern direkt in der Kopfzeile der Tabelle:
    - Ein Klick auf eine Überschrift (alle Spalten außer „Ansehen“) sortiert nach dieser Spalte; ein zweiter Klick dreht die Richtung. Datum beginnt mit „neueste zuerst“, alle anderen aufsteigend. „Mängel“ sortiert nach der Anzahl der Mängel; das Backend zählt sie dafür in der Abfrage.
    - Das Trichter-Symbol neben Wohnanlage, WG, Kontrolle, Datum, Ergebnis und Mängel öffnet ein kleines Menü mit dem Filter dieser Spalte: Teil des Namens der Wohnanlage, Teil der WG-Bezeichnung, Erst- oder Nachkontrolle, Zeitraum (von/bis, beide Tage inklusive; Eingabe als Tag/Monat/Jahr, z. B. `28.03.2026`, oder über den Kalender-Knopf), Ergebnis, mit oder ohne Mängel. Bei „Kontrolle“, „Ergebnis“ und „Mängel“ stehen die Optionen als Liste im App-Design (kein `<select>`, dessen Liste der Browser zeichnet); ein Klick filtert sofort. Ein gefüllter Trichter zeigt einen aktiven Filter.
@@ -22,7 +22,7 @@ Ein Etage-Filter wie im Wireframe fehlt, weil `flats` keine Etage speichert.
 
 ### Vorgeschichte der WG in der Kontrolle (US-51)
 
-Beim Abarbeiten der Checkliste (Status `PLANNED` oder `DRAFT`) zeigt die Kontrollseite oben die Karte **Vorgeschichte der WG**: die letzten drei abgeschlossenen Kontrollen derselben WG mit Datum, Erst- oder Nachkontrolle, Ergebnis und ihren Mängeln (Bereich, Kriterium, Schwere, Notiz, Gebäudeursache, „vor Ort geklärt“). Gibt es frühere Mängel, ist die Karte aufgeklappt, sonst zugeklappt. Der Aufbau folgt „Frühere Kontrollen“ aus dem Wireframe; eine eigene Ansicht für die Objektbetreuung zeigt das Wireframe nicht.
+Beim Abarbeiten der Checkliste (Status `PLANNED` oder `DRAFT`) zeigt die Kontrollseite oben die Karte **Vorgeschichte der WG**: die letzten drei abgeschlossenen Kontrollen derselben WG mit Datum, Erst- oder Nachkontrolle, Ergebnis und ihren Mängeln (Bereich, Kriterium, Schwere, Notiz, Gebäudeursache, „vor Ort geklärt“). Die Karte ist immer aufgeklappt und lässt sich über den Pfeil rechts zuklappen. Ohne frühere Kontrollen steht unter der Überschrift „Keine früheren Kontrollen dieser WG.“ Frühere Kontrollen sind nur bei *Nicht bestanden* rot umrandet. Der Aufbau folgt „Frühere Kontrollen“ aus dem Wireframe; eine eigene Ansicht für die Objektbetreuung zeigt das Wireframe nicht.
 
 Zusätzlich trägt jedes Kriterium, das in einer dieser Kontrollen auffällig war, den Hinweis **„früher auffällig · Datum“**; aufgeklappt steht die zuletzt notierte Bemerkung darunter. „Auffällig“ statt „Mangel“, weil auch vor Ort geklärte Befunde zählen, die fachlich kein Mangel sind. Zugeordnet wird über Bereich und Kriteriumstitel, nicht über die ID, weil jede Checklisten-Fassung eigene Kriterien-IDs hat.
 

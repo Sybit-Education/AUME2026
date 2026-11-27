@@ -11,17 +11,8 @@ export default function ProfilePage() {
   const data = useLoaderData<Awaited<ReturnType<typeof loadProfile>> | null>()
   if (!data) return <LoadingPage />
 
-  const isCaretaker = user?.roles.includes('CARETAKER') ?? false
   const assignedFlats = data.responsibilities.reduce((count, residence) => count + residence.flats.length, 0)
   const initial = user?.name.trim().charAt(0).toUpperCase() ?? ''
-
-  if (!isCaretaker) {
-    return (
-      <div className="page-stack profile-page">
-        <LegalFooter />
-      </div>
-    )
-  }
 
   return (
     <div className="page-stack profile-page">

@@ -123,7 +123,8 @@
     "more": "More",
     "studentTabs": "Student navigation",
     "inspectionPlanning": "Plan inspections",
-    "wg": "My flat"
+    "wg": "My flat",
+    "history": "History"
   },
   "inspectionOverview": {
     "openWork": "Open work",
@@ -475,8 +476,6 @@
     "continue": "Continue inspection",
     "started": "Inspection started.",
     "round": "Follow-up {{round}}",
-    "places_one": "{{count}} place",
-    "places_other": "{{count}} places",
     "areas": "Areas",
     "checklistOf": "Checklist {{area}}",
     "noChecklist": "There is no published checklist.",
@@ -536,7 +535,6 @@
       "PASSED": "Passed",
       "FAILED": "Follow-up required"
     },
-    "tabHistory": "History",
     "history": {
       "title": "Inspection history",
       "flat": "Flat",
@@ -579,8 +577,6 @@
     "previous": {
       "title": "History of this flat",
       "none": "No earlier inspections of this flat.",
-      "summary_one": "Last completed inspection",
-      "summary_other": "Last {{count}} completed inspections",
       "noDefects": "No defects.",
       "earlier": "previously flagged · {{date}}",
       "earlierNote": "Last note: {{note}}"
@@ -592,7 +588,6 @@
     "upcomingTitle": "Upcoming inspections",
     "startsFrom": "from {{date}}",
     "residence": "Residence",
-    "tabCurrent": "Current",
     "ready": "Ready to start",
     "defectLabel": "Defect",
     "defectOf": "Defect for {{criterion}}",

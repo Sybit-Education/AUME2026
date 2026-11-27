@@ -123,7 +123,8 @@
     "more": "Mehr",
     "studentTabs": "Navigation der Studierenden",
     "inspectionPlanning": "Kontrollen planen",
-    "wg": "Meine WG"
+    "wg": "Meine WG",
+    "history": "Historie"
   },
   "inspectionOverview": {
     "openWork": "Offene Arbeit",
@@ -475,8 +476,6 @@
     "continue": "Kontrolle fortsetzen",
     "started": "Kontrolle gestartet.",
     "round": "Nachkontrolle {{round}}",
-    "places_one": "{{count}} Platz",
-    "places_other": "{{count}} Plätze",
     "areas": "Bereiche",
     "checklistOf": "Checkliste {{area}}",
     "noChecklist": "Es ist keine veröffentlichte Checkliste vorhanden.",
@@ -536,7 +535,6 @@
       "PASSED": "Bestanden",
       "FAILED": "Nachkontrolle erforderlich"
     },
-    "tabHistory": "Historie",
     "history": {
       "title": "Kontroll-Historie",
       "flat": "WG",
@@ -579,8 +577,6 @@
     "previous": {
       "title": "Vorgeschichte der WG",
       "none": "Keine früheren Kontrollen dieser WG.",
-      "summary_one": "Letzte abgeschlossene Kontrolle",
-      "summary_other": "Letzte {{count}} abgeschlossene Kontrollen",
       "noDefects": "Keine Mängel.",
       "earlier": "früher auffällig · {{date}}",
       "earlierNote": "Zuletzt notiert: {{note}}"
@@ -592,7 +588,6 @@
     "upcomingTitle": "Anstehende Kontrollen",
     "startsFrom": "ab {{date}}",
     "residence": "Wohnanlage",
-    "tabCurrent": "Aktuell",
     "ready": "Startbereit",
     "defectLabel": "Mangel",
     "defectOf": "Mangel bei {{criterion}}",

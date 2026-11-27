@@ -6,7 +6,6 @@ import type { InspectionPage, InspectionSummary } from './api'
 import type { RequestPage } from './requestsApi'
 import RequestsSection from './RequestsSection'
 import { formatDayMonth, formatPeriod, formatWindow, today } from './dates'
-import InspectionTabs from './InspectionTabs'
 import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
 import { compareValues, contains, overlaps, periodChipLabel, useFilterMenu, useLocalTable, type FilterSpec } from './tableState'
 import './inspections.css'
@@ -49,7 +48,6 @@ export default function InspectionsPage() {
 
   return (
     <section className="card obm">
-      <InspectionTabs />
       <h2>{t('navigation.inspections')}</h2>
       {loaded.requests && <RequestsSection data={loaded.requests} />}
       <UpcomingSection inspections={loaded.inspections.content} />

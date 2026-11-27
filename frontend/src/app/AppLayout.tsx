@@ -7,6 +7,7 @@ import NotificationBell from '@/features/student-messages/NotificationBell'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { supportedLanguage } from '@/lib/i18n'
 import type { PageHandle } from '@/lib/pageHandle'
+import { profileNavigation } from '@/features/profile/routes'
 import { navigation, studentTabs, usesStudentView } from './navigation'
 
 export default function AppLayout({ children }: PropsWithChildren) {
@@ -20,6 +21,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const busy = auth.busy || transition.state !== 'idle' || revalidator.state !== 'idle'
   const [error, setError] = useState<ErrorKey | null>(null)
   const studentView = auth.user ? usesStudentView(auth.user.roles) : false
+  // Wie NavLink, aber ohne Markierung unter `inactiveWithin` (z. B. „Kontrollen“ nicht in der Historie).
+  const mainActive = (item: (typeof navigation)[number]) =>
+    Boolean(matchPath({ path: item.to, end: item.to === '/' }, pathname))
+    && !item.inactiveWithin?.some((pattern) => matchPath(pattern, pathname))
   const allowed = (privilege?: string) => !privilege || auth.user!.privileges.includes(privilege)
   // Titel und Zurück-Ziel der Kopfleiste kommen aus der tiefsten Route mit `handle.title`.
   const page = useMatches().map((match) => match.handle as PageHandle | undefined)
@@ -49,8 +54,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
         <h1 className="brand">{t('app.name')}</h1>
         {auth.user && !studentView && (
           <nav className="seg" aria-label={t('navigation.main')}>
-            {navigation.filter((item) => allowed(item.privilege)).map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.to === '/'} className={({ isActive }) => isActive ? 'on' : undefined}>{t(item.label)}</NavLink>
+            {navigation.filter((item) => allowed(item.privilege) && (item.visibleFor?.(auth.user!) ?? true)).map((item) => (
+              <Link key={item.to} to={item.to} className={mainActive(item) ? 'on' : undefined}
+                aria-current={mainActive(item) ? 'page' : undefined}>
+                {t(item.label)}
+              </Link>
             ))}
           </nav>
         )}
@@ -66,7 +74,16 @@ export default function AppLayout({ children }: PropsWithChildren) {
         )}
         {auth.user && (
           <>
-            <span className="who">{auth.user.name}</span>
+            {/* Wer ein Profil hat, findet es rechts an Stelle des Namens; sonst bleibt der Name stehen. */}
+            {allowed(profileNavigation.privilege) ? (
+              <NavLink to={profileNavigation.to} className={({ isActive }) => isActive ? 'profile-link on' : 'profile-link'}
+                aria-label={t(profileNavigation.label)} title={t(profileNavigation.label)}>
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+                </svg>
+              </NavLink>
+            ) : <span className="who">{auth.user.name}</span>}
             <button className="btn gh" disabled={busy} onClick={() => void signOut()}>{t('auth.logout')}</button>
           </>
         )}

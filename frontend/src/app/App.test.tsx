@@ -134,9 +134,43 @@ it('restores an existing session when opening a protected page directly', async 
   expect(login).not.toHaveBeenCalled()
 })
 
-it('shows caretaker assignments, roles and shared flats on the profile', async () => {
+it('shows inspections and history as separate main tabs for caretakers', async () => {
+  signedIn = { ...caretaker, privileges: [...caretaker.privileges, 'INSPECTION_PERFORM'] }
+  const base = vi.mocked(api).getMockImplementation()!
+  vi.mocked(api).mockImplementation(async (path, init) => String(path).startsWith('/api/inspections/history')
+    ? Response.json({ content: [], page: { number: 0, size: 20, totalElements: 0, totalPages: 0 } })
+    : base(path, init))
+  mount('/inspections/history')
+  const main = within(await screen.findByRole('navigation', { name: 'Hauptnavigation' }))
+  const history = await main.findByRole('link', { name: 'Historie' })
+  expect(history.getAttribute('href')).toBe('/inspections/history')
+  expect(history.getAttribute('aria-current')).toBe('page')
+  // In der Historie ist nur „Historie“ markiert, nicht zusätzlich „Kontrollen“.
+  expect(main.getByRole('link', { name: 'Kontrollen' }).getAttribute('aria-current')).toBeNull()
+  expect(screen.queryByRole('link', { name: 'Aktuell' })).toBeNull()
+})
+
+it('hides residences from caretakers and blocks the page', async () => {
   signedIn = caretaker
+  const router = mount('/residences')
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
+  expect(screen.queryByRole('link', { name: 'Wohnanlagen' })).toBeNull()
+  expect(vi.mocked(api).mock.calls.some(([path]) => path.startsWith('/api/residences?'))).toBe(false)
+})
+
+it('hides the profile from clerks and blocks the page', async () => {
+  signedIn = clerk
+  const router = mount('/profile')
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
+  expect(screen.queryByRole('link', { name: 'Profil' })).toBeNull()
+})
+
+it('shows caretaker assignments, roles and shared flats on the profile', async () => {
+  signedIn = { ...caretaker, privileges: [...caretaker.privileges, 'INSPECTION_PERFORM'] }
   mount('/profile')
+  expect(await screen.findByRole('link', { name: 'Profil' })).toBeDefined()
   await screen.findByText('Petershausen')
   expectHtwgLegalLinks()
   const summary = screen.getByRole('group', { name: 'Profilübersicht' })

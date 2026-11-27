@@ -1,9 +1,9 @@
 import type de from '@/locales/de.json'
 import type { NavIconName } from '@/components/NavIcon'
+import type { LoggedInUser } from '@/lib/auth/client'
 import { residenceNavigation } from '@/features/residences/routes'
-import { profileNavigation } from '@/features/profile/routes'
 import { inspectionPlanningNavigation } from '@/features/inspection-planning/routes'
-import { inspectionNavigation } from '@/features/inspections/routes'
+import { inspectionHistoryNavigation, inspectionNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
 import { wgNavigation } from '@/features/wg/routes'
 
@@ -11,14 +11,18 @@ type NavigationItem = {
   to: string
   label: `navigation.${keyof typeof de.navigation}`
   privilege?: string
+  /** Zusätzliche Bedingung neben dem Privileg, z. B. Wohnanlagen nicht für die Objektbetreuung. */
+  visibleFor?: (user: LoggedInUser) => boolean
+  /** Adressmuster unterhalb von {@code to}, unter denen der Reiter nicht markiert ist (dort gilt ein eigener). */
+  inactiveWithin?: readonly string[]
 }
 
 export const navigation: NavigationItem[] = [
   { to: '/', label: 'navigation.dashboard' },
-  profileNavigation,
   residenceNavigation,
   inspectionPlanningNavigation,
   inspectionNavigation,
+  inspectionHistoryNavigation,
   standardsNavigation,
   wgNavigation,
 ]
