@@ -22,6 +22,7 @@
   "roles": {
     "student": "Studierende",
     "caretaker": "Objektbetreuung",
+    "caretaker2": "Objektbetreuung (Vertretung)",
     "clerk": "Sachbearbeitung"
   },
   "errors": {

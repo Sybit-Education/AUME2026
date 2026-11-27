@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 import de.seezeit.aume.auth.AppUserService;
+import de.seezeit.aume.residence.StaffAccessService;
 import de.seezeit.aume.inspection.FindingEntity.Rating;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
 import de.seezeit.aume.inspection.InspectionEntity.Status;
@@ -29,8 +31,8 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 
 /**
- * Kontroll-Historie der Objektbetreuung: abgeschlossene und veröffentlichte Kontrollen der eigenen
- * Wohnanlage, neueste zuerst. Die Detailansicht nutzt {@link InspectionService#view}.
+ * Kontroll-Historie der Objektbetreuung: abgeschlossene und veröffentlichte Kontrollen der betreuten
+ * und vertretenen Wohnanlagen, neueste zuerst. Die Detailansicht nutzt {@link InspectionService#view}.
  */
 @Service
 @Transactional(readOnly = true)
@@ -42,19 +44,23 @@ public class InspectionHistoryService {
     private final InspectionRepository inspections;
     private final FindingRepository findings;
     private final AppUserService users;
+    private final StaffAccessService staffAccess;
 
     public InspectionHistoryService(InspectionRepository inspections, FindingRepository findings,
-            AppUserService users) {
+            AppUserService users, StaffAccessService staffAccess) {
         this.inspections = inspections;
         this.findings = findings;
         this.users = users;
+        this.staffAccess = staffAccess;
     }
 
     public Page<HistoryEntry> history(String userKey, HistoryFilter filter, HistoryOrder order, Pageable pageable) {
         var user = users.requireUser(userKey);
         validate(filter);
         // Nur die Spalten aus HistoryOrder sind sortierbar; ein `sort`-Parameter des Clients wird ignoriert.
-        var spec = matching(user.getResidence().getId(), filter);
+        var residences = staffAccess.residencesInCare(user.getId());
+        if (residences.isEmpty()) return Page.empty(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        var spec = matching(residences, filter);
         Page<InspectionEntity> result;
         if (order.by() == OrderBy.DEFECTS) {
             // Die Zahl der Mängel steht nicht in einer Spalte; die Abfrage sortiert selbst danach.
@@ -89,11 +95,11 @@ public class InspectionHistoryService {
         }
     }
 
-    private static Specification<InspectionEntity> matching(Long residenceId, HistoryFilter filter) {
+    private static Specification<InspectionEntity> matching(Collection<Long> residenceIds, HistoryFilter filter) {
         return (root, query, cb) -> {
             var flat = root.join("flat");
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(flat.get("residence").get("id"), residenceId));
+            predicates.add(flat.get("residence").get("id").in(residenceIds));
             predicates.add(root.get("status").in(DONE));
             if (StringUtils.hasText(filter.flat())) {
                 predicates.add(cb.like(cb.lower(flat.get("label")),

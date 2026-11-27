@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
+import de.seezeit.aume.residence.StaffAccessService;
 import de.seezeit.aume.inspection.FindingEntity.Rating;
 import de.seezeit.aume.inspection.FindingEntity.Severity;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
@@ -37,13 +38,15 @@ public class InspectionService {
     private final FindingRepository findings;
     private final ChecklistService checklists;
     private final AppUserService users;
+    private final StaffAccessService staffAccess;
 
     public InspectionService(InspectionRepository inspections, FindingRepository findings,
-            ChecklistService checklists, AppUserService users) {
+            ChecklistService checklists, AppUserService users, StaffAccessService staffAccess) {
         this.inspections = inspections;
         this.findings = findings;
         this.checklists = checklists;
         this.users = users;
+        this.staffAccess = staffAccess;
     }
 
     @Transactional(readOnly = true)
@@ -51,7 +54,9 @@ public class InspectionService {
         var user = users.requireUser(userKey);
         // Die Reihenfolge legt die Abfrage fest, eine Sortierung aus der Anfrage wird nicht angewendet.
         var page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        return inspections.findDue(user.getResidence().getId(), Status.PLANNED, Status.DRAFT, page)
+        var residences = staffAccess.residencesInCare(user.getId());
+        if (residences.isEmpty()) return Page.empty(page);
+        return inspections.findDue(residences, Status.PLANNED, Status.DRAFT, page)
             .map(inspection -> {
                 var period = inspection.getPeriod();
                 return new InspectionSummary(inspection.getId(), inspection.getFlat().getLabel(),
@@ -164,15 +169,28 @@ public class InspectionService {
 
     private InspectionEntity require(UserEntity user, Long id) {
         return inspections.findById(id)
-            .filter(inspection -> inspection.getFlat().getResidence().getId().equals(user.getResidence().getId()))
+            .filter(inspection -> inCare(user, inspection))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     /** Wie {@link #require}, sperrt die Kontrolle aber für die restliche Transaktion. */
     private InspectionEntity requireLocked(UserEntity user, Long id) {
         return inspections.findLockedById(id)
-            .filter(inspection -> inspection.getFlat().getResidence().getId().equals(user.getResidence().getId()))
+            .filter(inspection -> inCare(user, inspection))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    /**
+     * Fremde Kontrollen verhalten sich wie nicht vorhanden (404); zuständig sind Betreuung und Vertretung.
+     * Eine begonnene Kontrolle darf die Person, die sie durchführt, auch nach einem Wechsel der Zuständigkeit
+     * noch abschließen, sonst bliebe der halb bewertete Entwurf hängen.
+     */
+    private boolean inCare(UserEntity user, InspectionEntity inspection) {
+        if (inspection.getStatus() == Status.DRAFT && inspection.getInspector() != null
+                && inspection.getInspector().getId().equals(user.getId())) {
+            return true;
+        }
+        return staffAccess.residencesInCare(user.getId()).contains(inspection.getFlat().getResidence().getId());
     }
 
     private InspectionEntity requireDraft(UserEntity user, Long id) {

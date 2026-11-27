@@ -4,7 +4,7 @@ Die JPA-Entities im Backend sind das Schema. Hibernate legt die Tabellen im Prof
 
 Jedes Modul schreibt nur in die eigenen Tabellen ([ADR-0003](adr/0003-structure-the-backend-as-a-modular-monolith.md)). Fremdschlüssel über Modulgrenzen sind die gemeinsamen Verträge. Dateien selbst liegen im privaten Dateispeicher, in der Datenbank steht nur `attachments` ([ADR-0005](adr/0005-use-postgresql-and-private-attachment-storage.md)).
 
-`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal. Für die Sachbearbeitung gilt bereits `staff_assignments`. `users.user_type` ist die Sicht und einer von `STUDENT`, `CARETAKER` oder `CLERK`. Die Tabelle bleibt eine.
+`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal. Für die Sachbearbeitung gilt bereits `staff_assignments`, für die Objektbetreuung bei Kontrollen ebenfalls (Betreuung und Vertretung, US-03). `users.user_type` ist die Sicht und einer von `STUDENT`, `CARETAKER` oder `CLERK`. Die Tabelle bleibt eine.
 
 ## Überblick
 
