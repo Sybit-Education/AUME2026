@@ -212,9 +212,12 @@ it('announces an agreed period with an edited template after a confirmation step
   expect(message.value).toBe('Liebe WG,\n\nVorlage')
   fireEvent.change(message, { target: { value: 'Eigener Text' } })
 
-  fireEvent.click(dialog.getByRole('button', { name: 'Weiter' }))
+  const next = dialog.getByRole('button', { name: 'Weiter' }) as HTMLButtonElement
+  fireEvent.click(next)
   expect(dialog.getByText('Bitte prüfe die Angaben. Nach dem Senden steht die Kontrolle auf „Angekündigt“.')).toBeDefined()
   expect(dialog.getByText('Kein Anhang')).toBeDefined()
+  // Würde React den geklickten Button zu „Jetzt ankündigen“ umbauen, sendet der Browser das Formular sofort ab.
+  expect(next.type).toBe('button')
   expect(writes()).toHaveLength(0)
 
   fireEvent.click(dialog.getByRole('button', { name: 'Jetzt ankündigen' }))

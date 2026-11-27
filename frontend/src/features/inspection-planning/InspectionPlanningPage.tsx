@@ -360,15 +360,16 @@ function AnnounceDialog({ period, draft, error, closeUrl, onClose }: {
         )}
         {shownError && <p className="err" role="alert">{t(shownError)}</p>}
         <div className="ft">
+          {/* Eigene keys: Sonst wird „Weiter“ beim Klick zum Submit-Button umgebaut und sendet sofort ab. */}
           {confirming ? (
             <>
               <button className="btn gh" type="button" onClick={() => setConfirming(false)}>{t('inspectionPlanning.back')}</button>
-              <button className="btn" type="submit" disabled={saving || uploading}>{t('inspectionPlanning.sendAnnouncement')}</button>
+              <button key="send" className="btn" type="submit" disabled={saving || uploading}>{t('inspectionPlanning.sendAnnouncement')}</button>
             </>
           ) : (
             <>
               <Link className="btn gh" to={closeUrl} replace>{t('inspectionPlanning.cancel')}</Link>
-              <button className="btn" type="button" disabled={message.trim() === ''} onClick={() => setConfirming(true)}>
+              <button key="next" className="btn" type="button" disabled={message.trim() === ''} onClick={() => setConfirming(true)}>
                 {t('inspectionPlanning.next')}
               </button>
             </>
@@ -616,7 +617,8 @@ export default function InspectionPlanningPage() {
           closeUrl={closeUrl}
           onClose={closeDialog}
         />
-      )}      {withdrawing && <WithdrawDialog period={withdrawing} onClose={() => setWithdrawId(null)} />}
+      )}
+      {withdrawing && <WithdrawDialog period={withdrawing} onClose={() => setWithdrawId(null)} />}
     </>
   )
 }
