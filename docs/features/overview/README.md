@@ -4,16 +4,16 @@ Issue #41: Als Objektbetreuer möchte ich schnell eine Übersicht über offene A
 
 ## Inhalt
 
-Die Übersicht zeigt nur, was schon umgesetzt ist. Sie nutzt dieselben Daten und Tabellen wie die Seite Kontrollen (`/inspections`), damit Inhalt und Logik an beiden Stellen gleich sind.
+Die Übersicht zeigt nur, was schon umgesetzt ist. Sie ist die einzige Seite mit den aktuellen Kontrollen; einen eigenen Reiter „Kontrollen“ gibt es nicht mehr. Alte Links auf `/inspections` leiten hierher weiter.
 
-- **Kennzahlen** (jede führt zur Seite Kontrollen `/inspections`)
+- **Kennzahlen** (ein Klick springt zur passenden Tabelle darunter: Vorschläge zu den Anfragen, die beiden anderen zu Anstehend)
   - Vorschläge zu beantworten: Anfragen im Status `WAITING_FOR_CARETAKER` (je Zeitraum, nur mit `INSPECTION_PERIOD_RESPOND`)
   - Angekündigte Kontrollen: wie „Angekündigt“ in der Tabelle, also angekündigt und der Zeitraum hat noch nicht begonnen
   - Nachkontrollen: anstehende Kontrollen mit `round` ≥ 1
 
   Den Status bestimmt für Tabelle und Kachel dieselbe Funktion (`statusOf` in `upcomingStatus.ts`). „Heute“ gilt wie im Backend in Berliner Zeit und wird auf einer offenen Seite jede Minute und beim Zurückkehren neu bestimmt (`useToday`), sodass die Zahlen nach Mitternacht von selbst stimmen.
-- **Anfragen**: die Tabelle der [Kontroll-Anfragen](../kontroll-anfragen/README.md) (#44). „Beantworten“ öffnet den Dialog auf der Seite Kontrollen (`/inspections?answer={periodId}`).
-- **Anstehende Kontrollen**: die Tabelle „Anstehende Kontrollen“ der Seite Kontrollen mit „Kontrolle starten“ bzw. „Fortsetzen“.
+- **Anfragen**: die Tabelle der [Kontroll-Anfragen](../kontroll-anfragen/README.md) (#44). „Beantworten“ öffnet den Dialog direkt hier (`/?answer={periodId}`); gespeichert wird über die Action der Startseite.
+- **Anstehende Kontrollen**: mit „Kontrolle starten“ bzw. „Fortsetzen“. Öffnet man eine Kontrolle, bleibt der Reiter „Übersicht“ markiert.
 
 ## Rollen und API
 
@@ -22,7 +22,7 @@ Die Übersicht zeigt nur, was schon umgesetzt ist. Sie nutzt dieselben Daten und
 | Objektbetreuung (`CARETAKER`) | `INSPECTION_OVERVIEW_READ`, dazu `INSPECTION_PERFORM` (und für die Anfragen `INSPECTION_PERIOD_RESPOND`) | Übersicht auf der Startseite |
 | Studierende, Sachbearbeitung | – | allgemeine Startseite bzw. Kontrollübersicht der Sachbearbeitung |
 
-Kein eigener Backend-Endpunkt: Die Übersicht lädt wie die Seite Kontrollen `GET /api/inspections` und `GET /api/inspection-periods/assigned` (`loadCurrentInspections` in `features/inspections/currentInspections.ts`). Beide Listen werden vollständig geladen, Seite für Seite (`loadAllPages`), damit Kennzahlen und Tabellen nicht bei 100 Einträgen abbrechen. Die Kennzahlen werden im Browser aus diesen Daten gezählt.
+Kein eigener Backend-Endpunkt: Die Übersicht lädt `GET /api/inspections` und `GET /api/inspection-periods/assigned` (`loadCurrentInspections` in `features/inspections/currentInspections.ts`). Beide Listen werden vollständig geladen, Seite für Seite (`loadAllPages`), damit Kennzahlen und Tabellen nicht bei 100 Einträgen abbrechen. Die Kennzahlen werden im Browser aus diesen Daten gezählt.
 
 Frontend: Startseite `/` (Reiter „Übersicht“) für alle mit `INSPECTION_OVERVIEW_READ`; `app/HomePage.tsx` wählt je nach Privileg zwischen dieser Übersicht und der allgemeinen Startseite. Die Seite liegt in `features/inspections/OverviewPage.tsx`, weil sie die Tabellen dieses Features verwendet (`RequestsSection`, `UpcomingSection`).
 
@@ -42,4 +42,4 @@ Bewusst ausgeblendet, bis die Funktionen umgesetzt sind:
 
 ## Prüfung
 
-- Frontend: `features/inspections/OverviewPage.test.tsx` (Kennzahlen, Tabellen der Seite Kontrollen, ohne Recht auf Anfragen), `app/HomePage.test.tsx` (Startseite je nach Berechtigung)
+- Frontend: `features/inspections/OverviewPage.test.tsx` (Kennzahlen, Sprung zu den Tabellen, ohne Recht auf Anfragen), `features/inspections/RequestsSection.test.tsx` (Anfragen beantworten auf der Übersicht, alte Adressen), `app/HomePage.test.tsx` (Startseite je nach Berechtigung, Antwort über die Action der Startseite)

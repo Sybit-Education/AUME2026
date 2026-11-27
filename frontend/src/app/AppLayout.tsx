@@ -21,9 +21,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const busy = auth.busy || transition.state !== 'idle' || revalidator.state !== 'idle'
   const [error, setError] = useState<ErrorKey | null>(null)
   const studentView = auth.user ? usesStudentView(auth.user.roles) : false
-  // Wie NavLink, aber ohne Markierung unter `inactiveWithin` (z. B. „Kontrollen“ nicht in der Historie).
+  // Wie NavLink, ergänzt um `activeWithin` und `inactiveWithin` (Übersicht bei einer Kontrolle, nicht in der Historie).
   const mainActive = (item: (typeof navigation)[number]) =>
-    Boolean(matchPath({ path: item.to, end: item.to === '/' }, pathname))
+    (Boolean(matchPath({ path: item.to, end: item.to === '/' }, pathname))
+      || Boolean(item.activeWithin?.some((pattern) => matchPath(pattern, pathname))))
     && !item.inactiveWithin?.some((pattern) => matchPath(pattern, pathname))
   const allowed = (privilege?: string) => !privilege || auth.user!.privileges.includes(privilege)
   // Titel und Zurück-Ziel der Kopfleiste kommen aus der tiefsten Route mit `handle.title`.

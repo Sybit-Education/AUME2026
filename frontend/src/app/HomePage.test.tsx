@@ -201,6 +201,28 @@ it('shows the caretaker overview for users with the caretaker privilege', async 
   expect(overviewCalls()).toEqual([])
 })
 
+it('answers a proposal from the dialog on the caretaker overview', async () => {
+  signedIn = { ...caretaker, privileges: [...caretaker.privileges, 'INSPECTION_PERIOD_RESPOND'] }
+  const base = vi.mocked(api).getMockImplementation()!
+  vi.mocked(api).mockImplementation(async (path, init) => {
+    if (String(path).startsWith('/api/inspection-periods/assigned')) {
+      return Response.json(page([{
+        id: 7, residenceName: 'Sonne', kind: 'REGULAR', status: 'WAITING_FOR_CARETAKER', startsOn: '2099-12-01',
+        endsOn: '2099-12-03', windowStart: null, windowEnd: null, flatCount: 2, flatLabels: null, counter: null, version: 3,
+      }]))
+    }
+    if (path === '/api/inspection-periods/7/agree') return new Response(null, { status: 204 })
+    return base(path, init)
+  })
+  const router = mount('/?answer=7')
+  const dialog = within(await screen.findByRole('dialog', { name: 'Vorschlag · Sonne' }))
+  fireEvent.click(dialog.getByRole('button', { name: 'Zustimmen' }))
+  // Die Startseite leitet die Antwort an die Anfragen weiter, nicht an die Putzaufgaben.
+  expect(await screen.findByText('Zugestimmt. Die Sachbearbeitung wird informiert.')).toBeDefined()
+  expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/inspection-periods/7/agree')).toBe(true)
+  expect(router.state.location.search).toBe('?saved=agreed')
+})
+
 it('shows flat, weekly tasks and the consequence notice on the student dashboard', async () => {
   signedIn = resident
   mount()

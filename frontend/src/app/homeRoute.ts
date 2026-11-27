@@ -1,10 +1,12 @@
-import type { RouteObject } from 'react-router'
+import type { ActionFunctionArgs, RouteObject } from 'react-router'
 import { protectedLoader } from '@/lib/auth/loaders'
 import { loadHome } from './studentHome'
 import { loadOverview } from '@/features/inspection-overview/api'
 import { INSPECTION_OVERVIEW_PRIVILEGE } from '@/features/inspection-overview/routes'
 import { CARETAKER_OVERVIEW_PRIVILEGE, loadCurrentInspections } from '@/features/inspections/currentInspections'
 import { toggleTaskAction } from '@/features/putzplan/actions'
+import { inspectionRequestsAction } from '@/features/inspections/requestsActions'
+import { ensureSession } from '@/lib/auth/session'
 import { pageHandle } from '@/lib/pageHandle'
 import HomePage from './HomePage'
 
@@ -18,6 +20,9 @@ export const homeRoutes: RouteObject[] = [{
     if (user.privileges.includes(CARETAKER_OVERVIEW_PRIVILEGE)) return loadCurrentInspections(user, args.request.signal)
     return loadHome(user, args.request.signal)
   }),
-  // Putzaufgaben auf der Startseite abhaken (#99).
-  action: toggleTaskAction,
+  // Objektbetreuung: Anfragen beantworten (#44); Studierende: Putzaufgaben abhaken (#99).
+  action: async (args: ActionFunctionArgs) => {
+    const { user } = await ensureSession()
+    return user?.privileges.includes(CARETAKER_OVERVIEW_PRIVILEGE) ? inspectionRequestsAction(args) : toggleTaskAction(args)
+  },
 }]

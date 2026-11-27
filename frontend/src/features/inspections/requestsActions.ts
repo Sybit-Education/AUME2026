@@ -69,6 +69,8 @@ export async function inspectionRequestsAction({ request }: ActionFunctionArgs):
   const next = new URLSearchParams(url.search)
   next.delete('answer')
   next.delete('counter')
+  // Formulare auf der Startseite (Index-Route) senden mit ?index; das gehört nicht in die Adresse danach.
+  next.delete('index')
   next.set('saved', saved[intent])
   return redirect(`${url.pathname}?${next}`)
 }
