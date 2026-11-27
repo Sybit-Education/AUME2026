@@ -281,7 +281,8 @@
     "standards": "Sauberkeitsstandards",
     "save": "Speichern",
     "saved": "Gespeichert. Bewohnende sehen die neuen Texte.",
-    "readOnly": "Du kannst diese Texte nur lesen."
+    "readOnly": "Du kannst diese Texte nur lesen.",
+    "english": "Englisch (fest hinterlegt)"
   },
   "residences": {
     "name": "Wohnanlage",

@@ -4,7 +4,7 @@ import { Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import { useAuth } from '@/lib/auth/AuthContext'
 import type { InfoPagesActionResult } from './actions'
-import type { InfoPages } from './api'
+import { ENGLISH, germanPart, type InfoPages } from './api'
 
 const fields = [
   { name: 'process', rows: 6 },
@@ -35,17 +35,23 @@ export default function InfoPagesPage() {
         {/* Der Schlüssel erhält ungespeicherte Eingaben, wenn ein Sprachwechsel den Loader neu ausführt. */}
         <Form method="post" key={data.updatedAt ?? 'new'} onChange={() => setDismissed(result)}>
           {fields.map(({ name, rows }) => (
-            <div className="fld" key={name}>
-              <label htmlFor={`info-${name}`}>{t(`standards.${name}`)}</label>
-              <textarea
-                id={`info-${name}`}
-                name={name}
-                rows={rows}
-                defaultValue={data[name]}
-                maxLength={20000}
-                required
-                readOnly={!canEdit}
-              />
+            <div className="g2" key={name}>
+              <div className="fld">
+                <label htmlFor={`info-${name}`}>{t(`standards.${name}`)}</label>
+                <textarea
+                  id={`info-${name}`}
+                  name={name}
+                  rows={rows}
+                  defaultValue={germanPart(name, data[name])}
+                  maxLength={20000}
+                  required
+                  readOnly={!canEdit}
+                />
+              </div>
+              <div className="fld">
+                <label htmlFor={`info-${name}-en`}>{t('standards.english')}</label>
+                <textarea id={`info-${name}-en`} rows={rows} value={ENGLISH[name]} readOnly />
+              </div>
             </div>
           ))}
           {message && 'error' in message && <p className="err" role="alert">{t(message.error)}</p>}

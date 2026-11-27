@@ -281,7 +281,8 @@
     "standards": "Cleanliness standards",
     "save": "Save",
     "saved": "Saved. Residents will see the new version.",
-    "readOnly": "You can only read these texts."
+    "readOnly": "You can only read these texts.",
+    "english": "English (fixed)"
   },
   "residences": {
     "name": "Residence",
