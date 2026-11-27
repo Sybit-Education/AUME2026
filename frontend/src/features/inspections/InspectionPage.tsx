@@ -107,12 +107,12 @@ function InspectionView({ initial, previous, startError }: {
         <h2>{t(step === 'summary' ? 'inspections.summaryTitle' : 'inspections.title', { label: inspection.flatLabel })}</h2>
         <div className="acts" style={{ marginTop: 0 }}>
           {inspection.status === 'PLANNED' && inspection.criteria.length > 0 && (
-            <button className="btn" disabled={busy} onClick={() => void run(() => startInspection(inspection.id), t('inspections.started'))}>{t('inspections.start')}</button>
+            <button className="btn ins-cta" disabled={busy} onClick={() => void run(() => startInspection(inspection.id), t('inspections.started'))}>{t('inspections.start')}</button>
           )}
           {editable && step === 'check' && (
             <>
               <button className="btn sec" disabled={busy || open === 0} onClick={() => void run(() => markOk(inspection.id), t('inspections.allOkDone'))}>{t('inspections.allOk')}</button>
-              <button className="btn" disabled={busy} onClick={() => setStep('summary')}>{t('inspections.toSummary')}</button>
+              <button className="btn ins-cta" disabled={busy} onClick={() => setStep('summary')}>{t('inspections.toSummary')}</button>
             </>
           )}
           {editable && step === 'summary' && (

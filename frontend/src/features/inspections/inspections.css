@@ -395,3 +395,12 @@
   color:#fff;
 }
 
+/* Nächster Schritt der Kontrolle (Starten, Zum Abschluss): dunkel in der Schriftfarbe der App, damit er sich abhebt */
+.ins-head .btn.ins-cta {
+  background:var(--ink);
+  color:#fff;
+  box-shadow:0 2px 6px rgba(34,51,58,.25);
+}
+.ins-head .btn.ins-cta:hover:not(:disabled) {
+  background:#111d22;
+}
