@@ -6,8 +6,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +31,10 @@ import de.seezeit.aume.user.ClerkEntity;
 import de.seezeit.aume.user.RoleRepository;
 import de.seezeit.aume.user.StudentEntity;
 import jakarta.persistence.EntityManager;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,19 +42,24 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileSystemUtils;
 
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-student-announcement-integration;MODE=PostgreSQL")
 @ActiveProfiles("dev")
@@ -60,6 +70,18 @@ class StudentAnnouncementIntegrationTests {
     private static final String PERIODS = "/api/inspection-periods";
     private static final String INBOX = "/api/student/notifications";
     private static final String ORIGINAL_TEXT = "Liebe WG,\n\nbitte räumt den Bereich unter der Spüle frei.";
+    private static Path uploads;
+
+    @DynamicPropertySource
+    static void attachmentStorage(DynamicPropertyRegistry registry) throws IOException {
+        uploads = Files.createTempDirectory("aume-student-announcement-integration");
+        registry.add("aume.storage.location", uploads::toString);
+    }
+
+    @AfterAll
+    static void cleanStorage() throws IOException {
+        if (uploads != null) FileSystemUtils.deleteRecursively(uploads);
+    }
 
     @MockitoBean private InspectionNotificationScheduler automaticScheduler;
     @MockitoBean(name = "inspectionNotificationClock") private Clock clock;
@@ -75,6 +97,7 @@ class StudentAnnouncementIntegrationTests {
     private ResidenceEntity residence;
     private ClerkEntity clerk;
     private CaretakerEntity caretaker;
+    private FlatEntity firstFlat;
     private StudentEntity first;
     private StudentEntity second;
     private StudentEntity outsider;
@@ -93,11 +116,76 @@ class StudentAnnouncementIntegrationTests {
             Set.of(roles.findByName("CARETAKER").orElseThrow()), residence));
         persist(new StaffAssignmentEntity(clerk, residence, StaffKind.CLERK));
         persist(new StaffAssignmentEntity(caretaker, residence, StaffKind.CARETAKER));
-        first = resident("dispatch-first", new FlatEntity(residence, "N-01", 2));
+        firstFlat = new FlatEntity(residence, "N-01", 2);
+        first = resident("dispatch-first", firstFlat);
         second = resident("dispatch-second", new FlatEntity(residence, "N-02", 2));
         var occupied = new FlatEntity(residence, "N-03", 2);
         outsider = resident("dispatch-outsider", occupied);
         persist(new InspectionEntity(occupied, null));
+    }
+
+    @Test
+    void deliversAnIndividualAnnouncementAndItsAttachmentOnlyToTheSelectedFlatAcrossRevisions() throws Exception {
+        long periodId = id(write(PERIODS, clerk.getUserKey(), """
+            {"residenceId": %d, "startsOn": "%s", "endsOn": "%s",
+             "windowStart": "09:00", "windowEnd": "16:00", "caretakerId": %d,
+             "kind": "INDIVIDUAL", "flatIds": [%d], "occasion": "SAMPLE"}
+            """.formatted(residence.getId(), startsOn, startsOn.plusDays(2), caretaker.getId(), firstFlat.getId()))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.kind").value("INDIVIDUAL"))
+            .andExpect(jsonPath("$.flatCount").value(1))
+            .andExpect(jsonPath("$.flatLabels[0]").value(firstFlat.getLabel())), "$.id");
+        write(PERIODS + "/" + periodId + "/agree", caretaker.getUserKey(),
+            "{\"version\":" + period(periodId).getVersion() + "}")
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("AGREED"));
+
+        var fileName = "Hinweise zur Einzelkontrolle.txt";
+        byte[] originalBytes = "Hinweise für die ausgewählte WG.".getBytes(StandardCharsets.UTF_8);
+        var upload = new MockMultipartFile("file", fileName, MediaType.TEXT_PLAIN_VALUE, originalBytes);
+        long attachmentId = id(mvc.perform(multipart("/api/attachments").file(upload).with(as(clerk.getUserKey())).with(csrf()))
+            .andExpect(status().isCreated()), "$.id");
+        var individualText = "Liebe WG, bitte haltet den Zugang zur Spüle frei.";
+        long firstDispatch = id(write(PERIODS + "/" + periodId + "/announce", clerk.getUserKey(), """
+            {"message": "%s", "attachmentId": %d, "attachmentName": "%s", "version": %d}
+            """.formatted(individualText, attachmentId, fileName, period(periodId).getVersion()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.flatCount").value(1)), "$.id");
+        scanTwice();
+
+        var initialInbox = inbox(first).andExpect(jsonPath("$.content.length()").value(1));
+        assertRevision(initialInbox, 0, dispatch(firstDispatch))
+            .andExpect(jsonPath("$.content[0].announcementKind").value("ANNOUNCEMENT"))
+            .andExpect(jsonPath("$.content[0].announcementMessage").value(individualText))
+            .andExpect(jsonPath("$.content[0].attachment.fileName").value(fileName));
+        long firstDelivery = id(initialInbox, "$.content[0].id");
+        mvc.perform(get(INBOX + "/{id}/attachment", firstDelivery).with(as(first.getUserKey())))
+            .andExpect(status().isOk()).andExpect(content().bytes(originalBytes));
+        inbox(second).andExpect(jsonPath("$.content.length()").value(0));
+        mvc.perform(get(INBOX + "/{id}/attachment", firstDelivery).with(as(second.getUserKey())))
+            .andExpect(status().isNotFound());
+
+        var movedStart = startsOn.plusDays(4);
+        long movedDispatch = reschedule(periodId, movedStart, "10:00", "14:00");
+        scanTwice();
+
+        var revisedInbox = inbox(first).andExpect(jsonPath("$.content.length()").value(2));
+        assertRevision(revisedInbox, 0, dispatch(movedDispatch))
+            .andExpect(jsonPath("$.content[0].announcementKind").value("RESCHEDULE"))
+            .andExpect(jsonPath("$.content[0].startsOn").value(movedStart.toString()))
+            .andExpect(jsonPath("$.content[0].attachment").value(nullValue()));
+        assertRevision(revisedInbox, 1, dispatch(firstDispatch))
+            .andExpect(jsonPath("$.content[1].id").value((int) firstDelivery))
+            .andExpect(jsonPath("$.content[1].announcementMessage").value(individualText))
+            .andExpect(jsonPath("$.content[1].attachment.fileName").value(fileName));
+        long movedDelivery = id(revisedInbox, "$.content[0].id");
+        mvc.perform(get(INBOX + "/{id}/attachment", movedDelivery).with(as(first.getUserKey())))
+            .andExpect(status().isNotFound());
+        mvc.perform(get(INBOX + "/{id}/attachment", firstDelivery).with(as(first.getUserKey())))
+            .andExpect(status().isOk()).andExpect(content().bytes(originalBytes));
+        inbox(second).andExpect(jsonPath("$.content.length()").value(0));
+        mvc.perform(get(INBOX + "/{id}/attachment", firstDelivery).with(as(second.getUserKey())))
+            .andExpect(status().isNotFound());
     }
 
     @Test

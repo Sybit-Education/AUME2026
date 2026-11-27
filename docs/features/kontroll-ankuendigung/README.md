@@ -1,6 +1,6 @@
 # Kontrolle ankündigen (US-18)
 
-Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontrolle für alle WGs der Wohnanlage an. Sie kann einen angekündigten Termin auch nachträglich ändern. Für neue Zustellungen zeigt das Studierenden-Postfach den Originaltext einer eindeutig zugeordneten Ankündigung, kennzeichnet Terminänderungen und bietet bei einem verfügbaren individuellen Anhang den nachrichtenbezogenen Download an.
+Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontrolle für die WGs des Kontrollzeitraums an. Sie kann einen angekündigten Termin auch nachträglich ändern. Für neue Zustellungen zeigt das Studierenden-Postfach den Originaltext einer eindeutig zugeordneten Ankündigung, kennzeichnet Terminänderungen und bietet bei einem verfügbaren individuellen Anhang den nachrichtenbezogenen Download an.
 
 ## Wie es funktioniert
 

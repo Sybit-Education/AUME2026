@@ -9,7 +9,7 @@ import { createAppRoutes } from '@/app/router'
 import { api, login, type LoggedInUser } from '@/lib/auth/client'
 import { invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
-import type { StudentMessage } from './api'
+import { downloadMessageChecklist, type StudentMessage } from './api'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
@@ -258,7 +258,7 @@ it.each([
   expect(readCalls()).toHaveLength(0)
 })
 
-it('downloads both files independently and allows retry after an individual attachment fails', async () => {
+it('only offers the individual attachment and allows retry after it fails', async () => {
   pages = [[{ ...announcement, readAt: '2026-11-28T08:00:00Z', attachment: { fileName } }]]
   let finishAttachment!: (response: Response) => void
   attachmentResponse = () => new Promise((resolve) => { finishAttachment = resolve })
@@ -273,30 +273,23 @@ it('downloads both files independently and allows retry after an individual atta
   mount()
   fireEvent.click(await screen.findByRole('button', { name: /Sauberkeitskontrolle/ }))
   const attachment = screen.getByRole('button', { name: fileName + ' herunterladen' }) as HTMLButtonElement
-  const checklist = screen.getByRole('button', { name: 'Checkliste_Sauberkeit.pdf herunterladen' }) as HTMLButtonElement
+  expect(screen.getAllByRole('button', { name: /herunterladen/ })).toEqual([attachment])
+  expect(screen.queryByText(/liegt als Anhang bei/)).toBeNull()
 
   fireEvent.click(attachment)
   expect(attachment.disabled).toBe(true)
   expect(attachment.getAttribute('aria-busy')).toBe('true')
-  expect(checklist.disabled).toBe(false)
-  fireEvent.click(checklist)
-  await waitFor(() => {
-    expect(saved).toEqual(['Checkliste_Sauberkeit.pdf'])
-    expect(checklist.disabled).toBe(false)
-  })
-  expect(attachment.disabled).toBe(true)
   await act(async () => { finishAttachment(new Response(null, { status: 404 })) })
   await screen.findByText('Der Anhang konnte nicht heruntergeladen werden.')
   expect(screen.queryByText('Die Checkliste konnte nicht heruntergeladen werden.')).toBeNull()
   expect(attachment.disabled).toBe(false)
-  expect(checklist.disabled).toBe(false)
 
   attachmentResponse = () => new Response('Originaldatei')
   fireEvent.click(attachment)
-  await waitFor(() => expect(saved).toEqual(['Checkliste_Sauberkeit.pdf', fileName]))
+  await waitFor(() => expect(saved).toEqual([fileName]))
   expect(screen.queryByText('Der Anhang konnte nicht heruntergeladen werden.')).toBeNull()
   expect(vi.mocked(api).mock.calls.filter(([path]) => path === endpoint + '/11/attachment')).toHaveLength(2)
-  expect(vi.mocked(api).mock.calls.filter(([path]) => path === endpoint + '/11/checklist.pdf')).toHaveLength(1)
+  expect(vi.mocked(api).mock.calls.some(([path]) => path.endsWith('/checklist.pdf'))).toBe(false)
   expect(readCalls()).toHaveLength(0)
 })
 
@@ -324,11 +317,10 @@ it('formats a year boundary and translates both reminder types in English', asyn
 })
 
 it.each([
-  ['de', 'Checkliste_Sauberkeit.pdf', /Sauberkeitskontrolle/],
-  ['en', 'Cleanliness_Checklist.pdf', /Cleanliness inspection/],
-] as const)('downloads the attachment with the %s filename', async (language, file, title) => {
+  ['de', 'Checkliste_Sauberkeit.pdf'],
+  ['en', 'Cleanliness_Checklist.pdf'],
+] as const)('retains the generated PDF download helper with the %s filename', async (language, file) => {
   await i18n.changeLanguage(language)
-  pages = [[{ ...announcement, readAt: '2026-11-28T08:00:00Z' }]]
   pdfResponse = () => new Response('PDF', { headers: {
     'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${file}"`,
   } })
@@ -339,25 +331,22 @@ it.each([
   const save = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
     expect(this.download).toBe(file)
   })
-  mount()
-  fireEvent.click(await screen.findByRole('button', { name: title }))
-  fireEvent.click(screen.getByText(file))
-  await waitFor(() => expect(save).toHaveBeenCalledOnce())
+  await downloadMessageChecklist(announcement.id, language, new AbortController().signal)
+  expect(save).toHaveBeenCalledOnce()
   expect(vi.mocked(api).mock.calls.some(([path]) => path === `${endpoint}/11/checklist.pdf`)).toBe(true)
   expect(readCalls()).toHaveLength(0)
 })
 
-it('reports a download failure on the open card and allows another attempt', async () => {
-  pdfResponse = () => new Response(null, { status: 500 })
+it('hides the generated PDF and its hint when the announcement has no individual attachment', async () => {
+  pages = [[{ ...announcement, readAt: '2026-11-28T08:00:00Z' }]]
   mount()
   const head = await screen.findByRole('button', { name: /Sauberkeitskontrolle/ })
   fireEvent.click(head)
-  const file = screen.getByRole('button', { name: 'Checkliste_Sauberkeit.pdf herunterladen' })
-  fireEvent.click(file)
   const card = within(head.closest('article')!)
-  await card.findByText('Die Checkliste konnte nicht heruntergeladen werden.')
-  expect((file as HTMLButtonElement).disabled).toBe(false)
-  expect(head.getAttribute('aria-expanded')).toBe('true')
+  expect(card.getByText(/Die Sauberkeitskontrolle für WG S-01/)).toBeTruthy()
+  expect(card.queryByText(/liegt als Anhang bei/)).toBeNull()
+  expect(card.queryByRole('button', { name: /herunterladen/ })).toBeNull()
+  expect(vi.mocked(api).mock.calls.some(([path]) => path.endsWith('/checklist.pdf'))).toBe(false)
 })
 
 it('shows a usable empty state', async () => {

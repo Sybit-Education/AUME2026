@@ -75,9 +75,9 @@ Studierende öffnen das Postfach über die Glocke im gemeinsamen Header oder üb
 
 Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelesenen Zustellungen „Neu“. Erst beim bewussten Öffnen wird eine ungelesene Nachricht als gelesen markiert. Nach erfolgreichem PUT entfällt „Neu“. Bei einem Fehler lässt sich die Markierung in der geöffneten Karte erneut versuchen.
 
-Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
+Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Die Karte bietet derzeit ausschließlich individuell hinzugefügte Anhänge an. Der lokale Schalter `SHOW_GENERATED_CHECKLIST_PDF` in `StudentMessagesPage.tsx` blendet das generierte Checklisten-PDF samt Hinweis aus. Es bleibt über die berechtigte API abrufbar. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
 
-Bei einer Terminänderung zeigt der Kartenkopf „Termin geändert“ beziehungsweise „Inspection date changed“. Im aufgeklappten Zustand erscheint der Originaltext in der eingereichten Sprache mit seinen Zeilenumbrüchen als Klartext. Fehlt er, greift der bisherige lokalisierte Standardtext. Die Karte zeigt den individuellen Anhang unter seinem bereinigten Dateinamen. Sind individuelle Datei und Checklisten-PDF verfügbar, lassen sie sich unabhängig voneinander herunterladen. Lade- und Fehlerzustände beziehen sich auf die jeweilige Datei.
+Bei einer Terminänderung zeigt der Kartenkopf „Termin geändert“ beziehungsweise „Inspection date changed“. Im aufgeklappten Zustand erscheint der Originaltext in der eingereichten Sprache mit seinen Zeilenumbrüchen als Klartext. Fehlt er, greift der bisherige lokalisierte Standardtext. Die Karte zeigt den individuellen Anhang unter seinem bereinigten Dateinamen und bietet bei einem Downloadfehler einen erneuten Versuch.
 
 ## Glocke und Ungelesen-Zähler
 
@@ -87,7 +87,7 @@ Der Zähler wird beim ersten Rendern des Studierenden-Headers, bei Pfadwechseln,
 
 ## Abweichung vom Arbeitsstand zu US-16 (#20)
 
-Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen führen zur bestehenden interaktiven Checkliste.
+Die API stellt das automatisch generierte Checklisten-PDF ausschließlich für berechtigte Ankündigungen bereit. Beide Erinnerungen führen zur bestehenden interaktiven Checkliste.
 
 ## Prüfungen
 
@@ -101,6 +101,6 @@ Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen fü
 
 `StudentNotificationAttachmentTests` prüft mit eigenen Daten und temporärem Dateispeicher Originalbytes, Dateinamen, Header, getrennte PDF-Berechtigung, historische Anhänge, WG-Sichtbarkeit und unveränderten Lesestatus. Ein separater Kontext ohne `dev` prüft den Betrieb ohne Speicheradapter.
 
-`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN und Lesestatus über den App-Router. Für die Integration prüft der Test mehrzeiligen Originaltext als Klartext, Revisionslabel, Standardtext als Fallback sowie unabhängige Downloads und Wiederholung nach einem Fehler.
+`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN und Lesestatus über den App-Router. Die Tests prüfen außerdem das ausgeblendete Checklisten-PDF samt Hinweis, den individuellen Download mit Wiederholung nach einem Fehler und die DE-/EN-Dateinamen über den weiterhin verfügbaren PDF-Download-Helfer.
 
 `NotificationBell.test.tsx` prüft Header, Rollen, Navigation, zugängliche Zählertexte, Polling, Fehlerbehandlung und Sitzungswechsel. Der Nachrichten-Routingtest prüft zusätzlich den neuen Zählerabruf nach bewusstem Lesen.

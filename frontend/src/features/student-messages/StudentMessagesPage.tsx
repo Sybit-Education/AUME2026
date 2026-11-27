@@ -44,6 +44,7 @@ export default function StudentMessagesPage() {
 }
 
 const validTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+const SHOW_GENERATED_CHECKLIST_PDF = false
 
 function MessageCard({ message, canReadChecklist }: { message: StudentMessage; canReadChecklist: boolean }) {
   const { t, i18n } = useTranslation()
@@ -54,7 +55,7 @@ function MessageCard({ message, canReadChecklist }: { message: StudentMessage; c
   const unread = message.readAt === null && !(read.data && 'read' in read.data)
   const readError = unread && read.data && 'error' in read.data ? read.data.error : undefined
   const announcement = message.type === 'ANNOUNCEMENT'
-  const hasChecklistPdf = announcement && message.hasChecklistPdf
+  const showChecklistPdf = SHOW_GENERATED_CHECKLIST_PDF && announcement && message.hasChecklistPdf
   const attachment = announcement ? message.attachment : null
   const originalText = announcement ? message.announcementMessage : null
   const label = announcement
@@ -114,12 +115,12 @@ function MessageCard({ message, canReadChecklist }: { message: StudentMessage; c
         )}
         {!originalText && (
           <p>{t(announcement ? 'studentMessages.prepareAnnouncement' : 'studentMessages.prepareReminder')}
-            {hasChecklistPdf && <> {t('studentMessages.attachmentHint')}</>}
+            {showChecklistPdf && <> {t('studentMessages.attachmentHint')}</>}
           </p>
         )}
-        {(hasChecklistPdf || attachment) && (
+        {(showChecklistPdf || attachment) && (
           <div className="student-message-downloads">
-            {hasChecklistPdf && (
+            {showChecklistPdf && (
               <MessageDownload key="checklist" file={checklistFileName(language)} error="errors.studentMessageDownload"
                 load={(signal) => downloadMessageChecklist(message.id, language, signal)} />
             )}
