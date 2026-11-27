@@ -6,7 +6,6 @@ import type { HistoryPage as HistoryData } from './api'
 import {
   formatDate, hasFilter, toggleSort, withFilter, type FilterKey, type HistoryFilter, type SortColumn,
 } from './history'
-import InspectionTabs from './InspectionTabs'
 import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
 import { useFilterMenu, type FilterSpec, type FilterValues } from './tableState'
 import './inspections.css'
@@ -103,7 +102,6 @@ export default function HistoryPage() {
 
   return (
     <section className="card obm ins-history" ref={section}>
-      <InspectionTabs />
       <h2>{t('inspections.history.title')}</h2>
 
       <ActiveFilters filters={active} onReset={() => setParams(new URLSearchParams())} />

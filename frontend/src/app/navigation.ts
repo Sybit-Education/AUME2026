@@ -2,7 +2,7 @@ import type de from '@/locales/de.json'
 import type { NavIconName } from '@/components/NavIcon'
 import { residenceNavigation } from '@/features/residences/routes'
 import { inspectionPlanningNavigation } from '@/features/inspection-planning/routes'
-import { inspectionNavigation } from '@/features/inspections/routes'
+import { inspectionHistoryNavigation, inspectionNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
 import { wgNavigation } from '@/features/wg/routes'
 
@@ -10,6 +10,10 @@ type NavigationItem = {
   to: string
   label: `navigation.${keyof typeof de.navigation}`
   privilege?: string
+  /** Für diese Rolle ausgeblendet, sofern sie das Recht nicht über eine weitere Rolle hat. */
+  hiddenForRole?: string
+  /** Adressmuster unterhalb von {@code to}, unter denen der Reiter nicht markiert ist (dort gilt ein eigener). */
+  inactiveWithin?: readonly string[]
 }
 
 export const navigation: NavigationItem[] = [
@@ -17,6 +21,7 @@ export const navigation: NavigationItem[] = [
   residenceNavigation,
   inspectionPlanningNavigation,
   inspectionNavigation,
+  inspectionHistoryNavigation,
   standardsNavigation,
   wgNavigation,
 ]

@@ -61,6 +61,11 @@ export const inspectionRoutes: RouteObject[] = [{
   }),
 }]
 
+/** „Kontrollen“ bleibt bei einzelnen Kontrollen markiert, aber nicht in der Historie, die einen eigenen Reiter hat. */
 export const inspectionNavigation = {
-  to: '/inspections', label: 'navigation.inspections', privilege,
+  to: '/inspections', label: 'navigation.inspections', privilege, inactiveWithin: ['/inspections/history/*'],
+} as const
+
+export const inspectionHistoryNavigation = {
+  to: '/inspections/history', label: 'navigation.history', privilege,
 } as const

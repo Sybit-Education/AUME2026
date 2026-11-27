@@ -122,7 +122,8 @@
     "more": "More",
     "studentTabs": "Student navigation",
     "inspectionPlanning": "Plan inspections",
-    "wg": "My flat"
+    "wg": "My flat",
+    "history": "History"
   },
   "inspectionOverview": {
     "openWork": "Open work",
@@ -531,7 +532,6 @@
       "PASSED": "Passed",
       "FAILED": "Follow-up required"
     },
-    "tabHistory": "History",
     "history": {
       "title": "Inspection history",
       "flat": "Flat",
@@ -585,7 +585,6 @@
     "upcomingTitle": "Upcoming inspections",
     "startsFrom": "from {{date}}",
     "residence": "Residence",
-    "tabCurrent": "Current",
     "ready": "Ready to start",
     "defectLabel": "Defect",
     "defectOf": "Defect for {{criterion}}",

@@ -122,7 +122,8 @@
     "more": "Mehr",
     "studentTabs": "Navigation der Studierenden",
     "inspectionPlanning": "Kontrollen planen",
-    "wg": "Meine WG"
+    "wg": "Meine WG",
+    "history": "Historie"
   },
   "inspectionOverview": {
     "openWork": "Offene Arbeit",
@@ -531,7 +532,6 @@
       "PASSED": "Bestanden",
       "FAILED": "Nachkontrolle erforderlich"
     },
-    "tabHistory": "Historie",
     "history": {
       "title": "Kontroll-Historie",
       "flat": "WG",
@@ -585,7 +585,6 @@
     "upcomingTitle": "Anstehende Kontrollen",
     "startsFrom": "ab {{date}}",
     "residence": "Wohnanlage",
-    "tabCurrent": "Aktuell",
     "ready": "Startbereit",
     "defectLabel": "Mangel",
     "defectOf": "Mangel bei {{criterion}}",
