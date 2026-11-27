@@ -46,7 +46,7 @@ Die Regeln gelten nur innerhalb von `.st-wrap`. Die Seiten für Objektbetreuung 
 
 ## Nachrichten
 
-Unter **Mehr → Kommunikation → Nachrichten** erreichen Studierende ihre Ankündigungen und Erinnerungen. „Mehr“ bleibt als unterer Tab aktiv. Die Nachrichten verwenden die gewählte Sprache für Texte, Datumsdarstellung und den PDF-Download. [In-App-Kontrollnachrichten](../student-messages/README.md)
+Unter **Mehr → Wohnen → Nachrichten** oder über die Glocke links neben „Abmelden“ erreichen Studierende ihre Ankündigungen und Erinnerungen. „Mehr“ bleibt als unterer Tab aktiv. Der Ungelesen-Zähler aktualisiert sich nach dem Lesen sofort und regelmäßig im Hintergrund. Die Nachrichten verwenden die gewählte Sprache für Texte, Datumsdarstellung und den PDF-Download. [In-App-Kontrollnachrichten](../student-messages/README.md)
 
 ## Sprache (US-26)
 

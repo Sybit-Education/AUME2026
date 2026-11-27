@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, matchPath, NavLink, Outlet, useLocation, useMatches, useNavigation, useRevalidator } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
 import NavIcon from '@/components/NavIcon'
+import NotificationBell from '@/features/student-messages/NotificationBell'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import { supportedLanguage } from '@/lib/i18n'
 import type { PageHandle } from '@/lib/pageHandle'
@@ -73,20 +74,23 @@ export default function AppLayout({ children }: PropsWithChildren) {
       {studentView ? (
         <div className="st-wrap">
           {/* App-Kopfleiste wie im Wireframe: Zurück, Seitentitel, Abmelden. */}
-          <header className="st-top">
+          <header className={pathname === '/login' ? 'st-top' : 'st-top st-top-with-notifications'}>
             {page?.back ? (
               <Link className="st-icon-btn" to={page.back} aria-label={t('app.back')}>
                 <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="m14.5 5.5-6.5 6.5 6.5 6.5" /></svg>
               </Link>
             ) : <span className="st-icon-btn" aria-hidden="true" />}
             <h1>{page ? t(page.title, { name: auth.user?.name }) : t('app.name')}</h1>
-            <button className="st-icon-btn" type="button" disabled={busy} aria-label={t('auth.logout')} title={t('auth.logout')}
-              onClick={() => void signOut()}>
-              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                <path d="M10 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H10" />
-                <path d="m14 8 4 4-4 4M18 12H9" />
-              </svg>
-            </button>
+            <div className="student-header-actions">
+              {auth.user && pathname !== '/login' && <NotificationBell user={auth.user} />}
+              <button className="st-icon-btn" type="button" disabled={busy} aria-label={t('auth.logout')} title={t('auth.logout')}
+                onClick={() => void signOut()}>
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <path d="M10 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H10" />
+                  <path d="m14 8 4 4-4 4M18 12H9" />
+                </svg>
+              </button>
+            </div>
           </header>
           <div className="st-body">
             {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}

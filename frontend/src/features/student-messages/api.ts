@@ -28,6 +28,13 @@ export async function getMessages(page: number, signal: AbortSignal): Promise<St
   return await requireOk(response, 'errors.studentMessages').json() as StudentMessages
 }
 
+export async function getUnreadCount(signal: AbortSignal): Promise<number> {
+  const response = await api(`${path}/unread-count`, { signal })
+  signal.throwIfAborted()
+  const { count } = await requireOk(response, 'errors.studentMessages').json() as { count: number }
+  return count
+}
+
 export async function markMessageRead(id: number, signal: AbortSignal): Promise<void> {
   const response = await api(`${path}/${id}/read`, { method: 'PUT', signal })
   signal.throwIfAborted()

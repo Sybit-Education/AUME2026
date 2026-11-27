@@ -322,7 +322,6 @@
     "consequenceLink": "View inspection procedure and consequences"
   },
   "more": {
-    "communication": "Communication",
     "messages": "Messages",
     "messagesHint": "Announcements and reminders",
     "title": "More",
@@ -335,6 +334,8 @@
     "back": "More"
   },
   "studentMessages": {
+    "unreadLabel_one": "Messages, {{count}} unread message",
+    "unreadLabel_other": "Messages, {{count}} unread messages",
     "announcement": "Announcement",
     "reminder": "Reminder",
     "new": "New",

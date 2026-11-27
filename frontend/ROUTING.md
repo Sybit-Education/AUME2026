@@ -22,7 +22,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/student/inspection/history` | Angemeldet, Rolle `STUDENT` | Reiter „Verlauf“: Platzhalter für den eigenen Kontrollverlauf |
 | `/student/cleaning-plan` | Angemeldet, `WG_MEMBERSHIP` | Putzplan der eigenen WG |
 | `/student/more` | Angemeldet | Weitere Studierenden-Funktionen, gruppiert |
-| `/student/messages?page=0` | Angemeldet, Rolle `STUDENT` | Nachrichten über „Mehr → Kommunikation“. Der untere Tab „Mehr“ bleibt aktiv. |
+| `/student/messages?page=0` | Angemeldet, Rolle `STUDENT` | Nachrichten über die Glocke oder „Mehr → Wohnen → Nachrichten“. Der untere Tab „Mehr“ bleibt aktiv. |
 | `/student/flat` | Angemeldet, `WG_MEMBERSHIP` | Meine WG mit Mitgliedern, Beitritt und Austritt |
 | `/student/settings` | Angemeldet | Sprache wählen (US-26); unterer Tab „Mehr“ bleibt markiert |
 | `/forbidden` | Angemeldet | Fehlende Berechtigung |

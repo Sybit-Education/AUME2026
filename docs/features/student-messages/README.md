@@ -53,11 +53,17 @@ Das A4-PDF wird beim Abruf im Arbeitsspeicher aus der referenzierten Checklisten
 
 ## Nachrichtenansicht
 
-Studierende öffnen das Postfach über **Mehr → Kommunikation → Nachrichten** (`/student/messages`). „Mehr“ bleibt aktiv. Die Route verwendet die bestehende Anmeldung und ruft persönliche Kontrollnachrichten seitenweise in der Reihenfolge des Backends ab.
+Studierende öffnen das Postfach über die Glocke im gemeinsamen Header oder über **Mehr → Wohnen → Nachrichten** (`/student/messages`). „Mehr“ bleibt aktiv. Die Route verwendet die bestehende Anmeldung und ruft persönliche Kontrollnachrichten seitenweise in der Reihenfolge des Backends ab.
 
 Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelesenen Zustellungen „Neu“. Erst beim bewussten Öffnen wird eine ungelesene Nachricht als gelesen markiert. Nach erfolgreichem PUT entfällt „Neu“. Bei einem Fehler lässt sich die Markierung in der geöffneten Karte erneut versuchen.
 
-Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste. Die aktualisierte Nachrichtenliste und die erfolgreiche Leseaktion sind die Anknüpfungspunkte für den Ungelesen-Zähler in Phase 6.
+Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
+
+## Glocke und Ungelesen-Zähler
+
+Die Glocke steht links neben „Abmelden“ im Studierenden-Header. Ein Klick öffnet das Postfach und ändert den Lesestatus keiner Nachricht. Die Anzeige entfällt bei null ungelesenen Nachrichten und zeigt ab 100 den Wert `99+`. Der zugängliche Name enthält die tatsächliche Anzahl in der eingestellten Sprache.
+
+Der Zähler wird beim ersten Rendern des Studierenden-Headers, bei Pfadwechseln, bei Rückkehr in die App und alle 15 Sekunden über die authentifizierte API geladen. Nach einem erfolgreichen PUT zum Markieren startet unmittelbar ein neuer Abruf. Vorübergehende Fehler lassen den letzten erfolgreichen Wert sichtbar. Bei Ende oder Wechsel der Sitzung werden laufende Abrufe, Timer und Listener bereinigt. In Personalansichten und auf der Anmeldeseite finden keine Zählerabrufe statt.
 
 ## Abweichung vom Arbeitsstand zu US-16 (#20)
 
@@ -72,3 +78,5 @@ Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen fü
 `StudentNotificationPdfTests` prüft Downloadrechte, Dateinamen und Header, Fassungsbindung nach Veröffentlichung einer neuen Checkliste, Lokalisierung und Seitenumbrüche sowie den unveränderten Lesestatus.
 
 `StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN-Download und Lesestatus über den App-Router.
+
+`NotificationBell.test.tsx` prüft Header, Rollen, Navigation, zugängliche Zählertexte, Polling, Fehlerbehandlung und Sitzungswechsel. Der Nachrichten-Routingtest prüft zusätzlich den neuen Zählerabruf nach bewusstem Lesen.

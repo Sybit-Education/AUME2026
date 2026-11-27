@@ -60,6 +60,9 @@ beforeEach(async () => {
   vi.mocked(login).mockImplementation(async () => { account = student })
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return account ? Response.json(account) : new Response(null, { status: 401 })
+    if (path === `${endpoint}/unread-count`) {
+      return Response.json({ count: pages.flat().filter((message) => message.readAt === null).length })
+    }
     if (path.startsWith(`${endpoint}?page=`)) {
       if (listStatus !== 200) return new Response(null, { status: listStatus })
       const number = Number(new URL(path, 'http://localhost').searchParams.get('page'))
@@ -89,12 +92,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('adds the communication group, keeps More active and provides a back link', async () => {
+it('links to messages above My Flat, keeps More active and provides a back link', async () => {
   const router = mount('/student/more')
-  await screen.findByRole('heading', { name: 'Kommunikation' })
+  const living = within(await screen.findByRole('region', { name: 'Wohnen' }))
   expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent))
-    .toEqual(['Wohnen', 'Kommunikation', 'Konto und Datenschutz'])
-  const entry = screen.getByRole('link', { name: /Nachrichten.*Ankündigungen und Erinnerungen/ })
+    .toEqual(['Wohnen', 'Konto und Datenschutz'])
+  const entry = living.getByRole('link', { name: /Nachrichten.*Ankündigungen und Erinnerungen/ })
+  expect(living.getAllByRole('link')).toEqual([entry, living.getByRole('link', { name: /Meine WG/ })])
   expect(entry.getAttribute('href')).toBe(route)
   fireEvent.click(entry)
 
@@ -128,6 +132,7 @@ it('only marks a message after intentional opening and prevents duplicate reques
   readResponse = () => new Promise((resolve) => { complete = resolve })
   mount()
   const head = await screen.findByRole('button', { name: /Sauberkeitskontrolle/ })
+  await screen.findByRole('link', { name: 'Nachrichten, 3 ungelesene Nachrichten' })
   expect(head.textContent).toContain('28.11.2026')
   expect(head.textContent).toContain('Neu')
   expect(head.getAttribute('aria-expanded')).toBe('false')
@@ -147,6 +152,7 @@ it('only marks a message after intentional opening and prevents duplicate reques
 
   await act(async () => { complete(new Response(null, { status: 204 })) })
   await waitFor(() => expect(head.textContent).not.toContain('Neu'))
+  expect(await screen.findByRole('link', { name: 'Nachrichten, 2 ungelesene Nachrichten' })).toBeTruthy()
   fireEvent.click(head)
   fireEvent.click(head)
   expect(readCalls()).toHaveLength(1)

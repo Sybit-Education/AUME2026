@@ -322,7 +322,6 @@
     "consequenceLink": "Kontrollablauf und Konsequenzen ansehen"
   },
   "more": {
-    "communication": "Kommunikation",
     "messages": "Nachrichten",
     "messagesHint": "Ankündigungen und Erinnerungen",
     "title": "Mehr",
@@ -335,6 +334,8 @@
     "back": "Mehr"
   },
   "studentMessages": {
+    "unreadLabel_one": "Nachrichten, {{count}} ungelesene Nachricht",
+    "unreadLabel_other": "Nachrichten, {{count}} ungelesene Nachrichten",
     "announcement": "Ankündigung",
     "reminder": "Erinnerung",
     "new": "Neu",

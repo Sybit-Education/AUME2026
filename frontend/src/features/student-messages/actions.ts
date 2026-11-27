@@ -4,6 +4,7 @@ import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
 import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { markMessageRead } from './api'
+import { requestUnreadCountRefresh } from './unreadCountRefresh'
 
 export type MessageReadResult = { read: true } | { error: ErrorKey }
 
@@ -20,6 +21,7 @@ export async function messageReadAction({ request }: ActionFunctionArgs): Promis
 
   try {
     await markMessageRead(id, request.signal)
+    requestUnreadCountRefresh(user)
     return { read: true }
   } catch (cause) {
     if (request.signal.aborted || cause instanceof Response) throw cause
