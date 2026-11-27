@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth/AuthContext'
 import { safeReturnTo } from '@/lib/auth/returnTo'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 
-const mockUsers = ['student', 'caretaker', 'clerk'] as const
+// caretaker2 betreut Petershausen und vertritt Sonne; zum Testen der Zuständigkeit (US-03).
+const mockUsers = ['student', 'caretaker', 'caretaker2', 'clerk'] as const
 
 export default function LoginPage() {
   const { t } = useTranslation()

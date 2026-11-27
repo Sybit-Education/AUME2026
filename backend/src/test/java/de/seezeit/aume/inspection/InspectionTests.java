@@ -216,8 +216,8 @@ class InspectionTests {
         sampleData.run();
         assertThat(versions.count()).isEqualTo(1);
         // 5 aus InspectionSampleData, 2 aus dem Beispiel-Gegenvorschlag in InspectionPlanningSampleData,
-        // 1 veröffentlichte Erstkontrolle aus StudentSampleData (US-38)
-        assertThat(inspections.count()).isEqualTo(8);
+        // 1 veröffentlichte Erstkontrolle aus StudentSampleData (US-38), 1 geplante in Petershausen (US-03)
+        assertThat(inspections.count()).isEqualTo(9);
     }
 
     private Integer startAndFirstCriterion(MockHttpSession session, Long id) throws Exception {
