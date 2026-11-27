@@ -21,7 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 @SecurityRequirements
 @Profile("dev")
 public class DevAuthController {
-    private static final Set<String> MOCK_USERS = Set.of("student", "caretaker", "clerk");
+    private static final Set<String> MOCK_USERS = Set.of("student", "caretaker", "caretaker2", "clerk");
     private final AppUserService users;
     private final HttpSessionSecurityContextRepository contexts;
     private final SessionAuthenticationStrategy sessions;

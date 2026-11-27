@@ -26,7 +26,8 @@ import de.seezeit.aume.user.UserRepository;
 /**
  * Entwicklungsdaten für die Kontrolle: eine veröffentlichte Checkliste nach dem Wireframe,
  * je eine geplante Kontrolle für die WGs S-01 und S-02 der Wohnanlage Sonne und drei abgeschlossene
- * Kontrollen für die Kontroll-Historie. Läuft nach {@link SampleData}, das die Wohnanlage und die WGs anlegt.
+ * Kontrollen für die Kontroll-Historie, dazu eine geplante Kontrolle in Petershausen für die Vertretung (US-03).
+ * Läuft nach {@link SampleData}, das die Wohnanlagen und die WGs anlegt.
  */
 @Component
 @Profile("dev")
@@ -86,6 +87,18 @@ public class InspectionSampleData implements CommandLineRunner {
             inspections.save(new InspectionEntity(flat(residence, "S-02", 3), null));
             seedHistory(residence);
         }
+        seedDeputyExample();
+    }
+
+    /**
+     * US-03: eine sofort startbare Kontrolle in Petershausen (WG 3.09, ohne Zeitraum). So sieht caretaker2, der
+     * Petershausen betreut und Sonne vertritt, im Browser Kontrollen beider Anlagen, caretaker nur die von Sonne.
+     */
+    private void seedDeputyExample() {
+        residences.findFirstByName("Petershausen").ifPresent(petershausen -> {
+            var flat = flat(petershausen, "3.09", 5);
+            if (!inspections.existsByFlat_Id(flat.getId())) inspections.save(new InspectionEntity(flat, null));
+        });
     }
 
     /** Abgeschlossene Kontrollen: S-01 nicht bestanden mit Nachkontrolle bestanden, S-02 bestanden. */

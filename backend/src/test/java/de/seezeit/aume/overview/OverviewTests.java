@@ -109,11 +109,12 @@ class OverviewTests {
 
     @Test
     void deputiesSeeTheResidencesTheyStandInFor() {
-        // caretaker2 betreut Petershausen und vertritt Sonne (SampleData).
+        // caretaker2 betreut Petershausen und vertritt Sonne (SampleData); in Petershausen liegt eine
+        // geplante Kontrolle aus InspectionSampleData (US-03).
         var upcoming = overview.caretakerOverview("caretaker2").upcoming();
         assertThat(upcoming).extracting(OverviewService.UpcomingInspection::residenceName)
-            .containsOnly("Wohnanlage Sonne");
-        assertThat(upcoming).hasSize(5);
+            .containsOnly("Wohnanlage Sonne", "Petershausen");
+        assertThat(upcoming).hasSize(6);
         // Den Vorschlag beantwortet nur die eingetragene Objektbetreuung.
         assertThat(upcoming).noneMatch(OverviewService.UpcomingInspection::canRespond);
         assertThat(overview.caretakerOverview("caretaker2").proposals()).isZero();

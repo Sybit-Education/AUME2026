@@ -32,7 +32,7 @@ Zusätzlich trägt jedes Kriterium, das in einer dieser Kontrollen auffällig wa
 
 | Rolle | Berechtigung | Zugriff |
 | --- | --- | --- |
-| Objektbetreuung (`CARETAKER`) | `INSPECTION_PERFORM` | nur Kontrollen von WGs der eigenen Wohnanlage; fremde Kontrollen antworten mit 404 |
+| Objektbetreuung (`CARETAKER`) | `INSPECTION_PERFORM` | nur Kontrollen von WGs der betreuten und vertretenen Anlagen (`staff_assignments`, US-03); fremde Kontrollen antworten mit 404 |
 | Studierende, Sachbearbeitung | – | 403 |
 
 Keine neuen Tabellen. Für das PDF kommt die Bibliothek OpenPDF (`com.github.librepdf:openpdf`, LGPL/MPL) dazu. Gelesen werden `inspections` und `inspection_findings` (Paket `inspection`, `InspectionHistoryService` und `PreviousFindingsService`).
@@ -41,7 +41,7 @@ Keine neuen Tabellen. Für das PDF kommt die Bibliothek OpenPDF (`com.github.lib
 
 | Methode und Pfad | Zweck |
 | --- | --- |
-| `GET /api/inspections/history?page=&size=&residence=&flat=&result=&followUp=&defects=&from=&to=&orderBy=&direction=` | abgeschlossene Kontrollen der eigenen Wohnanlage mit `residenceName`, paginiert; `orderBy` = `DATE`, `RESIDENCE`, `FLAT`, `KIND`, `RESULT`, `DEFECTS`, `INSPECTOR` |
+| `GET /api/inspections/history?page=&size=&residence=&flat=&result=&followUp=&defects=&from=&to=&orderBy=&direction=` | abgeschlossene Kontrollen der betreuten und vertretenen Wohnanlagen mit `residenceName`, paginiert; `orderBy` = `DATE`, `RESIDENCE`, `FLAT`, `KIND`, `RESULT`, `DEFECTS`, `INSPECTOR` |
 | `GET /api/inspections/{id}` | wie bisher; liefert zusätzlich `inspectedAt` und `inspectorName` |
 | `GET /api/inspections/{id}/previous-findings` | Vorgeschichte: bis zu drei abgeschlossene Kontrollen derselben WG vor dieser Kontrolle, neueste zuerst |
 | `GET /api/inspections/{id}/protocol.pdf` | Protokoll als PDF (`Content-Disposition: attachment`, `Cache-Control: no-store`); Sprache aus `Accept-Language`. Nur abgeschlossene Kontrollen, sonst 409; Zugriff wie bei `GET /api/inspections/{id}` |

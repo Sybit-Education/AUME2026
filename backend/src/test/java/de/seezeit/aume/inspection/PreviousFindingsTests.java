@@ -14,6 +14,8 @@ import de.seezeit.aume.residence.ResidenceEntity;
 import de.seezeit.aume.residence.ResidenceRepository;
 import de.seezeit.aume.standard.ChecklistVersionEntity;
 import de.seezeit.aume.standard.CriterionEntity;
+import de.seezeit.aume.residence.StaffAssignmentEntity;
+import de.seezeit.aume.residence.StaffKind;
 import de.seezeit.aume.user.CaretakerEntity;
 import de.seezeit.aume.user.RoleRepository;
 import jakarta.persistence.EntityManager;
@@ -61,6 +63,8 @@ class PreviousFindingsTests {
         caretaker = new CaretakerEntity("previous-findings-test-caretaker", "Vorgeschichte-Testperson",
             Set.of(roles.findByName("CARETAKER").orElseThrow()), residence);
         entities.persist(caretaker);
+        // Zuständigkeit läuft über staff_assignments, nicht über users.residence_id (US-03).
+        entities.persist(new StaffAssignmentEntity(caretaker, residence, StaffKind.CARETAKER));
         checklist = new ChecklistVersionEntity(Integer.MAX_VALUE, caretaker);
         checklist.setStatus(ChecklistVersionEntity.Status.PUBLISHED);
         checklist.setPublishedAt(Instant.parse("2020-01-01T08:00:00Z"));
