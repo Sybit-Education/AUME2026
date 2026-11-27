@@ -97,7 +97,11 @@
     "requestGone": "This request no longer exists. The administrative staff withdrew it or assigned it to someone else.",
     "inspectionNotStarted": "The inspection can only be started once its period has begun.",
     "selfCheck": "The self-check could not be loaded.",
-    "selfCheckSave": "The self-check could not be saved."
+    "selfCheckSave": "The self-check could not be saved.",
+    "periodOccasionRequired": "Please choose an occasion.",
+    "periodFlatsRequired": "Please choose at least one flat.",
+    "periodUnknownFlat": "A selected flat does not belong to this residence.",
+    "periodFlatOpen": "A selected flat now has an open inspection. Please check your selection."
   },
   "navigation": {
     "main": "Main navigation",
@@ -146,7 +150,8 @@
     "runningProgress": "Running · {{controlled}} of {{total}}",
     "kinds": {
       "REGULAR": "Regular inspection",
-      "FOLLOW_UP": "Follow-up inspection"
+      "FOLLOW_UP": "Follow-up inspection",
+      "INDIVIDUAL": "Individual inspection"
     },
     "outcomes": {
       "OPEN": "Still open",
@@ -175,7 +180,18 @@
     "flats_other": "{{count}} flats",
     "kindLabel": "Inspection type",
     "kind": {
-      "REGULAR": "Regular inspection"
+      "REGULAR": "Regular inspection",
+      "INDIVIDUAL": "Individual inspection"
+    },
+    "flatsSelect": "Flats",
+    "flatsHint": "Only the selected flats get the inspection and the message.",
+    "flatOpen": "open inspection",
+    "occasionLabel": "Occasion",
+    "chooseOccasion": "Choose occasion",
+    "occasion": {
+      "SAMPLE": "Spot check",
+      "COMPLAINT": "Complaint",
+      "OTHER": "Other"
     },
     "startsOn": "Start date",
     "endsOn": "End date",
@@ -253,7 +269,9 @@
     "withdraw": "Withdraw",
     "withdrawFor": "Withdraw proposal for {{name}}",
     "withdrawTitle": "Withdraw proposal?",
-    "withdrawConfirm": "The proposal for {{name}} will be deleted. The planned flat inspections will be removed."
+    "withdrawConfirm": "The proposal for {{name}} will be deleted. The planned flat inspections will be removed.",
+    "recipientsFlats": "Selected flats only: {{flats}}",
+    "messageHintIndividual": "Prefilled from the template for individual inspections. The occasion is deliberately not mentioned. You can edit the text before sending."
   },
   "standards": {
     "title": "Standards and criteria",
@@ -264,7 +282,8 @@
     "standards": "Cleanliness standards",
     "save": "Save",
     "saved": "Saved. Residents will see the new version.",
-    "readOnly": "You can only read these texts."
+    "readOnly": "You can only read these texts.",
+    "english": "English (fixed)"
   },
   "residences": {
     "name": "Residence",
@@ -515,6 +534,7 @@
       "kind": "Inspection",
       "all": "All",
       "initial": "Initial inspection",
+      "individual": "Individual inspection",
       "followUp": "Follow-up",
       "from": "From",
       "to": "To",
@@ -698,7 +718,8 @@
     "close": "Close",
     "kindLabel": "Inspection",
     "kind": {
-      "REGULAR": "Regular inspection"
+      "REGULAR": "Regular inspection",
+      "INDIVIDUAL": "Individual inspection"
     },
     "time": "Time",
     "flatsLabel": "Flats"

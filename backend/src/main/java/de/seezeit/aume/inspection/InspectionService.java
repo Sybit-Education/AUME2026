@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 import de.seezeit.aume.auth.AppUserService;
+import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.StaffAccessService;
 import de.seezeit.aume.inspection.FindingEntity.Rating;
 import de.seezeit.aume.inspection.FindingEntity.Severity;
@@ -61,7 +62,8 @@ public class InspectionService {
                 return new InspectionSummary(inspection.getId(), inspection.getFlat().getLabel(),
                     inspection.getFlat().getResidence().getName(), inspection.getStatus(), inspection.getRound(),
                     period == null ? null : period.getStartsOn(), period == null ? null : period.getEndsOn(),
-                    period == null ? null : period.getWindowStart(), period == null ? null : period.getWindowEnd());
+                    period == null ? null : period.getWindowStart(), period == null ? null : period.getWindowEnd(),
+                    period == null ? null : period.getKind());
             });
     }
 
@@ -225,9 +227,13 @@ public class InspectionService {
     /** Die Kontrolle gehört zu einem Zeitraum, der noch nicht begonnen hat. */
     public static class PeriodNotStartedException extends RuntimeException {}
 
-    /** Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. */
+    /**
+     * Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. {@code periodKind}
+     * unterscheidet reguläre von individuellen Kontrollen (US-18b).
+     */
     public record InspectionSummary(Long id, String flatLabel, String residenceName, Status status, int round,
-        LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd) {}
+        LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
+        InspectionPeriodEntity.Kind periodKind) {}
 
     public record InspectionView(Long id, String flatLabel, String residenceName, int capacity, int round,
         Status status, Result overallResult, Instant inspectedAt, String inspectorName,

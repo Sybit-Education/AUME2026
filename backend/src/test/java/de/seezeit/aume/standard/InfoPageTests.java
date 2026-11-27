@@ -42,6 +42,21 @@ class InfoPageTests {
     }
 
     @Test
+    void englishVersionIsStoredSeparately() throws Exception {
+        mvc.perform(put("/api/info-pages").session(login("clerk")).with(csrf())
+                .contentType(MediaType.APPLICATION_JSON).content(
+                    "{\"process\":\"A\",\"consequences\":\"B\",\"standards\":\"C\","
+                        + "\"processEn\":\"A en\",\"consequencesEn\":\"B en\",\"standardsEn\":\"C en\"}"))
+            .andExpect(status().isOk());
+
+        mvc.perform(get("/api/info-pages").session(login("student")))
+            .andExpect(jsonPath("$.process").value("A"))
+            .andExpect(jsonPath("$.processEn").value("A en"))
+            .andExpect(jsonPath("$.consequencesEn").value("B en"))
+            .andExpect(jsonPath("$.standardsEn").value("C en"));
+    }
+
+    @Test
     void residentsCanReadButNotSave() throws Exception {
         var session = login("student");
         mvc.perform(get("/api/info-pages").session(session)).andExpect(status().isOk());

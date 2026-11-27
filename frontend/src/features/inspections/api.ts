@@ -18,6 +18,8 @@ export interface InspectionSummary {
   endsOn: string | null
   windowStart: string | null
   windowEnd: string | null
+  /** Leer bei Kontrollen ohne Zeitraum. `INDIVIDUAL` = nur einzelne WGs (US-18b). */
+  periodKind: 'REGULAR' | 'INDIVIDUAL' | null
 }
 
 export interface InspectionPage {

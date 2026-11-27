@@ -6,6 +6,12 @@ Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontr
 
 Die Ankündigung setzt `announcedAt` am Zeitraum und schreibt einen Versandeintrag (`inspection_announcements`). Eine Terminänderung setzt `rescheduledAt`. Nachrichten verschickt dieses Feature nicht selbst. Der Scheduler im Notification-Modul (siehe [In-App-Kontrollnachrichten](../student-messages/README.md)) erkennt die neue Revision innerhalb von etwa 15 Sekunden und stellt jeder WG-Kontrolle des Zeitraums eine Ankündigung zu.
 
+## Individuelle Kontrolle (US-18b)
+
+Eine individuelle Kontrolle wird genauso angekündigt. Empfänger sind nur die ausgewählten WGs, weil nur sie eine Kontrolle im Zeitraum haben. Der Text kommt aus einer eigenen Vorlage („für eure WG … ist … eine Sauberkeitskontrolle geplant“). Den Anlass nennt die Vorlage bewusst nicht, damit eine Beschwerde nicht im Text der WG steht. Der Entwurf liefert zusätzlich `kind` und `flatLabels`, der Dialog zeigt die WG-Nummern als Empfänger. Status, Versandeintrag und Terminänderung verhalten sich wie bei der regulären Kontrolle.
+
+In der Kontrollübersicht (US-47) zählt eine individuelle Kontrolle nicht als Runde der Anlage. Sie steht unter „Offene Einzel-WG-Kontrollen“.
+
 ## Regeln
 
 - Ankündigen geht nur bei Status `AGREED`, noch nicht angekündigt und mit Start in der Zukunft.
@@ -22,7 +28,7 @@ Alle Pfade beginnen mit `/api/inspection-periods/{id}`.
 
 | Methode und Pfad | Body | Antwort |
 | --- | --- | --- |
-| `GET /announcement-draft` | – | `residenceName`, `flatCount`, `channels`, vorbefüllte `message` |
+| `GET /announcement-draft` | – | `residenceName`, `kind`, `flatCount`, `flatLabels` (nur individuell), `channels`, vorbefüllte `message` |
 | `POST /announce` | `message`, `attachmentId`, `attachmentName`, `version` | Versandeintrag |
 | `POST /reschedule` | `startsOn`, `endsOn`, `windowStart`, `windowEnd`, `version` | Versandeintrag |
 | `GET /announcements` | – | Versandeinträge, neueste zuerst. Die Oberfläche zeigt sie noch nicht an. |

@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Abgestimmte Kontrolle an alle WGs ankündigen und angekündigte Termine ändern (US-18).
+ * Abgestimmte Kontrolle an alle WGs des Zeitraums ankündigen (bei individuellen Kontrollen nur die ausgewählten) und angekündigte Termine ändern (US-18).
  * Setzt nur {@code announcedAt}/{@code rescheduledAt} und schreibt den Versandeintrag. Die Nachrichten an die
  * WGs erzeugt der Scheduler im Notification-Modul.
  */
@@ -61,8 +61,10 @@ public class InspectionAnnouncementService {
     /** Vorbefüllter Text und Empfänger für den Ankündigen-Dialog. */
     public DraftView draft(String userKey, Long id) {
         var period = requireForClerk(users.requireUser(userKey), id);
-        return new DraftView(period.getId(), period.getResidence().getName(), flatCount(period), channels(CHANNELS),
-            announcementText(period));
+        var labels = period.getKind() != InspectionPeriodEntity.Kind.INDIVIDUAL ? null
+            : inspections.flatLabelsByPeriod(List.of(period.getId())).getOrDefault(period.getId(), List.of());
+        return new DraftView(period.getId(), period.getResidence().getName(), period.getKind(), flatCount(period),
+            labels, channels(CHANNELS), announcementText(period));
     }
 
     @Transactional
@@ -148,9 +150,21 @@ public class InspectionAnnouncementService {
         return stripped.length() > MAX_ATTACHMENT_NAME_LENGTH ? stripped.substring(0, MAX_ATTACHMENT_NAME_LENGTH) : stripped;
     }
 
-    /** Vorlage für reguläre Kontrollen. Die Bewohnenden werden in der App geduzt. */
+    /** Vorlage je Kontrollart. Die Bewohnenden werden in der App geduzt. */
     static String announcementText(InspectionPeriodEntity period) {
+        return period.getKind() == InspectionPeriodEntity.Kind.INDIVIDUAL ? individualText(period) : regularText(period);
+    }
+
+    private static String regularText(InspectionPeriodEntity period) {
         return "Liebe WG,\n\nin der Wohnanlage %s findet %s die reguläre Sauberkeitskontrolle statt.%s\n\n"
+            .formatted(period.getResidence().getName(), range(period.getStartsOn(), period.getEndsOn()),
+                window(period.getWindowStart(), period.getWindowEnd()))
+            + checklistHint();
+    }
+
+    /** Den Anlass (z. B. Beschwerde) nennt die Vorlage bewusst nicht; die Sachbearbeitung kann ihn ergänzen. */
+    private static String individualText(InspectionPeriodEntity period) {
+        return "Liebe WG,\n\nfür eure WG in der Wohnanlage %s ist %s eine Sauberkeitskontrolle geplant.%s\n\n"
             .formatted(period.getResidence().getName(), range(period.getStartsOn(), period.getEndsOn()),
                 window(period.getWindowStart(), period.getWindowEnd()))
             + checklistHint();
@@ -196,8 +210,9 @@ public class InspectionAnnouncementService {
     public record RescheduleRequest(LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
         Long version) {}
 
-    public record DraftView(Long periodId, String residenceName, int flatCount, List<String> channels,
-        String message) {}
+    /** {@code flatLabels} nur bei individuellen Kontrollen. */
+    public record DraftView(Long periodId, String residenceName, InspectionPeriodEntity.Kind kind, int flatCount,
+        List<String> flatLabels, List<String> channels, String message) {}
 
     public record AnnouncementView(Long id, Kind kind, Instant sentAt, StaffView sentBy, String residenceName,
         int flatCount, List<String> channels, String message, String attachmentName, LocalDate startsOn,

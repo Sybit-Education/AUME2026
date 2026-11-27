@@ -30,9 +30,9 @@ let routers: ReturnType<typeof createMemoryRouter>[] = []
 
 function period(overrides: Partial<InspectionPeriod> = {}): InspectionPeriod {
   return {
-    id: 7, residenceId: 1, residenceName: 'Sonne', kind: 'REGULAR', status: 'WAITING_FOR_CARETAKER', announcedAt: null, rescheduledAt: null,
+    id: 7, residenceId: 1, residenceName: 'Sonne', kind: 'REGULAR', occasion: null, status: 'WAITING_FOR_CARETAKER', announcedAt: null, rescheduledAt: null,
     startsOn: '2026-12-01', endsOn: '2026-12-03', windowStart: '09:00:00', windowEnd: '16:00:00',
-    caretaker: bea, flatCount: 2, counter: null, version: 3, ...overrides,
+    caretaker: bea, flatCount: 2, flatLabels: null, counter: null, version: 3, ...overrides,
   }
 }
 
@@ -57,12 +57,14 @@ beforeEach(async () => {
   signedIn = clerk
   writeResponse = null
   periods = []
-  draft = { periodId: 7, residenceName: 'Sonne', flatCount: 2, channels: ['IN_APP'], message: 'Liebe WG,\n\nVorlage' }
+  draft = { periodId: 7, residenceName: 'Sonne', kind: 'REGULAR', flatCount: 2, flatLabels: null, channels: ['IN_APP'], message: 'Liebe WG,\n\nVorlage' }
   options = {
     residences: [
-      { id: 1, name: 'Sonne', flatCount: 2, caretakerId: 10, flatsWithOpenInspection: [] },
-      { id: 2, name: 'Egg', flatCount: 2, caretakerId: 11, flatsWithOpenInspection: ['E-12'] },
-      { id: 3, name: 'Mond', flatCount: 1, caretakerId: null, flatsWithOpenInspection: ['M-01'] },
+      { id: 1, name: 'Sonne', flatCount: 2, caretakerId: 10, flatsWithOpenInspection: [],
+        flats: [{ id: 101, label: 'S-01' }, { id: 102, label: 'S-02' }] },
+      { id: 2, name: 'Egg', flatCount: 2, caretakerId: 11, flatsWithOpenInspection: ['E-12'],
+        flats: [{ id: 201, label: 'E-12' }, { id: 202, label: 'E-14' }] },
+      { id: 3, name: 'Mond', flatCount: 1, caretakerId: null, flatsWithOpenInspection: ['M-01'], flats: [{ id: 301, label: 'M-01' }] },
     ],
     caretakers: [bea, cem],
   }
@@ -108,6 +110,39 @@ it('prefills the form and sends a proposal for the whole residence', async () =>
   expect(JSON.parse(String(writes()[0][1]?.body))).toEqual({
     residenceId: 1, startsOn: '2026-12-01', endsOn: '2026-12-03', windowStart: '09:00', windowEnd: '16:00', caretakerId: 10,
   })
+})
+
+it('sends an individual inspection only for the selected flats with an occasion', async () => {
+  mount('/inspection-planning?residence=2')
+  const form = await newForm()
+  fireEvent.change(form.getByLabelText('Kontrollart'), { target: { value: 'INDIVIDUAL' } })
+  const send = form.getByRole('button', { name: 'Vorschlag an Objektbetreuung senden' }) as HTMLButtonElement
+  expect(send.disabled).toBe(true)
+  expect((form.getByLabelText(/E-12/) as HTMLInputElement).disabled).toBe(true)
+  expect(form.queryByRole('note')).toBeNull()
+
+  fireEvent.click(form.getByLabelText('E-14'))
+  fireEvent.change(form.getByLabelText('Anlass'), { target: { value: 'COMPLAINT' } })
+  fireEvent.change(form.getByLabelText('Startdatum'), { target: { value: '2026-12-01' } })
+  fireEvent.change(form.getByLabelText('Enddatum'), { target: { value: '2026-12-03' } })
+  expect(send.disabled).toBe(false)
+  fireEvent.click(send)
+
+  expect((await screen.findByRole('status')).textContent).toBe('Vorschlag an die Objektbetreuung gesendet.')
+  expect(JSON.parse(String(writes()[0][1]?.body))).toEqual({
+    residenceId: 2, startsOn: '2026-12-01', endsOn: '2026-12-03', windowStart: '09:00', windowEnd: '16:00', caretakerId: 11,
+    kind: 'INDIVIDUAL', flatIds: [202], occasion: 'COMPLAINT',
+  })
+})
+
+it('shows kind, flats and occasion of an individual inspection in the list and the announce dialog', async () => {
+  periods = [period({ kind: 'INDIVIDUAL', occasion: 'SAMPLE', flatLabels: ['S-02'], flatCount: 1, status: 'AGREED' })]
+  draft = { ...draft, kind: 'INDIVIDUAL', flatCount: 1, flatLabels: ['S-02'] }
+  mount('/inspection-planning?announce=7')
+  expect(await screen.findByText('Individuelle Kontrolle · S-02 · Stichprobe')).toBeDefined()
+  const dialog = within(await screen.findByRole('dialog'))
+  expect(dialog.getByText('Nur ausgewählte WGs: S-02')).toBeDefined()
+  expect(dialog.getByText(/Vorlage für individuelle Kontrollen/)).toBeDefined()
 })
 
 it('follows the residence for caretaker, flat count and open-inspection hint', async () => {
@@ -292,7 +327,7 @@ it('marks a rescheduled period like an announced one, without open work', async 
 })
 
 it('blocks a residence without flats and asks for a caretaker when none is assigned', async () => {
-  options.residences.push({ id: 4, name: 'Leer', flatCount: 0, caretakerId: null, flatsWithOpenInspection: [] })
+  options.residences.push({ id: 4, name: 'Leer', flatCount: 0, caretakerId: null, flatsWithOpenInspection: [], flats: [] })
   mount('/inspection-planning?residence=4')
   const form = await newForm()
   expect(form.getByText('0 WGs gehören zur Kontrolle')).toBeDefined()

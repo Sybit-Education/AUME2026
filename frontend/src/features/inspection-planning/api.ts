@@ -15,7 +15,13 @@ export interface ResidenceOption {
   flatCount: number
   caretakerId: number | null
   flatsWithOpenInspection: string[]
+  /** Auswahl für individuelle Kontrollen (US-18b). */
+  flats: { id: number; label: string }[]
 }
+
+export type PeriodKind = 'REGULAR' | 'INDIVIDUAL'
+export const OCCASIONS = ['SAMPLE', 'COMPLAINT', 'OTHER'] as const
+export type Occasion = typeof OCCASIONS[number]
 
 export interface PlanningOptions {
   residences: ResidenceOption[]
@@ -26,7 +32,8 @@ export interface InspectionPeriod {
   id: number
   residenceId: number
   residenceName: string
-  kind: 'REGULAR'
+  kind: PeriodKind
+  occasion: Occasion | null
   status: PeriodStatus
   announcedAt: string | null
   /** Gesetzt, sobald ein angekündigter Termin geändert wurde (US-18). */
@@ -37,6 +44,8 @@ export interface InspectionPeriod {
   windowEnd: string | null
   caretaker: StaffMember | null
   flatCount: number
+  /** Nur bei individuellen Kontrollen gesetzt. */
+  flatLabels: string[] | null
   counter: { startsOn: string; endsOn: string; windowStart: string | null; windowEnd: string | null; reason: string } | null
   version: number
 }
@@ -51,7 +60,9 @@ export type Channel = 'IN_APP'
 export interface AnnouncementDraft {
   periodId: number
   residenceName: string
+  kind: PeriodKind
   flatCount: number
+  flatLabels: string[] | null
   channels: Channel[]
   message: string
 }
@@ -77,6 +88,13 @@ export interface PeriodInput {
   caretakerId: number | null
 }
 
+/** Nur beim Anlegen einer individuellen Kontrolle; ohne `kind` legt das Backend eine reguläre an. */
+export interface NewPeriodInput extends PeriodInput {
+  kind?: 'INDIVIDUAL'
+  flatIds?: number[]
+  occasion?: Occasion | null
+}
+
 const saveErrors: Record<string, ErrorKey> = {
   dates_required: 'errors.periodDatesRequired',
   end_before_start: 'errors.periodEndBeforeStart',
@@ -93,6 +111,10 @@ const saveErrors: Record<string, ErrorKey> = {
   message_too_long: 'errors.announceMessageTooLong',
   unknown_attachment: 'errors.announceAttachment',
   period_unchanged: 'errors.periodUnchanged',
+  occasion_required: 'errors.periodOccasionRequired',
+  flats_required: 'errors.periodFlatsRequired',
+  unknown_flat: 'errors.periodUnknownFlat',
+  flat_has_open_inspection: 'errors.periodFlatOpen',
 }
 
 export async function getPlanningOptions(signal: AbortSignal): Promise<PlanningOptions> {
@@ -119,7 +141,7 @@ async function send(path: string, method: 'POST' | 'PUT', body: unknown, signal:
   requireOk(response, 'errors.inspectionPlanningSave')
 }
 
-export function createPeriod(residenceId: number, input: PeriodInput, signal: AbortSignal): Promise<void> {
+export function createPeriod(residenceId: number, input: NewPeriodInput, signal: AbortSignal): Promise<void> {
   return send('/api/inspection-periods', 'POST', { residenceId, ...input }, signal)
 }
 

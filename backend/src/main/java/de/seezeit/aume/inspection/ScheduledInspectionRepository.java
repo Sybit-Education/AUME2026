@@ -25,6 +25,17 @@ interface ScheduledInspectionRepository extends Repository<InspectionEntity, Lon
         """)
     List<PeriodFlatCount> countByPeriod(@Param("periodIds") Collection<Long> periodIds);
 
+    @Query("""
+        select i.period.id as periodId, i.flat.label as flatLabel from InspectionEntity i
+        where i.period.id in :periodIds order by i.flat.label
+        """)
+    List<PeriodFlatLabel> findFlatLabelsByPeriod(@Param("periodIds") Collection<Long> periodIds);
+
+    interface PeriodFlatLabel {
+        Long getPeriodId();
+        String getFlatLabel();
+    }
+
     interface PeriodFlatCount {
         Long getPeriodId();
         long getFlatCount();
