@@ -29,6 +29,10 @@ public class InfoPageEntity {
     @Column(nullable = false, length = 20000)
     private String body;
 
+    /** Englische Fassung; leer, solange keine gespeichert wurde. */
+    @Column(length = 20000)
+    private String bodyEn;
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "updated_by", nullable = false)
     private UserEntity updatedBy;

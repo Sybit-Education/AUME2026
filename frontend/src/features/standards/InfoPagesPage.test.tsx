@@ -70,16 +70,15 @@ afterEach(() => {
   routers = []
 })
 
-it('saves German and the fixed English version together and shows only German on the left', async () => {
+it('saves German and the fixed English version in separate fields', async () => {
   mount()
   expect((await screen.findAllByLabelText<HTMLTextAreaElement>('Englisch (fest hinterlegt)'))[0].value).toBe(ENGLISH.process)
   fireEvent.change(await field('Ablauf der Kontrolle'), { target: { value: 'Ablauf neu' } })
   fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
   expect((await screen.findByRole('status')).textContent).toBe('Gespeichert. Bewohnende sehen die neuen Texte.')
   expect(JSON.parse(String(putCalls()[0][1]?.body))).toEqual({
-    process: `Ablauf neu\n\n${ENGLISH.process}`,
-    consequences: `Folgen alt\n\n${ENGLISH.consequences}`,
-    standards: `Standards alt\n\n${ENGLISH.standards}`,
+    process: 'Ablauf neu', consequences: 'Folgen alt', standards: 'Standards alt',
+    processEn: ENGLISH.process, consequencesEn: ENGLISH.consequences, standardsEn: ENGLISH.standards,
   })
   expect((await field('Ablauf der Kontrolle')).value).toBe('Ablauf neu')
 })

@@ -3,7 +3,7 @@ import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
 import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
-import { saveInfoPages, withEnglish } from './api'
+import { ENGLISH, saveInfoPages } from './api'
 
 export type InfoPagesActionResult = { saved: true } | { error: ErrorKey }
 
@@ -15,12 +15,15 @@ export async function saveInfoPagesAction({ request }: ActionFunctionArgs): Prom
   if (!user.privileges.includes('INFO_PAGE_EDIT')) throw redirect('/forbidden')
 
   const form = await request.formData()
-  const text = (name: 'process' | 'consequences' | 'standards') => withEnglish(name, String(form.get(name) ?? ''))
+  const text = (name: string) => String(form.get(name) ?? '')
   try {
     await saveInfoPages({
       process: text('process'),
       consequences: text('consequences'),
       standards: text('standards'),
+      processEn: ENGLISH.process,
+      consequencesEn: ENGLISH.consequences,
+      standardsEn: ENGLISH.standards,
     }, request.signal)
     return { saved: true }
   } catch (cause) {

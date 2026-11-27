@@ -4,7 +4,7 @@ import { Form, useActionData, useLoaderData, useNavigation } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
 import { useAuth } from '@/lib/auth/AuthContext'
 import type { InfoPagesActionResult } from './actions'
-import { ENGLISH, germanPart, type InfoPages } from './api'
+import { ENGLISH, type InfoPages } from './api'
 
 const fields = [
   { name: 'process', rows: 6 },
@@ -42,7 +42,7 @@ export default function InfoPagesPage() {
                   id={`info-${name}`}
                   name={name}
                   rows={rows}
-                  defaultValue={germanPart(name, data[name])}
+                  defaultValue={data[name]}
                   maxLength={20000}
                   required
                   readOnly={!canEdit}

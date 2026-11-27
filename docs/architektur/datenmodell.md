@@ -184,6 +184,7 @@ erDiagram
         varchar slug UK
         varchar title
         varchar body
+        varchar body_en
         bigint updated_by FK
         timestamptz updated_at
     }

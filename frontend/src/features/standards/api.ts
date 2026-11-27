@@ -8,11 +8,18 @@ export interface InfoTexts {
   standards: string
 }
 
-export interface InfoPages extends InfoTexts {
+/** Englische Fassung in eigenen Feldern (eigene DB-Spalte), damit Bewohnende später die Sprache wählen können. */
+export interface EnglishTexts {
+  processEn: string
+  consequencesEn: string
+  standardsEn: string
+}
+
+export interface InfoPages extends InfoTexts, EnglishTexts {
   updatedAt: string | null
 }
 
-/** Fest hinterlegte englische Fassung. Sie wird beim Speichern unter den deutschen Text gehängt. */
+/** Fest hinterlegte englische Fassung. Sie wird bei jedem Speichern mitgeschickt. */
 export const ENGLISH: InfoTexts = {
   process: [
     '1. You will receive an announcement with the inspection period.',
@@ -26,17 +33,6 @@ export const ENGLISH: InfoTexts = {
   standards: 'The cleanliness standards are the same for all residences. The caretaker uses exactly the same checklist as you.',
 }
 
-/** Deutsch und Englisch in einem Text, damit Bewohnende beide Sprachen sehen. */
-export function withEnglish(name: keyof InfoTexts, german: string): string {
-  return german.trim() === '' ? german : `${german}\n\n${ENGLISH[name]}`
-}
-
-/** Schneidet die angehängte englische Fassung wieder ab, damit links nur der deutsche Text steht. */
-export function germanPart(name: keyof InfoTexts, stored: string): string {
-  const suffix = `\n\n${ENGLISH[name]}`
-  return stored.endsWith(suffix) ? stored.slice(0, -suffix.length) : stored
-}
-
 const saveErrors: Record<string, ErrorKey> = {
   info_text_required: 'errors.infoTextRequired',
   info_text_too_long: 'errors.infoTextTooLong',
@@ -47,7 +43,7 @@ export async function getInfoPages(signal: AbortSignal): Promise<InfoPages> {
   return (await response.json()) as InfoPages
 }
 
-export async function saveInfoPages(texts: InfoTexts, signal: AbortSignal): Promise<void> {
+export async function saveInfoPages(texts: InfoTexts & EnglishTexts, signal: AbortSignal): Promise<void> {
   const response = await api('/api/info-pages', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
