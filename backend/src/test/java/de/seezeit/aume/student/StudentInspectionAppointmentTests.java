@@ -1,30 +1,35 @@
 package de.seezeit.aume.student;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.inspection.InspectionEntity;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.FlatEntity;
-import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.MembershipEntity;
-import de.seezeit.aume.user.UserRepository;
+import de.seezeit.aume.residence.ResidenceEntity;
+import de.seezeit.aume.user.ClerkEntity;
+import de.seezeit.aume.user.RoleRepository;
+import de.seezeit.aume.user.StudentEntity;
+import de.seezeit.aume.user.UserEntity;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,26 +42,24 @@ class StudentInspectionAppointmentTests {
     private static final String APPOINTMENT_PATH = "/api/student/inspection-appointment";
     private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
     @Autowired private MockMvc mvc;
-    @Autowired private UserRepository users;
-    @Autowired private FlatRepository flats;
+    @Autowired private AppUserService users;
+    @Autowired private RoleRepository roles;
     @Autowired private EntityManager entities;
 
     @Test
     void studentReadsTheNextAnnouncedPeriodOnlyFromTheirOwnFlat() throws Exception {
         var today = LocalDate.now(BERLIN);
-        var own = sampleInspection();
-        own.getPeriod().setStartsOn(today.plusDays(2));
-        own.getPeriod().setEndsOn(today.plusDays(4));
-        var otherFlat = flats.findByResidenceIdAndLabel(own.getFlat().getResidence().getId(), "S-02")
-            .orElseThrow();
-        var foreign = inspection(otherFlat, today, true);
-        inspection(own.getFlat(), today, false);
-        inspection(own.getFlat(), today.minusDays(7), true);
-        inspection(own.getFlat(), today.plusDays(10), true);
+        var fixture = fixture(today);
+        var own = inspection(fixture.flat(), today.plusDays(2), true, fixture.clerk());
+        var foreign = inspection(fixture.otherFlat(), today, true, fixture.clerk());
+        inspection(fixture.flat(), today, false, fixture.clerk());
+        inspection(fixture.flat(), today.minusDays(7), true, fixture.clerk());
+        inspection(fixture.flat(), today.plusDays(10), true, fixture.clerk());
         entities.flush();
         entities.clear();
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student")).param("flatId", foreign.getFlat().getId().toString()))
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session())
+                .param("flatId", foreign.getFlat().getId().toString()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(own.getId().intValue()))
             .andExpect(jsonPath("$.startsOn").value(today.plusDays(2).toString()))
@@ -73,16 +76,15 @@ class StudentInspectionAppointmentTests {
     void changeNoticeIsVisibleOnlyBeforeTheUpdatedPeriodStarts(int daysUntilStart, boolean expectedNotice)
             throws Exception {
         var today = LocalDate.now(BERLIN);
-        var period = sampleInspection().getPeriod();
+        var fixture = fixture(today);
         var startsOn = today.plusDays(daysUntilStart);
-        period.setStartsOn(startsOn);
-        period.setEndsOn(startsOn.plusDays(2));
+        var period = inspection(fixture.flat(), startsOn, true, fixture.clerk()).getPeriod();
         var announcedAt = startsOn.minusDays(2).atStartOfDay(BERLIN).toInstant();
         period.setAnnouncedAt(announcedAt);
         period.setRescheduledAt(announcedAt);
         entities.flush();
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.startsOn").value(startsOn.toString()))
             .andExpect(jsonPath("$.endsOn").value(startsOn.plusDays(2).toString()))
@@ -94,17 +96,15 @@ class StudentInspectionAppointmentTests {
     @Test
     void unchangedFollowUpDoesNotShowTheInitialInspectionLabel() throws Exception {
         var today = LocalDate.now(BERLIN);
-        var initial = sampleInspection();
-        var period = initial.getPeriod();
-        period.setStartsOn(today.plusDays(1));
-        period.setEndsOn(today.plusDays(3));
+        var fixture = fixture(today);
+        var initial = inspection(fixture.flat(), today.plusDays(1), true, fixture.clerk());
         initial.setStatus(InspectionEntity.Status.PUBLISHED);
         var followUp = new InspectionEntity(initial, today.plusDays(3));
-        followUp.setPeriod(period);
+        followUp.setPeriod(initial.getPeriod());
         entities.persist(followUp);
         entities.flush();
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(followUp.getId().intValue()))
             .andExpect(jsonPath("$.appointmentChanged").value(false))
@@ -114,13 +114,12 @@ class StudentInspectionAppointmentTests {
     @Test
     void expiredRescheduledPeriodDoesNotAppear() throws Exception {
         var today = LocalDate.now(BERLIN);
-        var period = sampleInspection().getPeriod();
-        period.setStartsOn(today.minusDays(3));
-        period.setEndsOn(today.minusDays(1));
+        var fixture = fixture(today);
+        var period = inspection(fixture.flat(), today.minusDays(3), true, fixture.clerk()).getPeriod();
         period.setRescheduledAt(today.minusDays(4).atStartOfDay(BERLIN).toInstant());
         entities.flush();
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session()))
             .andExpect(status().isNoContent())
             .andExpect(content().string(""));
     }
@@ -128,16 +127,12 @@ class StudentInspectionAppointmentTests {
     @Test
     void studentWithFutureMoveOutCanReadTheAppointment() throws Exception {
         var today = LocalDate.now(BERLIN);
-        var own = sampleInspection();
-        var membership = entities.createQuery("""
-            select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
-            """, MembershipEntity.class).getSingleResult();
-        membership.setValidTo(today.plusDays(1));
-        own.getPeriod().setStartsOn(today.plusDays(2));
-        own.getPeriod().setEndsOn(today.plusDays(4));
+        var fixture = fixture(today);
+        fixture.membership().setValidTo(today.plusDays(1));
+        var own = inspection(fixture.flat(), today.plusDays(2), true, fixture.clerk());
         entities.flush();
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student")))
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(own.getId().intValue()))
             .andExpect(jsonPath("$.appointmentChanged").value(false));
@@ -147,21 +142,17 @@ class StudentInspectionAppointmentTests {
     @CsvSource({"ended", "endsToday", "future", "missing", "ambiguous", "ambiguousWithFutureMoveOut"})
     void studentWithoutOneActiveFlatReceivesNoAppointment(String membershipState) throws Exception {
         var today = LocalDate.now(BERLIN);
-        var membership = entities.createQuery("""
-            select m from MembershipEntity m where m.user.userKey = 'student' and m.validTo is null
-            """, MembershipEntity.class).getSingleResult();
-        var period = sampleInspection().getPeriod();
-        period.setStartsOn(today.plusDays(1));
-        period.setEndsOn(today.plusDays(2));
+        var fixture = fixture(today);
+        var membership = fixture.membership();
+        var appointment = inspection(fixture.flat(), today.plusDays(1), true, fixture.clerk());
+        appointment.getPeriod().setEndsOn(today.plusDays(2));
         switch (membershipState) {
             case "ended" -> membership.setValidTo(today.minusDays(1));
             case "endsToday" -> membership.setValidTo(today);
             case "future" -> membership.setValidFrom(today.plusDays(1));
             case "missing" -> entities.remove(membership);
             case "ambiguous", "ambiguousWithFutureMoveOut" -> {
-                var otherFlat = flats.findByResidenceIdAndLabel(membership.getFlat().getResidence().getId(), "S-02")
-                    .orElseThrow();
-                var otherMembership = new MembershipEntity(otherFlat, membership.getUser(), today);
+                var otherMembership = new MembershipEntity(fixture.otherFlat(), membership.getUser(), today);
                 if (membershipState.equals("ambiguousWithFutureMoveOut")) {
                     otherMembership.setValidTo(today.plusDays(1));
                 }
@@ -172,39 +163,51 @@ class StudentInspectionAppointmentTests {
         entities.flush();
         entities.clear();
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student"))).andExpect(status().isNoContent());
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session())).andExpect(status().isNoContent());
     }
 
     @Test
     void equallyEarlyAppointmentsAreNotSelectedArbitrarily() throws Exception {
-        var own = sampleInspection();
-        var start = LocalDate.now(BERLIN).plusDays(1);
-        own.getPeriod().setStartsOn(start);
-        own.getPeriod().setEndsOn(start.plusDays(2));
-        inspection(own.getFlat(), start, true);
+        var today = LocalDate.now(BERLIN);
+        var fixture = fixture(today);
+        var start = today.plusDays(1);
+        inspection(fixture.flat(), start, true, fixture.clerk());
+        inspection(fixture.flat(), start, true, fixture.clerk());
 
-        mvc.perform(get(APPOINTMENT_PATH).session(login("student"))).andExpect(status().isNoContent());
+        mvc.perform(get(APPOINTMENT_PATH).session(fixture.session())).andExpect(status().isNoContent());
     }
 
     @Test
     void appointmentEndpointRejectsAnonymousAndStaffRequests() throws Exception {
         mvc.perform(get(APPOINTMENT_PATH)).andExpect(status().isUnauthorized());
-        mvc.perform(get(APPOINTMENT_PATH).session(login("clerk"))).andExpect(status().isForbidden());
+        var residence = new ResidenceEntity("Termintest Wohnanlage");
+        entities.persist(residence);
+        mvc.perform(get(APPOINTMENT_PATH).session(session(clerk(residence)))).andExpect(status().isForbidden());
     }
 
-    private InspectionEntity sampleInspection() {
-        return entities.createQuery("""
-            select i from InspectionEntity i join i.period p
-            where i.flat.label = 'S-01' and i.flat.residence.name = 'Wohnanlage Sonne'
-              and i.round = 0 and p.startsOn = :startsOn and p.endsOn = :endsOn
-            """, InspectionEntity.class)
-            .setParameter("startsOn", LocalDate.of(2026, 12, 7))
-            .setParameter("endsOn", LocalDate.of(2026, 12, 11))
-            .getSingleResult();
+    private Fixture fixture(LocalDate today) {
+        var residence = new ResidenceEntity("Termintest Wohnanlage");
+        entities.persist(residence);
+        var flat = new FlatEntity(residence, "T-01", 2);
+        var otherFlat = new FlatEntity(residence, "T-02", 2);
+        entities.persist(flat);
+        entities.persist(otherFlat);
+        var role = roles.findByName("STUDENT").orElseThrow();
+        var student = new StudentEntity("appointment-test-student", "Termintest Studierender", Set.of(role), residence);
+        entities.persist(student);
+        var membership = new MembershipEntity(flat, student, today.minusDays(2));
+        entities.persist(membership);
+        return new Fixture(flat, otherFlat, membership, clerk(residence), session(student));
     }
 
-    private InspectionEntity inspection(FlatEntity flat, LocalDate start, boolean announced) {
-        var clerk = users.findByUserKey("clerk").orElseThrow();
+    private ClerkEntity clerk(ResidenceEntity residence) {
+        var role = roles.findByName("CLERK").orElseThrow();
+        var clerk = new ClerkEntity("appointment-test-clerk", "Termintest Sachbearbeitung", Set.of(role), residence);
+        entities.persist(clerk);
+        return clerk;
+    }
+
+    private InspectionEntity inspection(FlatEntity flat, LocalDate start, boolean announced, ClerkEntity clerk) {
         var period = new InspectionPeriodEntity(flat.getResidence(), start, start.plusDays(2), clerk);
         if (announced) {
             period.setAnnouncedAt(Instant.now());
@@ -216,9 +219,15 @@ class StudentInspectionAppointmentTests {
         return inspection;
     }
 
-    private MockHttpSession login(String key) throws Exception {
-        return (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
-            .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"" + key + "\"}"))
-            .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+    private MockHttpSession session(UserEntity user) {
+        var context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
+            user.getUserKey(), null, users.authorities(user)));
+        var session = new MockHttpSession();
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+        return session;
     }
+
+    private record Fixture(FlatEntity flat, FlatEntity otherFlat, MembershipEntity membership,
+            ClerkEntity clerk, MockHttpSession session) {}
 }
