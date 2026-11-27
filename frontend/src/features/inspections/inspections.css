@@ -68,15 +68,38 @@
 
 /* Vorgeschichte der WG (US-51) */
 .ins-previous > summary {
-  display:flex;
-  align-items:baseline;
-  gap:10px;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  column-gap:10px;
   cursor:pointer;
-  list-style-position:inside;
+  list-style:none;
+}
+.ins-previous > summary::-webkit-details-marker {
+  display:none;
+}
+/* Pfeil ganz rechts wie bei den Kriterien: zeigt nach unten zum Aufklappen, nach oben zum Zuklappen */
+.ins-previous > summary::after {
+  content:"›";
+  grid-column:2;
+  grid-row:1;
+  color:var(--mut);
+  font-size:20px;
+  line-height:1;
+  transform:rotate(90deg);
+}
+.ins-previous[open] > summary::after {
+  transform:rotate(-90deg);
 }
 .ins-previous > summary h3 {
   display:inline;
+}
+/* Hinweis ohne frühere Kontrollen unter der Überschrift, nicht daneben */
+.ins-previous > summary .ins-previous-sub {
+  grid-column:1;
+}
+.ins-previous .ins-previous-ok {
+  border-color:#bcd6d6;
 }
 .ins-previous-list {
   margin:4px 0 0;
@@ -363,3 +386,12 @@
   opacity:.5;
   cursor:default;
 }
+/* Mangel löschen: rot und ganz rechts */
+.ins-defect .ins-defect-delete {
+  margin-left:auto;
+}
+.ins-defect .ins-defect-delete:hover:not(:disabled) {
+  background:var(--bad);
+  color:#fff;
+}
+

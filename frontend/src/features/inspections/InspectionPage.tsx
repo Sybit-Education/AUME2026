@@ -129,8 +129,8 @@ function InspectionView({ initial, previous, startError }: {
       </div>
       <div className="ins-meta">
         <span>{inspection.residenceName}</span>
-        {!done && <span>{t('inspections.places', { count: inspection.capacity })}</span>}
-        <span>{t(`inspections.status.${inspection.status}`)}</span>
+        {/* „In Bearbeitung“ weiß, wer die Kontrolle gerade bearbeitet; die übrigen Zustände bleiben sichtbar. */}
+        {inspection.status !== 'DRAFT' && <span>{t(`inspections.status.${inspection.status}`)}</span>}
         {inspection.round > 0 && <span>{t('inspections.round', { round: inspection.round })}</span>}
         {done && inspection.inspectedAt && (
           <span>{t('inspections.protocol.inspectedOn', { date: formatDate(inspection.inspectedAt, i18n.resolvedLanguage) })}</span>
@@ -255,7 +255,7 @@ function CriterionRow({ criterion, finding, earlier, editable, busy, onResolve, 
               <div className="acts">
                 <button className="btn gh sm" disabled={busy || defect.rating === 'RESOLVED_ON_SITE'} onClick={() => onResolve(defect)}>{t('inspections.resolveOnSite')}</button>
                 <button className="btn gh sm" disabled={busy} aria-pressed={defect.buildingCauseSuspected} onClick={() => onToggleBuilding(defect)}>{t('inspections.buildingCause')}</button>
-                <button className="btn gh sm" disabled={busy} onClick={() => onDelete(defect)}>{t('inspections.delete')}</button>
+                <button className="btn dg sm ins-defect-delete" disabled={busy} onClick={() => onDelete(defect)}>{t('inspections.delete')}</button>
               </div>
             )}
           </div>
