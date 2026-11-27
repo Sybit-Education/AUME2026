@@ -2,8 +2,10 @@ package de.seezeit.aume.notification;
 
 import de.seezeit.aume.notification.StudentNotificationService.NotificationView;
 import de.seezeit.aume.notification.StudentNotificationService.UnreadCount;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Locale;
+import org.springframework.core.io.Resource;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ContentDisposition;
@@ -39,6 +41,32 @@ public class StudentNotificationController {
             .anyMatch(authority -> "CHECKLIST_READ".equals(authority.getAuthority()));
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
             .body(new PagedModel<>(notifications.list(authentication.getName(), page, size, canReadChecklist)));
+    }
+
+    @GetMapping("/{id}/attachment")
+    public ResponseEntity<Resource> attachment(Principal principal, @PathVariable long id) {
+        return notifications.attachment(principal.getName(), id).map(attachment ->
+            ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .header("X-Content-Type-Options", "nosniff")
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                    .filename(attachment.fileName(), StandardCharsets.UTF_8).build().toString())
+                .contentType(attachmentMediaType(attachment.contentType()))
+                .contentLength(attachment.sizeBytes())
+                .body(attachment.body())
+        ).orElseGet(() -> ResponseEntity.notFound().cacheControl(CacheControl.noStore()).build());
+    }
+
+    private static MediaType attachmentMediaType(String uploadedType) {
+        if (uploadedType != null && uploadedType.codePoints().noneMatch(Character::isISOControl)) {
+            try {
+                var mediaType = MediaType.parseMediaType(uploadedType);
+                if (mediaType.isConcrete()) return new MediaType(mediaType.getType(), mediaType.getSubtype());
+            } catch (IllegalArgumentException ignored) {
+                // Der beim Upload gemeldete Typ ist unverifiziert.
+            }
+        }
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 
     @GetMapping(value = "/{id}/checklist.pdf", produces = MediaType.APPLICATION_PDF_VALUE)

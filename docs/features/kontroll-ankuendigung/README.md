@@ -1,6 +1,6 @@
 # Kontrolle ankündigen (US-18)
 
-Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontrolle für alle WGs der Wohnanlage an. Sie kann einen angekündigten Termin auch nachträglich ändern. Umgesetzt ist nur die Seite der Sachbearbeitung.
+Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontrolle für die WGs des Kontrollzeitraums an. Sie kann einen angekündigten Termin auch nachträglich ändern. Für neue Zustellungen zeigt das Studierenden-Postfach den Originaltext einer eindeutig zugeordneten Ankündigung, kennzeichnet Terminänderungen und bietet bei einem verfügbaren individuellen Anhang den nachrichtenbezogenen Download an.
 
 ## Wie es funktioniert
 
@@ -41,14 +41,15 @@ Diese Seiten wurden nicht geändert. Sie reagieren schon auf `announcedAt` und `
 
 | Bereich | Verhalten nach dem Ankündigen | Offen |
 | --- | --- | --- |
-| Postfach der Studierenden (Notification-Modul) | Je WG eine Nachricht vom Typ `ANNOUNCEMENT` mit Zeitraum, Uhrzeit und aktuellem Checklisten-PDF. Eine Terminänderung erzeugt eine weitere `ANNOUNCEMENT` mit dem neuen Zeitraum. | Das Postfach zeigt noch nicht den **Text** und den **Anhang** der Sachbearbeitung, und eine Terminänderung ist dort nicht als solche gekennzeichnet. Beides steht in `inspection_announcements` und müsste vom Notification-Modul gelesen werden. |
+| Postfach der Studierenden (Notification-Modul) | Neue Zustellungen referenzieren den eindeutig zugeordneten Versandeintrag. Die Nachricht zeigt dessen Originaltext und bietet den individuellen Anhang bei verfügbarem Speicher an. Terminänderungen sind in der Karte gekennzeichnet und übernehmen keinen früheren Anhang. | Privater Speicheradapter für individuelle Anhänge außerhalb von `dev`. |
 | Terminkarte der Studierenden (US-15) | Zeigt den Zeitraum, sobald `announcedAt` gesetzt ist, und Änderungen über `rescheduledAt`. | – |
 | Objektbetreuung (Kontroll-Anfragen, Kontrollen) | Angekündigte Zeiträume verschwinden aus den Anfragen. Kontrollen lassen sich ab Beginn des Zeitraums starten. | Eine Terminänderung muss sie nicht bestätigen. Sie sieht den neuen Termin bei ihren Kontrollen. |
 | Kontrollübersicht der Sachbearbeitung | „Ankündigen“ führt jetzt zu `/inspection-planning?announce=<id>`. | – |
 
 ## Offen
 
+- Die Aufbewahrung referenzierter Versandeinträge und ihrer Dateien ist mit der Sachbearbeitung abzustimmen. Für historische Nachrichten müssen Eintrag und gegebenenfalls Originaldatei unverändert erhalten bleiben.
 - E-Mail als zusätzlicher Kanal. Dafür braucht es einen Outbox-Worker ([ADR-0008](../../architektur/adr/0008-run-background-work-through-a-transactional-outbox.md)).
 - Der Upload ist nur im Profil `dev` registriert. Ohne ihn schlägt ein Anhang mit „Der Anhang konnte nicht hochgeladen werden“ fehl. Senden ohne Anhang geht.
-- Den Anhang kann nur die hochladende Person herunterladen (`GET /api/attachments/{id}`). Für die WGs fehlt ein Download-Endpunkt.
+- `GET /api/attachments/{id}` bleibt der hochladenden Person vorbehalten. Studierende nutzen [den nachrichtenbezogenen Download](../student-messages/README.md#individuelle-anhänge). Außerhalb von `dev` muss das Integrationsteam vor der Bereitstellung individueller Anhänge einen privaten Speicheradapter und Upload bereitstellen.
 - Eine Terminänderung, während schon eine WG-Kontrolle läuft, wird nicht verhindert.

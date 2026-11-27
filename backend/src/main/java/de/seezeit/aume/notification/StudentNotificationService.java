@@ -1,7 +1,9 @@
 package de.seezeit.aume.notification;
 
+import de.seezeit.aume.attachment.FileAttachmentStorage;
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.notification.InspectionNotificationEntity.Kind;
+import de.seezeit.aume.planning.InspectionAnnouncementEntity;
 import de.seezeit.aume.standard.ChecklistPdfService;
 import de.seezeit.aume.standard.ChecklistPdfService.ChecklistPdf;
 import java.time.Clock;
@@ -13,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -26,13 +29,16 @@ public class StudentNotificationService {
     private final NotificationRepository notifications;
     private final AppUserService users;
     private final ChecklistPdfService checklistPdfs;
+    private final Optional<FileAttachmentStorage> attachmentStorage;
     private final Clock clock;
 
     StudentNotificationService(NotificationRepository notifications, AppUserService users, ChecklistPdfService checklistPdfs,
+            Optional<FileAttachmentStorage> attachmentStorage,
             @Qualifier("inspectionNotificationClock") Clock clock) {
         this.notifications = notifications;
         this.users = users;
         this.checklistPdfs = checklistPdfs;
+        this.attachmentStorage = attachmentStorage;
         this.clock = clock;
     }
 
@@ -40,7 +46,41 @@ public class StudentNotificationService {
         var userId = users.requireUser(userKey).getId();
         return notifications.pageVisibleInspectionNotifications(userId, LocalDate.now(clock), PageRequest.of(page, size))
             .map(notification -> NotificationView.from(notification,
-                canReadChecklist && hasChecklistPdf(notification.getInspectionNotification())));
+                canReadChecklist && hasChecklistPdf(notification.getInspectionNotification()), attachmentStorage.isPresent()));
+    }
+
+    public Optional<NotificationAttachment> attachment(String userKey, long id) {
+        if (attachmentStorage.isEmpty()) return Optional.empty();
+
+        var userId = users.requireUser(userKey).getId();
+        var storage = attachmentStorage.get();
+        return notifications.findVisibleInspectionNotification(userId, LocalDate.now(clock), id)
+            .map(NotificationEntity::getInspectionNotification)
+            .flatMap(StudentNotificationService::attachmentSource)
+            .flatMap(source -> {
+                var file = source.getAttachment();
+                var body = storage.load(file.getStorageKey());
+                if (!body.exists()) return Optional.empty();
+                return Optional.of(new NotificationAttachment(attachmentFileName(source.getAttachmentName()),
+                    body, file.getContentType(), file.getSizeBytes()));
+            });
+    }
+
+    private static Optional<InspectionAnnouncementEntity> attachmentSource(InspectionNotificationEntity message) {
+        if (message.getKind() != Kind.ANNOUNCEMENT) return Optional.empty();
+        return Optional.ofNullable(message.getSourceAnnouncement()).filter(source -> source.getAttachment() != null);
+    }
+
+    private static String attachmentFileName(String original) {
+        if (original == null) return "Anhang";
+        var separator = Math.max(original.lastIndexOf('/'), original.lastIndexOf('\\'));
+        var name = original.substring(separator + 1)
+            .replaceFirst("^[a-zA-Z]:", "")
+            .replaceAll("[\\p{Cc}\\p{Cf}\\p{Cs}\\p{Zl}\\p{Zp}]", "")
+            .replaceAll("[<>:\"|?*]", "_")
+            .strip()
+            .replaceFirst("[. ]+$", "");
+        return name.isEmpty() ? "Anhang" : name;
     }
 
     public Optional<ChecklistPdf> checklistPdf(String userKey, long id, Locale locale) {
@@ -70,18 +110,28 @@ public class StudentNotificationService {
     }
 
     public record UnreadCount(long count) {}
+    public record AttachmentView(String fileName) {}
+    public record NotificationAttachment(String fileName, Resource body, String contentType, long sizeBytes) {}
 
     public record NotificationView(Long id, Kind type, Instant createdAt, Instant occurredAt, Instant readAt,
             String flatLabel, LocalDate startsOn, LocalDate endsOn, String windowStart, String windowEnd,
-            boolean hasChecklistPdf) {
-        private static NotificationView from(NotificationEntity notification, boolean hasChecklistPdf) {
+            boolean hasChecklistPdf, InspectionAnnouncementEntity.Kind announcementKind, String announcementMessage,
+            AttachmentView attachment) {
+        private static NotificationView from(NotificationEntity notification, boolean hasChecklistPdf,
+                boolean hasAttachmentStorage) {
             var message = notification.getInspectionNotification();
+            var sourceAnnouncement = message.getSourceAnnouncement();
+            var attachment = hasAttachmentStorage
+                ? attachmentSource(message).map(source -> new AttachmentView(attachmentFileName(source.getAttachmentName())))
+                    .orElse(null)
+                : null;
             var occurredAt = message.getKind() == Kind.ANNOUNCEMENT
                 ? message.getAnnouncementRevisionAt() : notification.getCreatedAt();
             return new NotificationView(notification.getId(), message.getKind(), notification.getCreatedAt(),
                 occurredAt, notification.getReadAt(), message.getInspection().getFlat().getLabel(),
                 message.getStartsOn(), message.getEndsOn(), format(message.getWindowStart()),
-                format(message.getWindowEnd()), hasChecklistPdf);
+                format(message.getWindowEnd()), hasChecklistPdf, message.getAnnouncementKind(),
+                sourceAnnouncement == null ? null : sourceAnnouncement.getMessage(), attachment);
         }
 
         private static String format(LocalTime time) {

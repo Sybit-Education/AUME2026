@@ -66,6 +66,22 @@
   margin: 0 0 8px;
 }
 
+.student-message-original {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.student-message-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.student-message-download {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .student-messages-pagination {
   justify-content: space-between;
 }

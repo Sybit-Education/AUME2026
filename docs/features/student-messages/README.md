@@ -4,7 +4,9 @@
 
 Das Notification-Modul startet den ersten Scan nach 15 Sekunden. Zwischen zwei Scans liegt eine feste Pause von 15 Sekunden nach Ende des vorherigen Durchlaufs. Die Planung muss keinen NotificationService aufrufen. Ein Zeitraum wird durch `announcedAt` als offiziell angekündigt erkannt. Für die aktuelle Terminrevision zählt `announcedAt` oder ein neueres `rescheduledAt`.
 
-Bewusste Architekturentscheidung: Der Scheduler verarbeitet den jeweils aktuell gespeicherten offiziellen Kontrollzeitraum. Zwischen zwei Läufen überschriebene Revisionen werden weder rekonstruiert noch nachträglich zugestellt. Bereits erzeugte Nachrichten behalten ihren damaligen Zeitraum. Für den Integrationsbetrieb setzt der Scheduler auf die Revisionsdaten aus US-18. Die produktive Ankündigung durch die Sachbearbeitung ist im Basisstand noch offen.
+Der Scheduler verarbeitet den jeweils aktuell gespeicherten offiziellen Kontrollzeitraum aus US-18. Zwischen zwei Läufen überschriebene Revisionen werden weder rekonstruiert noch nachträglich zugestellt. Bereits erzeugte Nachrichten behalten ihren damaligen Zeitraum.
+
+Bei einer neuen Ankündigung wird einmalig nach dem offiziellen Versandeintrag gesucht. Zeitraum-ID, `sentAt` und Art müssen zur ausgewählten Revision passen. Bei genau einem Treffer speichert die gemeinsame Nachricht die unveränderliche Referenz. Fehlt ein eindeutiger Eintrag, bleibt die Referenz leer und das Postfach kann den Standardtext verwenden. Bei Mehrdeutigkeit wird nur der technische Revisionsbezug protokolliert. Eine reine Uhrzeitänderung zählt wie im Schreibpfad der Sachbearbeitung als `RESCHEDULE`. Frühere Zustellungen behalten ihren ursprünglichen Inhalt. Mit der Sachbearbeitung ist abzustimmen, wie lange referenzierte Versandeinträge und deren Anhänge unverändert erhalten bleiben müssen.
 
 | Art | Fälligkeit | Checkliste |
 | --- | --- | --- |
@@ -26,6 +28,7 @@ Alle Endpunkte setzen die Rolle `STUDENT` voraus. Sichtbar sind persönliche Kon
 | `GET /api/student/notifications/unread-count` | `200` mit `{ "count": 2 }`. Gezählt werden ausschließlich sichtbare Zustellungen ohne `readAt`. |
 | `PUT /api/student/notifications/{id}/read` | `204` für sichtbare Zustellungen, einschließlich bereits gelesener. `404` für fehlende, fremde und nicht sichtbare Zustellungen. Der erste Gelesen-Zeitpunkt bleibt bei weiteren Aufrufen erhalten. |
 | `GET /api/student/notifications/{id}/checklist.pdf` | `200` mit dem PDF einer sichtbaren Ankündigung und einer veröffentlichten oder zurückgezogenen Fassung. Zusätzlich ist `CHECKLIST_READ` erforderlich. Ohne dieses Recht gilt `403`. Fehlende oder unsichtbare Zustellungen und nicht verfügbare Anhänge ergeben `404`. |
+| `GET /api/student/notifications/{id}/attachment` | `200` mit der Originaldatei des Versandeintrags einer sichtbaren persönlichen Ankündigung. Für diese Datei genügt die Rolle `STUDENT` mit der berechtigten Zustellung. Bei fehlender oder unsichtbarer Zustellung, fehlendem Anhang, fehlender Datei oder fehlendem Speicheradapter gilt `404`. |
 
 Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cache-Control: no-store` ausgeliefert. Ohne Sitzung gilt `401`, ohne Rolle `STUDENT` gilt `403`. Schreibende Dev-Sitzungsaufrufe verwenden den bestehenden CSRF-Schutz.
 
@@ -41,15 +44,30 @@ Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cach
   "endsOn": "2026-12-11",
   "windowStart": "09:00",
   "windowEnd": "16:00",
-  "hasChecklistPdf": true
+  "hasChecklistPdf": true,
+  "announcementKind": "ANNOUNCEMENT",
+  "announcementMessage": "Liebe WG,\n\nbitte räumt den Bereich unter der Spüle frei.",
+  "attachment": { "fileName": "Hinweise für die Küche.pdf" }
 }
 ```
 
 Die ID bezeichnet die persönliche Zustellung. `type` ist `ANNOUNCEMENT`, `REMINDER_7_DAYS` oder `REMINDER_1_DAY`. `occurredAt` ist bei Ankündigungen der offizielle Revisionszeitpunkt und bei Erinnerungen der Erstellungszeitpunkt der Zustellung. Uhrzeiten im Format `HH:mm` sind optional und werden bei fehlender Grenze als `null` ausgegeben.
 
+`announcementKind` ist bei neu zugestellten Ankündigungen `ANNOUNCEMENT` oder `RESCHEDULE`, auch wenn der Versandeintrag fehlt. `announcementMessage` enthält den unveränderten Text aus der referenzierten Revision, sofern vorhanden. Bei Erinnerungen und bei zuvor zugestellten Nachrichten sind beide Felder `null`. Fehlt ein eindeutiger Versandeintrag, ist nur `announcementMessage` leer. Das erlaubt den bestehenden Standardtext als Fallback.
+
 `hasChecklistPdf` gibt an, ob die aufrufende Person eine referenzierte, veröffentlichte oder zurückgezogene Checklistenfassung dieser Ankündigung herunterladen darf. Der Download prüft die Rechte und die Sichtbarkeit erneut. Er liefert `application/pdf`, `Content-Disposition: attachment`, `Content-Language` und `Cache-Control: no-store`. Der Dateiname lautet `Checkliste_Sauberkeit.pdf` oder `Cleanliness_Checklist.pdf`, abhängig von `Accept-Language`. Fehlende englische Übersetzungen fallen wie in der interaktiven Checkliste auf Deutsch zurück. Ein Download ändert den Lesestatus nicht.
 
 Das A4-PDF wird beim Abruf im Arbeitsspeicher aus der referenzierten Checklistenfassung erzeugt. Es enthält Fassungsnummer, Bereiche und Kriterien mit Beschreibungen und leeren Kästchen. Eine neue Checklistenfassung ändert die Auswahl für einen älteren Anhang nicht. Für reproduzierbare Anhänge müssen historische veröffentlichte Fassungen einschließlich Kriterien und Übersetzungen erhalten und unverändert bleiben. Diese Integrationsvoraussetzung gilt auch für Fassungen mit Status `RETIRED`.
+
+### Individuelle Anhänge
+
+`attachment` enthält nur den bereinigten Dateinamen und kann gleichzeitig mit `hasChecklistPdf: true` vorkommen. Bei Erinnerungen, Ankündigungen ohne referenzierten Anhang und ohne Speicheradapter ist das Feld `null`. Die Liste liest Metadaten. Ob die Datei noch im Speicher vorhanden ist, wird beim Download geprüft.
+
+Die Download-URL verwendet die persönliche Zustell-ID. Der Server prüft die Sichtbarkeit erneut und liest die Datei aus dem Versandeintrag der gespeicherten Revision. Frühere Ankündigungen behalten ihre Originaldatei. Eine Terminänderung ohne eigenen Anhang erhält keine Datei aus einer früheren Revision. Der Download ändert weder den Lesestatus noch den Ungelesen-Zähler.
+
+Der neue Endpunkt liefert `Content-Disposition: attachment` mit UTF-8-Dateiname, `Content-Length`, `Cache-Control: no-store` und `X-Content-Type-Options: nosniff`. Pfadanteile und Steuerzeichen werden aus dem Dateinamen entfernt. Der MIME-Typ beruht auf den Upload-Metadaten. Nicht verwendbare Typangaben werden durch `application/octet-stream` ersetzt. Die vorhandenen allgemeinen Datei-Endpunkte behalten ihre Eigentümerprüfung.
+
+Der bestehende private Speicheradapter und der Upload stehen nur im Profil `dev` zur Verfügung. Außerhalb dieses Profils bleiben Nachrichten, Originaltexte und generierte Checklisten-PDFs verfügbar. Das Integrationsteam muss die dauerhafte private Dateispeicherung und die Aufbewahrung der Originaldateien vor einem produktiven Einsatz individueller Anhänge klären.
 
 ## Nachrichtenansicht
 
@@ -57,7 +75,9 @@ Studierende öffnen das Postfach über die Glocke im gemeinsamen Header oder üb
 
 Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelesenen Zustellungen „Neu“. Erst beim bewussten Öffnen wird eine ungelesene Nachricht als gelesen markiert. Nach erfolgreichem PUT entfällt „Neu“. Bei einem Fehler lässt sich die Markierung in der geöffneten Karte erneut versuchen.
 
-Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
+Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Die Karte bietet derzeit ausschließlich individuell hinzugefügte Anhänge an. Der lokale Schalter `SHOW_GENERATED_CHECKLIST_PDF` in `StudentMessagesPage.tsx` blendet das generierte Checklisten-PDF samt Hinweis aus. Es bleibt über die berechtigte API abrufbar. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
+
+Bei einer Terminänderung zeigt der Kartenkopf „Termin geändert“ beziehungsweise „Inspection date changed“. Im aufgeklappten Zustand erscheint der Originaltext in der eingereichten Sprache mit seinen Zeilenumbrüchen als Klartext. Fehlt er, greift der bisherige lokalisierte Standardtext. Die Karte zeigt den individuellen Anhang unter seinem bereinigten Dateinamen und bietet bei einem Downloadfehler einen erneuten Versuch.
 
 ## Glocke und Ungelesen-Zähler
 
@@ -67,16 +87,20 @@ Der Zähler wird beim ersten Rendern des Studierenden-Headers, bei Pfadwechseln,
 
 ## Abweichung vom Arbeitsstand zu US-16 (#20)
 
-Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen führen zur bestehenden interaktiven Checkliste.
+Die API stellt das automatisch generierte Checklisten-PDF ausschließlich für berechtigte Ankündigungen bereit. Beide Erinnerungen führen zur bestehenden interaktiven Checkliste.
 
 ## Prüfungen
 
 `InspectionNotificationDeliveryTests` ruft den Zustelldienst mit kontrollierter Uhr und eigenen Daten auf. `InspectionNotificationSchedulerTests` ruft einzelne Scans direkt auf. Beide Tests sind vom automatischen Scheduler-Lauf unabhängig.
 
+`StudentAnnouncementIntegrationTests` plant und bestätigt eigene Kontrollzeiträume über die Personal-API, kündigt sie offiziell an und verschiebt sie. Der Test prüft Revisionszuordnung und historische Inhalte nach erneutem Lesen aus der Datenbank, unbeteiligte WGs, mehrdeutige Versandeinträge, wiederholte Scans sowie beide Erinnerungen. Für die Scans wird die Benachrichtigungsuhr kontrolliert.
+
 `StudentNotificationTests` prüft die Postfach-API mit eigener H2-Datenbank, kontrollierter Uhr und ersetztem Scheduler. Die Fälle umfassen Pagination, Rollen, WG-Wechsel, Wiedereintritt und paralleles Markieren.
 
 `StudentNotificationPdfTests` prüft Downloadrechte, Dateinamen und Header, Fassungsbindung nach Veröffentlichung einer neuen Checkliste, Lokalisierung und Seitenumbrüche sowie den unveränderten Lesestatus.
 
-`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN-Download und Lesestatus über den App-Router.
+`StudentNotificationAttachmentTests` prüft mit eigenen Daten und temporärem Dateispeicher Originalbytes, Dateinamen, Header, getrennte PDF-Berechtigung, historische Anhänge, WG-Sichtbarkeit und unveränderten Lesestatus. Ein separater Kontext ohne `dev` prüft den Betrieb ohne Speicheradapter.
+
+`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN und Lesestatus über den App-Router. Die Tests prüfen außerdem das ausgeblendete Checklisten-PDF samt Hinweis, den individuellen Download mit Wiederholung nach einem Fehler und die DE-/EN-Dateinamen über den weiterhin verfügbaren PDF-Download-Helfer.
 
 `NotificationBell.test.tsx` prüft Header, Rollen, Navigation, zugängliche Zählertexte, Polling, Fehlerbehandlung und Sitzungswechsel. Der Nachrichten-Routingtest prüft zusätzlich den neuen Zählerabruf nach bewusstem Lesen.

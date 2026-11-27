@@ -5,9 +5,11 @@ import LoadingPage from '@/components/LoadingPage'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { SessionExpired } from '@/lib/auth/response'
 import { forgetUser } from '@/lib/auth/session'
-import { UiError } from '@/lib/errors'
+import { UiError, type ErrorKey } from '@/lib/errors'
 import type { MessageReadResult } from './actions'
-import { checklistFileName, downloadMessageChecklist, type StudentMessage, type StudentMessages } from './api'
+import {
+  checklistFileName, downloadMessageAttachment, downloadMessageChecklist, type StudentMessage, type StudentMessages,
+} from './api'
 import { formatMessageDate, formatMessagePeriod } from './formatMessageDates'
 import './student-messages.css'
 
@@ -42,6 +44,7 @@ export default function StudentMessagesPage() {
 }
 
 const validTime = /^(?:[01]\d|2[0-3]):[0-5]\d$/
+const SHOW_GENERATED_CHECKLIST_PDF = false
 
 function MessageCard({ message, canReadChecklist }: { message: StudentMessage; canReadChecklist: boolean }) {
   const { t, i18n } = useTranslation()
@@ -52,7 +55,12 @@ function MessageCard({ message, canReadChecklist }: { message: StudentMessage; c
   const unread = message.readAt === null && !(read.data && 'read' in read.data)
   const readError = unread && read.data && 'error' in read.data ? read.data.error : undefined
   const announcement = message.type === 'ANNOUNCEMENT'
-  const hasAttachment = announcement && message.hasChecklistPdf
+  const showChecklistPdf = SHOW_GENERATED_CHECKLIST_PDF && announcement && message.hasChecklistPdf
+  const attachment = announcement ? message.attachment : null
+  const originalText = announcement ? message.announcementMessage : null
+  const label = announcement
+    ? message.announcementKind === 'RESCHEDULE' ? 'studentMessages.rescheduled' : 'studentMessages.announcement'
+    : 'studentMessages.reminder'
   const title = announcement
     ? t('studentMessages.announcementTitle', { period: formatMessagePeriod(message.startsOn, message.endsOn, language) })
     : t(message.type === 'REMINDER_7_DAYS' ? 'studentMessages.reminderWeekTitle' : 'studentMessages.reminderTomorrowTitle')
@@ -78,7 +86,7 @@ function MessageCard({ message, canReadChecklist }: { message: StudentMessage; c
           <span className="student-message-heading-text">
             <span className="student-message-meta">
               <span className={announcement ? 'chip t' : 'chip'}>
-                {t(announcement ? 'studentMessages.announcement' : 'studentMessages.reminder')}
+                {t(label)}
               </span>
               <time className="mut xs" dateTime={message.occurredAt}>{formatMessageDate(message.occurredAt, language)}</time>
               {unread && <span className="chip inf">{t('studentMessages.new')}</span>}
@@ -92,16 +100,36 @@ function MessageCard({ message, canReadChecklist }: { message: StudentMessage; c
         </button>
       </h2>
       <div id={bodyId} className="student-message-body" hidden={!open}>
-        <p>{announcement
-          ? t('studentMessages.announcementText', { flat: message.flatLabel, period })
-          : t('studentMessages.reminderText', { period })}</p>
+        {originalText ? (
+          <>
+            <p>{t('studentMessages.announcementFlat', { flat: message.flatLabel })}</p>
+            <p className="student-message-original">{originalText}</p>
+          </>
+        ) : (
+          <p>{announcement
+            ? t('studentMessages.announcementText', { flat: message.flatLabel, period })
+            : t('studentMessages.reminderText', { period })}</p>
+        )}
         {announcement && showWindow && (
           <p>{t('studentInspections.window', { start: windowStart, end: windowEnd })}</p>
         )}
-        <p>{t(announcement ? 'studentMessages.prepareAnnouncement' : 'studentMessages.prepareReminder')}
-          {hasAttachment && <> {t('studentMessages.attachmentHint')}</>}
-        </p>
-        {hasAttachment && <ChecklistDownload id={message.id} language={language} />}
+        {!originalText && (
+          <p>{t(announcement ? 'studentMessages.prepareAnnouncement' : 'studentMessages.prepareReminder')}
+            {showChecklistPdf && <> {t('studentMessages.attachmentHint')}</>}
+          </p>
+        )}
+        {(showChecklistPdf || attachment) && (
+          <div className="student-message-downloads">
+            {showChecklistPdf && (
+              <MessageDownload key="checklist" file={checklistFileName(language)} error="errors.studentMessageDownload"
+                load={(signal) => downloadMessageChecklist(message.id, language, signal)} />
+            )}
+            {attachment && (
+              <MessageDownload key="attachment" file={attachment.fileName} error="errors.studentAttachmentDownload"
+                load={(signal) => downloadMessageAttachment(message.id, attachment.fileName, signal)} />
+            )}
+          </div>
+        )}
         {!announcement && canReadChecklist && (
           <div className="acts">
             <Link className="btn sec" to="/student/inspection/checklist">{t('studentMessages.openChecklist')}</Link>
@@ -120,7 +148,11 @@ function MessageCard({ message, canReadChecklist }: { message: StudentMessage; c
   )
 }
 
-function ChecklistDownload({ id, language }: { id: number; language?: string }) {
+function MessageDownload({ file, error, load }: {
+  file: string
+  error: ErrorKey
+  load: (signal: AbortSignal) => Promise<void>
+}) {
   const { t } = useTranslation()
   const [pending, setPending] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -134,7 +166,7 @@ function ChecklistDownload({ id, language }: { id: number; language?: string }) 
     setPending(true)
     setFailed(false)
     try {
-      await downloadMessageChecklist(id, language, controller.signal)
+      await load(controller.signal)
     } catch (cause) {
       if (controller.signal.aborted || cause instanceof SessionExpired) return
       if (cause instanceof UiError && cause.key === 'errors.sessionExpired') forgetUser()
@@ -145,16 +177,16 @@ function ChecklistDownload({ id, language }: { id: number; language?: string }) 
     }
   }
 
-  const file = checklistFileName(language)
   return (
-    <>
+    <div className="student-message-download">
       <div className="acts">
         <button className="btn sec student-message-file" type="button" disabled={pending}
+          aria-busy={pending}
           aria-label={t('studentMessages.download', { file })} onClick={() => void download()}>
           {file}
         </button>
       </div>
-      {failed && <p className="err" role="alert">{t('errors.studentMessageDownload')}</p>}
-    </>
+      {failed && <p className="err" role="alert">{t(error)}</p>}
+    </div>
   )
 }
