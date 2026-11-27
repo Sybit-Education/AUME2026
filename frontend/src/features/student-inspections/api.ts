@@ -10,6 +10,7 @@ export type UpcomingAppointment = {
 }
 
 export type AppointmentDetails = UpcomingAppointment & {
+  kind: 'INITIAL' | 'FOLLOW_UP'
   windowStart: string | null
   windowEnd: string | null
   status: 'ANNOUNCED' | 'RESULT_AVAILABLE' | null

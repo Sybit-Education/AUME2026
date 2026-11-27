@@ -93,6 +93,7 @@ beforeEach(async () => {
     if (path === `${appointmentPath}?view=details`) {
       return Response.json({
         id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
+        kind: 'INITIAL',
         windowStart: '09:00', windowEnd: '16:00', status: 'ANNOUNCED', display: 'UPCOMING',
       })
     }

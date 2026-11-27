@@ -7,10 +7,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.inspection.InspectionEntity;
+import de.seezeit.aume.inspection.StudentAppointmentDetailsService;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.MembershipEntity;
 import de.seezeit.aume.residence.ResidenceEntity;
+import de.seezeit.aume.user.ClerkEntity;
 import de.seezeit.aume.user.RoleRepository;
 import de.seezeit.aume.user.StudentEntity;
 import de.seezeit.aume.user.UserEntity;
@@ -21,6 +23,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -48,6 +52,7 @@ class StudentInspectionAppointmentIsolationTests {
     @Autowired private EntityManager entities;
     @Autowired private RoleRepository roles;
     @Autowired private AppUserService users;
+    @Autowired private StudentAppointmentDetailsService appointmentDetails;
 
     @Test
     void studentInspectionAppointmentsStayIsolatedBetweenTwoStudentSessions() throws Exception {
@@ -119,10 +124,12 @@ class StudentInspectionAppointmentIsolationTests {
             .andExpect(jsonPath("$.display").value("UPCOMING"))
             .andExpect(jsonPath("$.windowStart").value("09:00"))
             .andExpect(jsonPath("$.windowEnd").value("16:00"))
+            .andExpect(jsonPath("$.kind").value("INITIAL"))
             .andExpect(jsonPath("$.showInitialInspection").value(true));
         mvc.perform(get(STUDENT_INSPECTION_APPOINTMENT_PATH).session(fixture.session()))
             .andExpect(status().isOk()).andExpect(jsonPath("$.status").doesNotHaveJsonPath())
-            .andExpect(jsonPath("$.windowStart").doesNotHaveJsonPath());
+            .andExpect(jsonPath("$.windowStart").doesNotHaveJsonPath())
+            .andExpect(jsonPath("$.kind").doesNotHaveJsonPath());
 
         current.setStatus(InspectionEntity.Status.DRAFT);
         mvc.perform(details(fixture))
@@ -194,15 +201,58 @@ class StudentInspectionAppointmentIsolationTests {
         mvc.perform(details(fixture)).andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(followUp.getId().intValue()))
             .andExpect(jsonPath("$.status").value("ANNOUNCED"))
+            .andExpect(jsonPath("$.kind").value("FOLLOW_UP"))
             .andExpect(jsonPath("$.showInitialInspection").value(false));
         publish(followUp, Instant.now());
         mvc.perform(details(fixture)).andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(followUp.getId().intValue()))
+            .andExpect(jsonPath("$.kind").value("FOLLOW_UP"))
             .andExpect(jsonPath("$.status").value("RESULT_AVAILABLE"));
 
         followUp.getPeriod().setAnnouncedAt(null);
         older.setPeriod(null);
         mvc.perform(details(fixture)).andExpect(status().isNoContent());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2})
+    void detailsKeepTheControlKindWhenTheRescheduleNoticeEnds(int round) throws Exception {
+        var today = LocalDate.now(BERLIN);
+        var newStart = today.plusDays(3);
+        var fixture = fixture(today.minusDays(10));
+        var selected = new InspectionEntity(fixture.flat(), null);
+        entities.persist(selected);
+        for (int step = 0; step < round; step++) {
+            publish(selected, today.minusDays(2).atStartOfDay(BERLIN).toInstant());
+            selected = new InspectionEntity(selected, newStart);
+            entities.persist(selected);
+        }
+        var period = announcedPeriod(fixture.flat(), fixture.clerk(), newStart);
+        selected.setPeriod(period);
+        assertThat(selected.getRound()).isEqualTo(round);
+        var expectedKind = round == 0 ? StudentAppointmentDetailsService.Kind.INITIAL
+            : StudentAppointmentDetailsService.Kind.FOLLOW_UP;
+        mvc.perform(details(fixture))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(selected.getId().intValue()))
+            .andExpect(jsonPath("$.kind").value(expectedKind.name()))
+            .andExpect(jsonPath("$.appointmentChanged").value(false))
+            .andExpect(jsonPath("$.showInitialInspection").value(round == 0));
+
+        period.setRescheduledAt(period.getAnnouncedAt().plusSeconds(1));
+        mvc.perform(details(fixture))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(selected.getId().intValue()))
+            .andExpect(jsonPath("$.kind").value(expectedKind.name()))
+            .andExpect(jsonPath("$.appointmentChanged").value(true))
+            .andExpect(jsonPath("$.showInitialInspection").value(false));
+
+        var onStart = appointmentDetails.find(fixture.student().getUserKey(), newStart);
+        assertThat(onStart).isNotNull();
+        assertThat(onStart.id()).isEqualTo(selected.getId());
+        assertThat(onStart.kind()).isEqualTo(expectedKind);
+        assertThat(onStart.appointmentChanged()).isFalse();
+        assertThat(onStart.showInitialInspection()).isFalse();
     }
 
     @Test
@@ -249,7 +299,10 @@ class StudentInspectionAppointmentIsolationTests {
         entities.persist(student);
         var membership = new MembershipEntity(flat, student, validFrom);
         entities.persist(membership);
-        return new Fixture(flat, student, membership, studentSession(student), users.requireUser("clerk"));
+        var clerkRole = roles.findByName("CLERK").orElseThrow();
+        var clerk = new ClerkEntity("us67-clerk", "Sachbearbeitung", Set.of(clerkRole), residence);
+        entities.persist(clerk);
+        return new Fixture(flat, student, membership, studentSession(student), clerk);
     }
 
     private MockHttpServletRequestBuilder details(Fixture fixture) {
@@ -276,13 +329,17 @@ class StudentInspectionAppointmentIsolationTests {
     }
 
     private InspectionEntity announcedAppointment(FlatEntity flat, UserEntity clerk, LocalDate start) {
+        var appointment = new InspectionEntity(flat, announcedPeriod(flat, clerk, start));
+        entities.persist(appointment);
+        return appointment;
+    }
+
+    private InspectionPeriodEntity announcedPeriod(FlatEntity flat, UserEntity clerk, LocalDate start) {
         var period = new InspectionPeriodEntity(flat.getResidence(), start, start.plusDays(2), clerk);
         period.setAnnouncedBy(clerk);
         period.setAnnouncedAt(Instant.now());
         entities.persist(period);
-        var appointment = new InspectionEntity(flat, period);
-        entities.persist(appointment);
-        return appointment;
+        return period;
     }
 
     private void expectAppointment(MockHttpSession session, InspectionEntity appointment, boolean appointmentChanged,
