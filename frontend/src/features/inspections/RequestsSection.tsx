@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Form, Link, useActionData, useNavigate, useNavigation, useSearchParams } from 'react-router'
+import { Form, Link, useActionData, useLocation, useNavigate, useNavigation, useSearchParams } from 'react-router'
 import type { RequestActionResult } from './requestsActions'
 import { MAX_REASON_LENGTH, type InspectionRequest, type RequestPage } from './requestsApi'
 import { formatPeriod, formatWindow } from './dates'
@@ -16,7 +16,8 @@ const statusChip: Record<InspectionRequest['status'], string> = {
   AGREED: 'ok',
 }
 
-function urlWith(params: URLSearchParams, changes: Record<string, string | null>) {
+/** Adresse der aktuellen Seite mit geänderten Parametern (Dialog öffnen oder schließen). */
+function urlWith(pathname: string, params: URLSearchParams, changes: Record<string, string | null>) {
   const next = new URLSearchParams(params)
   next.delete('saved')
   Object.entries(changes).forEach(([key, value]) => {
@@ -24,7 +25,7 @@ function urlWith(params: URLSearchParams, changes: Record<string, string | null>
     else next.set(key, value)
   })
   const query = next.toString()
-  return query ? `/inspections?${query}` : '/inspections'
+  return query ? `${pathname}?${query}` : pathname
 }
 
 function Dialog({ title, onClose, closeUrl, children }: PropsWithChildren<{
@@ -200,6 +201,7 @@ export default function RequestsSection({ data }: { data: RequestPage }) {
   const { t, i18n } = useTranslation()
   const result = useActionData<RequestActionResult | undefined>()
   const [params] = useSearchParams()
+  const { pathname } = useLocation()
   const navigate = useNavigate()
   const section = useRef<HTMLElement>(null)
   const menu = useFilterMenu<Column>(section)
@@ -259,7 +261,7 @@ export default function RequestsSection({ data }: { data: RequestPage }) {
   const find = (id: string | null) => open.find((request) => String(request.id) === id)
   const answering = find(params.get('answer'))
   const countering = find(params.get('counter'))
-  const closeUrl = urlWith(params, { answer: null, counter: null })
+  const closeUrl = urlWith(pathname, params, { answer: null, counter: null })
   const closeDialog = () => { void navigate(closeUrl, { replace: true }) }
   const menuSpec = menu.open ? spec[menu.open.column] : undefined
 
@@ -296,7 +298,7 @@ export default function RequestsSection({ data }: { data: RequestPage }) {
               )}
               {requests.map((request) => (
                 <RequestRow key={request.id} request={request}
-                  answerUrl={urlWith(params, { answer: String(request.id), counter: null })} />
+                  answerUrl={urlWith(pathname, params, { answer: String(request.id), counter: null })} />
               ))}
             </tbody>
           </table>
@@ -309,7 +311,7 @@ export default function RequestsSection({ data }: { data: RequestPage }) {
       )}
       {answering && (
         <AnswerDialog key={answering.id} request={answering} closeUrl={closeUrl} onClose={closeDialog}
-          counterUrl={urlWith(params, { counter: String(answering.id), answer: null })}
+          counterUrl={urlWith(pathname, params, { counter: String(answering.id), answer: null })}
           error={result?.intent === 'agree' ? result : undefined} />
       )}
       {countering && (

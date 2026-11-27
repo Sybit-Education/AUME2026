@@ -73,14 +73,16 @@ it('shows counts linking to the inspections page', async () => {
   // Angekündigt nur 4.12 und 4.14; 4.16 und 4.18 (beginnt heute) sind startbereit, 4.20 ist begonnen.
   expect(screen.getByText('Angekündigte Kontrollen').previousElementSibling?.textContent).toBe('2')
   expect(screen.getByText('Nachkontrollen').previousElementSibling?.textContent).toBe('1')
-  expect(screen.getByText('Nachkontrollen').closest('a')?.getAttribute('href')).toBe('/inspections')
+  // Die Kacheln springen zur passenden Tabelle auf derselben Seite.
+  expect(screen.getByText('Vorschläge zu beantworten').closest('a')?.getAttribute('href')).toBe('#requests-title')
+  expect(screen.getByText('Nachkontrollen').closest('a')?.getAttribute('href')).toBe('#upcoming-title')
   expect(screen.queryByText('Offene Schäden')).toBeNull()
 })
 
 it('shows the requests and upcoming tables of the inspections page', async () => {
   mount()
   const requests = within(await screen.findByRole('table', { name: 'Anfragen' }))
-  expect(requests.getByRole('link', { name: 'Vorschlag für Mond beantworten' }).getAttribute('href')).toBe('/inspections?answer=3')
+  expect(requests.getByRole('link', { name: 'Vorschlag für Mond beantworten' }).getAttribute('href')).toBe('/?answer=3')
   const upcoming = within(screen.getByRole('table', { name: 'Anstehende Kontrollen' }))
   expect(upcoming.getByText('4.12')).toBeTruthy()
   expect(upcoming.getByText('3.08')).toBeTruthy()

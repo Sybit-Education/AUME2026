@@ -134,7 +134,7 @@ it('restores an existing session when opening a protected page directly', async 
   expect(login).not.toHaveBeenCalled()
 })
 
-it('shows inspections and history as separate main tabs for caretakers', async () => {
+it('shows only overview and history as main tabs for caretakers', async () => {
   signedIn = { ...caretaker, privileges: [...caretaker.privileges, 'INSPECTION_PERFORM'] }
   const base = vi.mocked(api).getMockImplementation()!
   vi.mocked(api).mockImplementation(async (path, init) => String(path).startsWith('/api/inspections/history')
@@ -145,8 +145,9 @@ it('shows inspections and history as separate main tabs for caretakers', async (
   const history = await main.findByRole('link', { name: 'Historie' })
   expect(history.getAttribute('href')).toBe('/inspections/history')
   expect(history.getAttribute('aria-current')).toBe('page')
-  // In der Historie ist nur „Historie“ markiert, nicht zusätzlich „Kontrollen“.
-  expect(main.getByRole('link', { name: 'Kontrollen' }).getAttribute('aria-current')).toBeNull()
+  // Es gibt keinen eigenen Reiter „Kontrollen“ mehr; in der Historie ist auch die Übersicht nicht markiert.
+  expect(main.queryByRole('link', { name: 'Kontrollen' })).toBeNull()
+  expect(main.getByRole('link', { name: 'Übersicht' }).getAttribute('aria-current')).toBeNull()
   expect(screen.queryByRole('link', { name: 'Aktuell' })).toBeNull()
 })
 

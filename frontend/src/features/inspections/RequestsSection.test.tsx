@@ -9,6 +9,11 @@ import { ensureSession, invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
 import type { InspectionSummary } from './api'
 import type { InspectionRequest } from './requestsApi'
+import { protectedLoader } from '@/lib/auth/loaders'
+import RequirePrivilege from '@/lib/auth/RequirePrivilege'
+import { loadCurrentInspections } from './currentInspections'
+import OverviewPage from './OverviewPage'
+import { inspectionRequestsAction } from './requestsActions'
 import { inspectionRoutes } from './routes'
 
 vi.mock('@/lib/auth/client', () => ({
@@ -36,12 +41,18 @@ function request(overrides: Partial<InspectionRequest> = {}): InspectionRequest 
   }
 }
 
-function mount(path = '/inspections') {
+// Anfragen stehen auf der Übersicht (Startseite); dort werden sie auch beantwortet.
+function mount(path = '/') {
   const router = createMemoryRouter([{
     path: '/',
     loader: ensureSession,
     HydrateFallback: () => null,
-    children: [...inspectionRoutes, { path: 'forbidden', element: <h1>forbidden</h1> }],
+    children: [{
+      index: true,
+      element: <RequirePrivilege privilege="INSPECTION_PERFORM"><OverviewPage /></RequirePrivilege>,
+      loader: protectedLoader('INSPECTION_PERFORM', ({ request }, user) => loadCurrentInspections(user, request.signal)),
+      action: inspectionRequestsAction,
+    }, ...inspectionRoutes, { path: 'forbidden', element: <h1>forbidden</h1> }],
   }], { initialEntries: [path] })
   routers.push(router)
   render(<AuthProvider getRequestedPath={() => path}><RouterProvider router={router} /></AuthProvider>)
@@ -151,7 +162,7 @@ it('agrees from the answer dialog', async () => {
 
 it('explains that a started period can only get a counter proposal', async () => {
   writeResponse = () => Response.json({ code: 'start_not_in_future' }, { status: 400 })
-  mount('/inspections?answer=7')
+  mount('/?answer=7')
   fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Zustimmen' }))
   expect((await screen.findByRole('alert')).textContent).toContain('Zustimmen geht nicht mehr')
 })
@@ -175,7 +186,7 @@ it('sends a counter proposal with reason, prefilled from the proposal', async ()
 })
 
 it('asks for a reason before sending anything', async () => {
-  mount('/inspections?counter=7')
+  mount('/?counter=7')
   const form = await screen.findByRole('form', { name: 'Gegenvorschlag · Sonne' })
   const reason = within(form).getByLabelText(/Grund/)
   fireEvent.change(reason, { target: { value: '   ' } })
@@ -193,7 +204,7 @@ it.each([
   ['a withdrawn request', () => new Response(null, { status: 404 }), 'gibt es nicht mehr'],
 ])('keeps the dialog open and explains %s', async (_, response, message) => {
   writeResponse = response
-  mount('/inspections?answer=7')
+  mount('/?answer=7')
   fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Zustimmen' }))
   expect((await screen.findByRole('alert')).textContent).toContain(message)
   expect(screen.getByRole('dialog')).toBeTruthy()
@@ -204,4 +215,11 @@ it('does not load the page without the respond privilege', async () => {
   mount()
   await screen.findByRole('heading', { name: 'forbidden' })
   expect(vi.mocked(api).mock.calls.some(([path]) => String(path).includes('/assigned'))).toBe(false)
+})
+
+it('sends old links to the former inspections page to the overview', async () => {
+  const router = mount('/inspections?answer=7')
+  expect(await screen.findByRole('dialog', { name: 'Vorschlag · Sonne' })).toBeTruthy()
+  expect(router.state.location.pathname).toBe('/')
+  expect(router.state.location.search).toBe('?answer=7')
 })

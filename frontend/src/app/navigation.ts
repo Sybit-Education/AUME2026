@@ -3,7 +3,7 @@ import type { NavIconName } from '@/components/NavIcon'
 import type { LoggedInUser } from '@/lib/auth/client'
 import { residenceNavigation } from '@/features/residences/routes'
 import { inspectionPlanningNavigation } from '@/features/inspection-planning/routes'
-import { inspectionHistoryNavigation, inspectionNavigation } from '@/features/inspections/routes'
+import { inspectionHistoryNavigation } from '@/features/inspections/routes'
 import { standardsNavigation } from '@/features/standards/routes'
 import { wgNavigation } from '@/features/wg/routes'
 
@@ -13,15 +13,17 @@ type NavigationItem = {
   privilege?: string
   /** Zusätzliche Bedingung neben dem Privileg, z. B. Wohnanlagen nicht für die Objektbetreuung. */
   visibleFor?: (user: LoggedInUser) => boolean
-  /** Adressmuster unterhalb von {@code to}, unter denen der Reiter nicht markiert ist (dort gilt ein eigener). */
+  /** Weitere Adressmuster, unter denen der Reiter markiert ist. */
+  activeWithin?: readonly string[]
+  /** Adressmuster, unter denen der Reiter trotzdem nicht markiert ist (dort gilt ein eigener). */
   inactiveWithin?: readonly string[]
 }
 
 export const navigation: NavigationItem[] = [
-  { to: '/', label: 'navigation.dashboard' },
+  // Einzelne Kontrollen öffnet man aus der Übersicht; die Historie hat einen eigenen Reiter.
+  { to: '/', label: 'navigation.dashboard', activeWithin: ['/inspections/*'], inactiveWithin: ['/inspections/history/*'] },
   residenceNavigation,
   inspectionPlanningNavigation,
-  inspectionNavigation,
   inspectionHistoryNavigation,
   standardsNavigation,
   wgNavigation,
