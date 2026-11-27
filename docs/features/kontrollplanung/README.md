@@ -2,6 +2,8 @@
 
 Die Sachbearbeitung legt unter `/inspection-planning` für eine ganze Wohnanlage einen Kontrollzeitraum an und schickt ihn der Objektbetreuung zur Abstimmung. Die Objektbetreuung stimmt zu oder schlägt einen anderen Zeitraum mit Begründung vor.
 
+Mit Kontrollart **Individuelle Kontrolle** (US-18b) gilt der Zeitraum nur für einzeln ausgewählte WGs der Anlage, zum Beispiel nach einer Beschwerde. Die Abstimmung läuft genauso.
+
 ## Ablauf
 
 | Status | Bedeutung | Nächster Schritt |
@@ -18,6 +20,7 @@ Die Sachbearbeitung legt unter `/inspection-planning` für eine ganze Wohnanlage
 - Start und Ende sind Pflicht. Das Ende darf nicht vor dem Start liegen, der Start muss in der Zukunft liegen (Zeitzone `Europe/Berlin`).
 - Das Uhrzeitfenster ist optional und im Formular mit 09:00 bis 16:00 Uhr vorbelegt.
 - Die Objektbetreuung ist aus der Anlage vorbelegt und änderbar. Nur die eingetragene Person darf antworten.
+- Individuelle Kontrolle: `kind = INDIVIDUAL`, mindestens eine WG der Anlage (`flatIds`) und ein Anlass (`occasion`: `SAMPLE`, `COMPLAINT`, `OTHER`) sind Pflicht. Fehlercodes: `flats_required`, `occasion_required`, `unknown_flat` (WG einer anderen Anlage) und `409 flat_has_open_inspection` (eine gewählte WG hat schon eine offene Kontrolle). In der Antwort stehen dann `occasion` und `flatLabels`. Bei regulären Kontrollen sind beide `null`.
 - Beim Absenden entsteht je WG eine Kontrolle mit Status `PLANNED`. WGs mit einer offenen Kontrolle (`PLANNED`, `DRAFT`, `FINALIZED`) werden vorher angezeigt und erhalten keine zweite. Haben alle WGs eine offene Kontrolle, ist Absenden nicht möglich.
 - Ändert die Sachbearbeitung einen abgestimmten Zeitraum oder die Person, muss die Objektbetreuung erneut zustimmen.
 - Zustimmen ist nur möglich, solange der Start in der Zukunft liegt (sonst `400 start_not_in_future`). Ein Gegenvorschlag bleibt möglich.
@@ -39,9 +42,9 @@ Alle Pfade beginnen mit `/api/inspection-periods`.
 
 | Methode und Pfad | Privileg | Body |
 | --- | --- | --- |
-| `GET /options` | `INSPECTION_PLAN` | Anlagen mit `flatCount`, `caretakerId`, `flatsWithOpenInspection` und Auswahlliste `caretakers` |
+| `GET /options` | `INSPECTION_PLAN` | Anlagen mit `flatCount`, `caretakerId`, `flatsWithOpenInspection`, `flats` (`id`, `label`) und Auswahlliste `caretakers` |
 | `GET /` | `INSPECTION_PLAN` | Paginierte Liste der Zeiträume |
-| `POST /` | `INSPECTION_PLAN` | `residenceId`, `startsOn`, `endsOn`, `windowStart`, `windowEnd`, `caretakerId` |
+| `POST /` | `INSPECTION_PLAN` | `residenceId`, `startsOn`, `endsOn`, `windowStart`, `windowEnd`, `caretakerId`; für US-18b zusätzlich `kind`, `flatIds`, `occasion` |
 | `PUT /{id}` | `INSPECTION_PLAN` | `startsOn`, `endsOn`, `windowStart`, `windowEnd`, `caretakerId`, `version` |
 | `POST /{id}/accept-counter` | `INSPECTION_PLAN` | `version` |
 | `POST /{id}/withdraw` | `INSPECTION_PLAN` | `version`; Antwort `204` |

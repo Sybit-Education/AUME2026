@@ -5,7 +5,7 @@ import i18n from '@/lib/i18n'
 import { api } from '@/lib/auth/client'
 import { UiError } from '@/lib/errors'
 import FindingPhotos from './FindingPhotos'
-import { addPhoto, removePhoto } from './api'
+import { addPhoto, loadPhoto, removePhoto } from './api'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
@@ -14,14 +14,16 @@ vi.mock('@/lib/auth/client', () => ({
   logout: vi.fn(),
 }))
 
+// Nur das Laden der Bilddatei wird ersetzt; addPhoto und removePhoto laufen echt gegen das gemockte `api`.
+vi.mock('./api', async (original) => ({ ...(await original<typeof import('./api')>()), loadPhoto: vi.fn() }))
+
 const revoke = vi.fn()
 
 beforeEach(async () => {
   vi.resetAllMocks()
   await i18n.changeLanguage('de')
-  let next = 0
-  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => `blob:photo-${++next}`), revokeObjectURL: revoke }))
-  vi.mocked(api).mockImplementation(async () => new Response(new Blob(['x'], { type: 'image/jpeg' })))
+  vi.stubGlobal('URL', Object.assign(URL, { revokeObjectURL: revoke }))
+  vi.mocked(loadPhoto).mockImplementation(async (_id, photoId) => `blob:photo-${photoId}`)
 })
 afterEach(() => {
   cleanup()
@@ -46,12 +48,12 @@ it('closes the zoom when the zoomed photo disappears', async () => {
 })
 
 it('frees the object URL of a photo that was hidden while it was loading', async () => {
-  let finish!: (response: Response) => void
-  vi.mocked(api).mockImplementation(() => new Promise((resolve) => { finish = resolve }))
+  let finish!: (url: string) => void
+  vi.mocked(loadPhoto).mockImplementation(() => new Promise((resolve) => { finish = resolve }))
   const { unmount } = render(<FindingPhotos inspectionId={1} photoIds={[5]} label="Foto zum Mangel Herd" />)
   unmount()
-  finish(new Response(new Blob(['x'], { type: 'image/jpeg' })))
-  await vi.waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:photo-1'))
+  finish('blob:photo-5')
+  await vi.waitFor(() => expect(revoke).toHaveBeenCalledWith('blob:photo-5'))
 })
 
 it('shows a specific message when the backend rejects a photo', async () => {

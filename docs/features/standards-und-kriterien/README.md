@@ -24,11 +24,16 @@ Aktuell darf die ganze Rolle `CLERK` bearbeiten. Wer `STANDARDS_VIEW`, aber nich
   "process": "…",
   "consequences": "…",
   "standards": "…",
+  "processEn": "…",
+  "consequencesEn": "…",
+  "standardsEn": "…",
   "updatedAt": "2026-11-21T10:00:00Z"
 }
 ```
 
-`PUT` sendet dieselben drei Textfelder ohne `updatedAt`. Fachliche Fehler kommen als `400` mit `{"code": …}`: `info_text_required` oder `info_text_too_long` (mehr als 20.000 Zeichen).
+Die englische Fassung liegt in einer eigenen Spalte (`info_pages.body_en`) und kommt in den Feldern `…En`. Sie ist leer, solange keine gespeichert wurde. Auf der Standards-Seite steht sie rechts neben dem deutschen Text. Sie ist dort fest hinterlegt und wird bei jedem Speichern mitgeschickt. Bewohnende sehen aktuell nur Deutsch, die Sprachauswahl baut das Studierenden-Team.
+
+`PUT` sendet dieselben Textfelder ohne `updatedAt`. Die `…En`-Felder sind optional. Fachliche Fehler kommen als `400` mit `{"code": …}`: `info_text_required` oder `info_text_too_long` (mehr als 20.000 Zeichen).
 
 Solange noch nichts gespeichert wurde, sind die Texte leer und `updatedAt` ist `null`. Im Profil `dev` legt `InfoPageSampleData` die Beispieltexte aus dem Wireframe an.
 
@@ -43,6 +48,6 @@ Solange noch nichts gespeichert wurde, sind die Texte leer und `updatedAt` ist `
 
 - Die Anzeige für Bewohnende kommt mit US-23, der Link in der Ankündigung mit US-18.
 - Die verbindlichen Texte muss Seezeit liefern.
-- Die Texte sind nur auf Deutsch vorhanden (Englisch: US-60).
+- Die englische Fassung ist im Frontend fest hinterlegt und nicht bearbeitbar (pflegbar mit US-60).
 - Mit der H2-Datenbank im Speicher gehen gespeicherte Texte bei einem Backend-Neustart verloren.
 - Speichern zwei Personen gleichzeitig, gilt die zuletzt gespeicherte Fassung.

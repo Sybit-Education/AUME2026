@@ -78,3 +78,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.planning-flats {
+  border: 0;
+  padding: 0;
+  margin: 0 0 11px;
+  min-width: 0;
+}
+
+.planning-flats legend {
+  padding: 0;
+  margin-bottom: 5px;
+}
+
+.planning-flats .planning-flat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+}

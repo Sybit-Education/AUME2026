@@ -7,7 +7,7 @@ export const OVERVIEW_STATES = [
 export const PERIOD_KINDS = ['REGULAR'] as const
 
 export type OverviewState = typeof OVERVIEW_STATES[number]
-type Kind = typeof PERIOD_KINDS[number] | 'FOLLOW_UP'
+type Kind = typeof PERIOD_KINDS[number] | 'INDIVIDUAL' | 'FOLLOW_UP'
 
 interface Page<T> {
   content: T[]
