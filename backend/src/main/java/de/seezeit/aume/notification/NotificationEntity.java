@@ -11,7 +11,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 /** Hinweis innerhalb der App. */
 @Entity
-@Table(name = "notifications", indexes = @Index(columnList = "user_id, read_at"))
+@Table(name = "notifications", indexes = @Index(columnList = "user_id, read_at"),
+    uniqueConstraints = @UniqueConstraint(columnNames = {"inspection_notification_id", "user_id"}))
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,6 +24,11 @@ public class NotificationEntity {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inspection_notification_id")
+    @Setter(AccessLevel.NONE)
+    private InspectionNotificationEntity inspectionNotification;
 
     @Column(nullable = false, length = 40)
     private String type;
@@ -44,5 +50,11 @@ public class NotificationEntity {
         this.type = type;
         this.title = title;
         this.link = link;
+    }
+
+    public NotificationEntity(UserEntity user, InspectionNotificationEntity inspectionNotification, String title,
+            String link) {
+        this(user, inspectionNotification.getKind().name(), title, link);
+        this.inspectionNotification = inspectionNotification;
     }
 }

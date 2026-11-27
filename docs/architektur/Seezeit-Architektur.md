@@ -64,6 +64,8 @@ Die fachlichen Module werden gemeinsam als Backend ausgeliefert. Nachkontrollen,
 
 Jedes Modul schreibt ausschließlich in die eigenen Tabellen. Zugriffe über Modulgrenzen verwenden definierte Schnittstellen. Listen, Einzeldaten, Anhänge und Exporte erhalten dieselben serverseitigen Rechteprüfungen. Einladungen und Mitgliedschaften müssen widerrufbar und zeitlich begrenzt sein.
 
+Der In-App-Scheduler liest über die Kontrollschnittstelle die aktuell gespeicherte offizielle Terminrevision und schreibt fachliche Nachricht und persönliche Zustellungen gemeinsam im Notification-Modul. Er führt keinen eigenen Revisionsverlauf für den Quelltermin und rekonstruiert keine zwischen zwei Durchläufen überschriebenen Terminrevisionen. [In-App-Kontrollnachrichten](../features/student-messages/README.md)
+
 Als gemeinsame Umsetzungskonventionen werden OpenAPI-Verträge, versionierte Datenbankmigrationen und Prüfungen auf unerlaubte Modulabhängigkeiten vorgeschlagen. Vertragsänderungen stimmt das verantwortliche Feature-Team mit den konsumierenden Teams und bei teamübergreifenden Auswirkungen mit dem Integrationsteam ab.
 
 ## 5. Durchgängiger Ablauf: Kontrolle bis Ergebnis
