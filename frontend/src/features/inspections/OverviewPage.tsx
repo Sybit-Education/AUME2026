@@ -5,6 +5,8 @@ import LoadingPage from '@/components/LoadingPage'
 import type { CurrentInspections } from './currentInspections'
 import RequestsSection from './RequestsSection'
 import UpcomingSection from './UpcomingSection'
+import { statusOf } from './upcomingStatus'
+import { useToday } from './useToday'
 import './overview.css'
 
 const INSPECTIONS_PATH = '/inspections'
@@ -13,6 +15,7 @@ const INSPECTIONS_PATH = '/inspections'
 export default function OverviewPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const day = useToday()
   const data = useLoaderData<CurrentInspections | null>()
   if (!data) return <LoadingPage />
 
@@ -20,7 +23,8 @@ export default function OverviewPage() {
   const proposals = data.requests?.content.filter((request) => request.status === 'WAITING_FOR_CARETAKER').length
   const tiles = [
     { key: 'proposals', value: proposals },
-    { key: 'announced', value: inspections.filter((inspection) => inspection.round === 0).length },
+    // Wie „Angekündigt“ in der Tabelle: angekündigt, aber der Zeitraum hat noch nicht begonnen.
+    { key: 'announced', value: inspections.filter((inspection) => statusOf(inspection, day) === 'ANNOUNCED').length },
     { key: 'followUps', value: inspections.filter((inspection) => inspection.round > 0).length },
   ] as const
 

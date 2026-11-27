@@ -1,6 +1,7 @@
 import { api } from '@/lib/auth/client'
 import { requireOk } from '@/lib/auth/response'
 import { UiError, type ErrorKey } from '@/lib/errors'
+import { loadAllPages } from './allPages'
 
 export type RequestStatus = 'WAITING_FOR_CARETAKER' | 'COUNTER_PROPOSED' | 'AGREED'
 
@@ -49,9 +50,13 @@ const answerErrors: Record<string, ErrorKey> = {
   invalid_period_status: 'errors.requestAnswered',
 }
 
-export async function listRequests(signal: AbortSignal): Promise<RequestPage> {
-  const response = requireOk(await api('/api/inspection-periods/assigned?size=100', { signal }), 'errors.inspectionRequests')
-  return (await response.json()) as RequestPage
+/** Alle eigenen Anfragen, Seite für Seite geladen. */
+export function listRequests(signal: AbortSignal): Promise<RequestPage> {
+  return loadAllPages(async (page) => {
+    const response = requireOk(await api(`/api/inspection-periods/assigned?page=${page}&size=100`, { signal }),
+      'errors.inspectionRequests')
+    return (await response.json()) as RequestPage
+  })
 }
 
 async function send(path: string, body: unknown, signal: AbortSignal, errors: Record<string, ErrorKey>): Promise<void> {

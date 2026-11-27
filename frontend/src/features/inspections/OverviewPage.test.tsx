@@ -12,6 +12,7 @@ import i18n from '@/lib/i18n'
 import { api, type LoggedInUser } from '@/lib/auth/client'
 import type { InspectionSummary } from './api'
 import type { InspectionRequest } from './requestsApi'
+import { today } from './dates'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
@@ -24,9 +25,10 @@ const caretaker: LoggedInUser = {
   userKey: 'caretaker', name: 'Fischer', roles: ['CARETAKER'],
   privileges: ['INSPECTION_OVERVIEW_READ', 'INSPECTION_PERFORM', 'INSPECTION_PERIOD_RESPOND', 'RESIDENCE_READ'],
 }
-const inspection = (id: number, flatLabel: string, round: number): InspectionSummary => ({
-  id, flatLabel, residenceName: 'Sonne', status: 'PLANNED', round, startsOn: round > 0 ? null : '2026-11-18',
-  endsOn: round > 0 ? null : '2026-11-20', windowStart: null, windowEnd: null, periodKind: round > 0 ? null : 'REGULAR',
+const inspection = (id: number, flatLabel: string, round: number, startsOn = '2099-11-18',
+  status: InspectionSummary['status'] = 'PLANNED'): InspectionSummary => ({
+  id, flatLabel, residenceName: 'Sonne', status, round, startsOn: round > 0 ? null : startsOn,
+  endsOn: round > 0 ? null : '2099-11-20', windowStart: null, windowEnd: null, periodKind: round > 0 ? null : 'REGULAR',
 })
 const request = (id: number, status: InspectionRequest['status']): InspectionRequest => ({
   id, residenceName: 'Mond', kind: 'REGULAR', status, startsOn: '2026-12-01', endsOn: '2026-12-03',
@@ -43,7 +45,13 @@ beforeEach(async () => {
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return Response.json(signedIn)
     if (String(path).startsWith('/api/inspections?')) {
-      return Response.json(page([inspection(7, '4.12', 0), inspection(8, '4.14', 0), inspection(9, '3.08', 1)]))
+      return Response.json(page([
+        inspection(7, '4.12', 0), inspection(8, '4.14', 0),
+        // Startbereit: Zeitraum läuft schon bzw. beginnt heute; begonnen: Entwurf mit künftigem Zeitraum.
+        inspection(10, '4.16', 0, '2000-01-03'), inspection(11, '4.18', 0, today()),
+        inspection(12, '4.20', 0, '2099-11-18', 'DRAFT'),
+        inspection(9, '3.08', 1),
+      ]))
     }
     if (String(path).startsWith('/api/inspection-periods/assigned')) {
       return Response.json(page([request(3, 'WAITING_FOR_CARETAKER'), request(4, 'AGREED')]))
@@ -62,7 +70,9 @@ it('shows counts linking to the inspections page', async () => {
   mount()
   expect(await screen.findByRole('heading', { name: 'Hallo Fischer' })).toBeTruthy()
   expect(screen.getByText('Vorschläge zu beantworten').previousElementSibling?.textContent).toBe('1')
+  // Angekündigt nur 4.12 und 4.14; 4.16 und 4.18 (beginnt heute) sind startbereit, 4.20 ist begonnen.
   expect(screen.getByText('Angekündigte Kontrollen').previousElementSibling?.textContent).toBe('2')
+  expect(screen.getByText('Nachkontrollen').previousElementSibling?.textContent).toBe('1')
   expect(screen.getByText('Nachkontrollen').closest('a')?.getAttribute('href')).toBe('/inspections')
   expect(screen.queryByText('Offene Schäden')).toBeNull()
 })

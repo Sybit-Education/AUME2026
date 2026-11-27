@@ -1,6 +1,7 @@
 import { api } from '@/lib/auth/client'
 import { requireOk } from '@/lib/auth/response'
 import { UiError, type ErrorKey } from '@/lib/errors'
+import { loadAllPages } from './allPages'
 
 export type InspectionStatus = 'PLANNED' | 'DRAFT' | 'FINALIZED' | 'PUBLISHED'
 export type OverallResult = 'PASSED' | 'FAILED'
@@ -103,10 +104,12 @@ export interface FindingInput {
 
 const json = { 'Content-Type': 'application/json' }
 
-/** Alle anstehenden Kontrollen auf einmal (höchstens 100); die Tabelle scrollt ab fünf Zeilen. */
-export async function listInspections(signal: AbortSignal): Promise<InspectionPage> {
-  const response = requireOk(await api('/api/inspections?size=100', { signal }), 'errors.inspections')
-  return (await response.json()) as InspectionPage
+/** Alle anstehenden Kontrollen, Seite für Seite geladen; die Tabelle scrollt ab fünf Zeilen. */
+export function listInspections(signal: AbortSignal): Promise<InspectionPage> {
+  return loadAllPages(async (page) => {
+    const response = requireOk(await api(`/api/inspections?page=${page}&size=100`, { signal }), 'errors.inspections')
+    return (await response.json()) as InspectionPage
+  })
 }
 
 /** `query` ist bereits geprüft, siehe `historyQuery` in history.ts. */

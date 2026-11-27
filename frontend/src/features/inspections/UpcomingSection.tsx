@@ -2,13 +2,14 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import type { InspectionSummary } from './api'
-import { formatDayMonth, formatPeriod, formatWindow, today } from './dates'
+import { formatDayMonth, formatPeriod, formatWindow } from './dates'
 import { ActiveFilters, FilterButton, FilterMenu, SortHeader, type ActiveFilter } from './tableControls'
 import { compareValues, contains, overlaps, periodChipLabel, useFilterMenu, useLocalTable, type FilterSpec } from './tableState'
+import { statusOf, type StatusKey } from './upcomingStatus'
+import { useToday } from './useToday'
 import './inspections.css'
 
 type Column = 'residence' | 'flat' | 'kind' | 'period' | 'status'
-type StatusKey = 'READY' | 'ANNOUNCED' | 'DRAFT'
 type KindKey = 'initial' | 'individual' | 'followUp'
 
 function kindOf(row: InspectionSummary): KindKey {
@@ -18,20 +19,12 @@ function kindOf(row: InspectionSummary): KindKey {
 
 const statusOrder: StatusKey[] = ['DRAFT', 'READY', 'ANNOUNCED']
 
-/**
- * Angezeigter Status nach dem, was man tun kann: in Bearbeitung (begonnen), startbereit (Zeitraum läuft oder
- * kein Zeitraum, z. B. Nachkontrolle) oder angekündigt (Zeitraum beginnt erst, starten ab dem ersten Tag).
- */
-function statusOf(inspection: InspectionSummary): StatusKey {
-  if (inspection.status === 'DRAFT') return 'DRAFT'
-  return inspection.startsOn && inspection.startsOn > today() ? 'ANNOUNCED' : 'READY'
-}
-
 const statusChip: Record<StatusKey, string> = { DRAFT: 'wr', READY: 'ok', ANNOUNCED: 't' }
 
 /** Anstehende Kontrollen: sortieren und filtern wie in der Historie, aber im Browser. */
 export default function UpcomingSection({ inspections }: { inspections: InspectionSummary[] }) {
   const { t, i18n } = useTranslation()
+  const day = useToday()
   const section = useRef<HTMLElement>(null)
   const menu = useFilterMenu<Column>(section)
   const table = useLocalTable<Column>()
@@ -51,12 +44,12 @@ export default function UpcomingSection({ inspections }: { inspections: Inspecti
     .filter((row) => contains(row.residenceName, filters.residence) && contains(row.flatLabel, filters.flat))
     .filter((row) => !filters.kind?.value || kindOf(row) === filters.kind.value)
     .filter((row) => overlaps(row.startsOn, row.endsOn, filters.period))
-    .filter((row) => !filters.status?.value || statusOf(row) === filters.status.value)
+    .filter((row) => !filters.status?.value || statusOf(row, day) === filters.status.value)
   if (table.sort) {
     const { column, dir } = table.sort
     const key = (row: InspectionSummary): string | number | null => ({
       residence: row.residenceName, flat: row.flatLabel, kind: row.round, period: row.startsOn,
-      status: statusOrder.indexOf(statusOf(row)),
+      status: statusOrder.indexOf(statusOf(row, day)),
     })[column]
     rows.sort((a, b) => compareValues(key(a), key(b), dir))
   }
@@ -125,7 +118,7 @@ export default function UpcomingSection({ inspections }: { inspections: Inspecti
               {rows.map((inspection) => {
                 const hours = formatWindow(inspection.windowStart, inspection.windowEnd)
                 const action = inspection.status === 'PLANNED' ? t('inspections.start') : t('inspections.continue')
-                const status = statusOf(inspection)
+                const status = statusOf(inspection, day)
                 return (
                   <tr key={inspection.id}>
                     <td>{inspection.residenceName}</td>
