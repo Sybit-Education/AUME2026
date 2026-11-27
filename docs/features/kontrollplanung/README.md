@@ -8,7 +8,7 @@ Die Sachbearbeitung legt unter `/inspection-planning` für eine ganze Wohnanlage
 | --- | --- | --- |
 | `WAITING_FOR_CARETAKER` | Vorschlag liegt bei der Objektbetreuung | Zustimmen oder Gegenvorschlag |
 | `COUNTER_PROPOSED` | Gegenvorschlag liegt bei der Sachbearbeitung | Annehmen (`AGREED`) oder neuer Zeitraum (`WAITING_FOR_CARETAKER`) |
-| `AGREED` | Abgestimmt, noch nicht angekündigt | Ankündigen (US-18) oder ändern (`WAITING_FOR_CARETAKER`) |
+| `AGREED` | Abgestimmt, noch nicht angekündigt | Ankündigen ([US-18](../kontroll-ankuendigung/README.md)) oder ändern (`WAITING_FOR_CARETAKER`) |
 
 „Angekündigt“ ist kein eigener Status: Ein Zeitraum gilt als angekündigt, sobald `announcedAt` gesetzt ist.
 
@@ -22,7 +22,7 @@ Die Sachbearbeitung legt unter `/inspection-planning` für eine ganze Wohnanlage
 - Ändert die Sachbearbeitung einen abgestimmten Zeitraum oder die Person, muss die Objektbetreuung erneut zustimmen.
 - Zustimmen ist nur möglich, solange der Start in der Zukunft liegt (sonst `400 start_not_in_future`). Ein Gegenvorschlag bleibt möglich.
 - Ein Gegenvorschlag kann auch eine andere Uhrzeit enthalten. Ohne Angabe bleibt die Uhrzeit aus dem Vorschlag.
-- Nach der Ankündigung ist der Zeitraum hier nicht mehr änderbar.
+- Nach der Ankündigung ist der Zeitraum hier nicht mehr änderbar. Termin ändern geht dann nur über `POST /{id}/reschedule` aus [US-18](../kontroll-ankuendigung/README.md).
 - Zurückziehen löscht einen nicht angekündigten Zeitraum und seine geplanten WG-Kontrollen. Die WGs sind danach wieder frei. Wurde eine Kontrolle schon begonnen, antwortet die API mit `409 period_started`.
 - `version` schützt vor veralteten Aktionen: Wurde ein Zeitraum inzwischen geändert, antwortet die API mit `409 period_changed`.
 
@@ -59,6 +59,7 @@ Ein Zeitraum in der Antwort:
   "kind": "REGULAR",
   "status": "COUNTER_PROPOSED",
   "announcedAt": null,
+  "rescheduledAt": null,
   "startsOn": "2026-12-01",
   "endsOn": "2026-12-03",
   "windowStart": "09:00:00",

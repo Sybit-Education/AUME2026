@@ -7,7 +7,7 @@ import AuthProvider from '@/lib/auth/AuthProvider'
 import { api, type LoggedInUser } from '@/lib/auth/client'
 import { ensureSession, invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
-import type { InspectionPeriod, PlanningOptions } from './api'
+import type { AnnouncementDraft, InspectionPeriod, PlanningOptions } from './api'
 import { inspectionPlanningRoutes } from './routes'
 
 vi.mock('@/lib/auth/client', () => ({
@@ -25,11 +25,12 @@ let signedIn: LoggedInUser
 let options: PlanningOptions
 let periods: InspectionPeriod[]
 let writeResponse: (() => Response) | null
+let draft: AnnouncementDraft
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
 function period(overrides: Partial<InspectionPeriod> = {}): InspectionPeriod {
   return {
-    id: 7, residenceId: 1, residenceName: 'Sonne', kind: 'REGULAR', status: 'WAITING_FOR_CARETAKER', announcedAt: null,
+    id: 7, residenceId: 1, residenceName: 'Sonne', kind: 'REGULAR', status: 'WAITING_FOR_CARETAKER', announcedAt: null, rescheduledAt: null,
     startsOn: '2026-12-01', endsOn: '2026-12-03', windowStart: '09:00:00', windowEnd: '16:00:00',
     caretaker: bea, flatCount: 2, counter: null, version: 3, ...overrides,
   }
@@ -56,6 +57,7 @@ beforeEach(async () => {
   signedIn = clerk
   writeResponse = null
   periods = []
+  draft = { periodId: 7, residenceName: 'Sonne', flatCount: 2, channels: ['IN_APP'], message: 'Liebe WG,\n\nVorlage' }
   options = {
     residences: [
       { id: 1, name: 'Sonne', flatCount: 2, caretakerId: 10, flatsWithOpenInspection: [] },
@@ -67,6 +69,8 @@ beforeEach(async () => {
   await i18n.changeLanguage('de')
   vi.mocked(api).mockImplementation(async (path, init) => {
     if (path === '/api/me') return Response.json(signedIn)
+    if (path === '/api/attachments') return Response.json({ id: 55, contentType: 'application/pdf', sizeBytes: 4 }, { status: 201 })
+    if (String(path).endsWith('/announcement-draft')) return Response.json(draft)
     if (init?.method === 'POST' || init?.method === 'PUT') {
       if (writeResponse) return writeResponse()
       if (path === '/api/inspection-periods') periods = [period()]
@@ -188,6 +192,100 @@ it('offers no changes for an announced period', async () => {
   mount()
   expect(await screen.findByText('Angekündigt')).toBeDefined()
   expect(screen.queryByRole('link', { name: 'Zeitraum für Sonne ändern' })).toBeNull()
+})
+
+it('offers announcing only for an agreed period', async () => {
+  periods = [period(), period({ id: 8, residenceName: 'Egg', status: 'AGREED' })]
+  mount()
+  expect(await screen.findByRole('link', { name: 'Kontrolle für Egg ankündigen' })).toBeDefined()
+  expect(screen.queryByRole('link', { name: 'Kontrolle für Sonne ankündigen' })).toBeNull()
+})
+
+it('announces an agreed period with an edited template after a confirmation step', async () => {
+  periods = [period({ status: 'AGREED' })]
+  mount()
+  fireEvent.click(await screen.findByRole('link', { name: 'Kontrolle für Sonne ankündigen' }))
+  const dialog = within(await screen.findByRole('dialog', { name: 'Kontrolle ankündigen · Sonne' }))
+  expect(dialog.getByText('Alle 2 WGs der Wohnanlage')).toBeDefined()
+  expect(dialog.getByText('In der App')).toBeDefined()
+  const message = dialog.getByLabelText('Nachricht') as HTMLTextAreaElement
+  expect(message.value).toBe('Liebe WG,\n\nVorlage')
+  fireEvent.change(message, { target: { value: 'Eigener Text' } })
+
+  fireEvent.click(dialog.getByRole('button', { name: 'Weiter' }))
+  expect(dialog.getByText('Bitte prüfe die Angaben. Nach dem Senden steht die Kontrolle auf „Angekündigt“.')).toBeDefined()
+  expect(dialog.getByText('Kein Anhang')).toBeDefined()
+  expect(writes()).toHaveLength(0)
+
+  fireEvent.click(dialog.getByRole('button', { name: 'Jetzt ankündigen' }))
+  expect((await screen.findByRole('status')).textContent).toBe('Kontrolle angekündigt. Alle WGs sehen die Nachricht in der App.')
+  expect(writes().map(([path]) => path)).toEqual(['/api/inspection-periods/7/announce'])
+  expect(JSON.parse(String(writes()[0][1]?.body))).toEqual({ message: 'Eigener Text', attachmentId: null, attachmentName: null, version: 3 })
+})
+
+it('blocks the next step without a message and goes back to the text', async () => {
+  periods = [period({ status: 'AGREED' })]
+  mount('/inspection-planning?announce=7')
+  const dialog = within(await screen.findByRole('dialog', { name: 'Kontrolle ankündigen · Sonne' }))
+  fireEvent.change(dialog.getByLabelText('Nachricht'), { target: { value: '  ' } })
+  expect((dialog.getByRole('button', { name: 'Weiter' }) as HTMLButtonElement).disabled).toBe(true)
+  fireEvent.change(dialog.getByLabelText('Nachricht'), { target: { value: 'Text' } })
+  fireEvent.click(dialog.getByRole('button', { name: 'Weiter' }))
+  fireEvent.click(dialog.getByRole('button', { name: 'Zurück' }))
+  expect((dialog.getByLabelText('Nachricht') as HTMLTextAreaElement).value).toBe('Text')
+})
+
+it('uploads the optional attachment only when sending', async () => {
+  periods = [period({ status: 'AGREED' })]
+  mount('/inspection-planning?announce=7')
+  const dialog = within(await screen.findByRole('dialog', { name: 'Kontrolle ankündigen · Sonne' }))
+  const file = new File(['%PDF'], 'Checkliste.pdf', { type: 'application/pdf' })
+  fireEvent.change(dialog.getByLabelText('Anhang (optional)'), { target: { files: [file] } })
+  fireEvent.click(dialog.getByRole('button', { name: 'Weiter' }))
+  expect(dialog.getByText('Checkliste.pdf')).toBeDefined()
+  expect(writes()).toHaveLength(0)
+
+  fireEvent.click(dialog.getByRole('button', { name: 'Jetzt ankündigen' }))
+  await screen.findByRole('status')
+  expect(writes().map(([path]) => path)).toEqual(['/api/attachments', '/api/inspection-periods/7/announce'])
+  expect(writes()[0][1]?.body).toBeInstanceOf(FormData)
+  expect(JSON.parse(String(writes()[1][1]?.body))).toMatchObject({ attachmentId: 55, attachmentName: 'Checkliste.pdf' })
+})
+
+it('keeps the announcement dialog open with the reason when sending fails', async () => {
+  periods = [period({ status: 'AGREED' })]
+  writeResponse = () => Response.json({ code: 'period_changed' }, { status: 409 })
+  mount('/inspection-planning?announce=7')
+  const dialog = within(await screen.findByRole('dialog', { name: 'Kontrolle ankündigen · Sonne' }))
+  fireEvent.click(dialog.getByRole('button', { name: 'Weiter' }))
+  fireEvent.click(dialog.getByRole('button', { name: 'Jetzt ankündigen' }))
+  expect((await dialog.findByRole('alert')).textContent).toBe('Der Zeitraum wurde inzwischen geändert. Bitte prüfe den aktuellen Stand.')
+  expect(dialog.getByRole('button', { name: 'Jetzt ankündigen' })).toBeDefined()
+})
+
+it('changes the date of an announced period without asking the caretaker again', async () => {
+  periods = [period({ status: 'AGREED', announcedAt: '2026-11-22T10:00:00Z' })]
+  mount()
+  expect(await screen.findByText('Angekündigt')).toBeDefined()
+  fireEvent.click(screen.getByRole('link', { name: 'Termin für Sonne ändern' }))
+  const form = within(await screen.findByRole('form', { name: 'Termin für Sonne ändern' }))
+  expect(form.queryByLabelText('Objektbetreuung')).toBeNull()
+  expect(form.getByText(/Alle 2 WGs bekommen automatisch eine Nachricht/)).toBeDefined()
+  fireEvent.change(form.getByLabelText('Enddatum'), { target: { value: '2026-12-04' } })
+  fireEvent.click(form.getByRole('button', { name: 'Termin ändern und WGs informieren' }))
+  expect((await screen.findByRole('status')).textContent).toBe('Termin geändert. Alle WGs bekommen automatisch eine Nachricht.')
+  expect(writes()[0][0]).toBe('/api/inspection-periods/7/reschedule')
+  expect(JSON.parse(String(writes()[0][1]?.body))).toEqual({
+    startsOn: '2026-12-01', endsOn: '2026-12-04', windowStart: '09:00', windowEnd: '16:00', version: 3,
+  })
+})
+
+it('marks a rescheduled period like an announced one, without open work', async () => {
+  periods = [period({ status: 'AGREED', announcedAt: '2026-11-22T10:00:00Z', rescheduledAt: '2026-11-24T09:30:00Z' })]
+  mount()
+  expect((await screen.findByText('Termin geändert')).className).toBe('chip t')
+  expect(screen.getByRole('link', { name: 'Termin für Sonne ändern' })).toBeDefined()
+  expect(screen.queryByRole('link', { name: 'Kontrolle für Sonne ankündigen' })).toBeNull()
 })
 
 it('blocks a residence without flats and asks for a caretaker when none is assigned', async () => {

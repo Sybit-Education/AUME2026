@@ -134,7 +134,7 @@ function NextStep({ row }: { row: ResidenceRow }) {
     case 'COUNTER_PROPOSED':
       return <Link className="btn sec" to={`/inspection-planning?review=${row.current?.id}`}>{t('inspectionOverview.review')}</Link>
     case 'AGREED':
-      return <button type="button" className="btn sec" disabled title={t('inspectionOverview.announceLater')}>{t('inspectionOverview.announce')}</button>
+      return <Link className="btn sec" to={`/inspection-planning?announce=${row.current?.id}`}>{t('inspectionOverview.announce')}</Link>
     default:
       return <Link className="btn sec" to={`/inspection-overview/${row.id}`}>{t('inspectionOverview.details')}</Link>
   }

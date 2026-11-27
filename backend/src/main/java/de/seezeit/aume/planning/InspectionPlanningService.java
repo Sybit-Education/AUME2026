@@ -234,17 +234,17 @@ public class InspectionPlanningService {
         return caretakers.findById(id).orElseThrow(() -> badRequest(ResidenceService.UNKNOWN_CARETAKER));
     }
 
-    private static void requireVersion(InspectionPeriodEntity period, Long version) {
+    static void requireVersion(InspectionPeriodEntity period, Long version) {
         if (version == null || version != period.getVersion()) throw conflict("period_changed");
     }
 
-    private void validateDates(LocalDate startsOn, LocalDate endsOn) {
+    static void validateDates(LocalDate startsOn, LocalDate endsOn) {
         if (startsOn == null || endsOn == null) throw badRequest("dates_required");
         if (endsOn.isBefore(startsOn)) throw badRequest("end_before_start");
         if (!startsOn.isAfter(today())) throw badRequest("start_not_in_future");
     }
 
-    private static void validateWindow(LocalTime start, LocalTime end) {
+    static void validateWindow(LocalTime start, LocalTime end) {
         if (start == null && end == null) return;
         if (start == null || end == null || !end.isAfter(start)) throw badRequest("invalid_time_window");
     }
@@ -276,21 +276,21 @@ public class InspectionPlanningService {
             : new CounterView(period.getCounterStartsOn(), period.getCounterEndsOn(),
                 period.getCounterWindowStart(), period.getCounterWindowEnd(), period.getCounterReason());
         return new PeriodView(period.getId(), period.getResidence().getId(), period.getResidence().getName(),
-            period.getKind(), period.getStatus(), period.getAnnouncedAt(), period.getStartsOn(), period.getEndsOn(),
+            period.getKind(), period.getStatus(), period.getAnnouncedAt(), period.getRescheduledAt(), period.getStartsOn(), period.getEndsOn(),
             period.getWindowStart(), period.getWindowEnd(),
             caretaker == null ? null : new StaffView(caretaker.getId(), caretaker.getName()),
             flatCount, counter, period.getVersion());
     }
 
-    private static LocalDate today() {
+    static LocalDate today() {
         return LocalDate.now(ZONE);
     }
 
-    private static ResponseStatusException badRequest(String code) {
+    static ResponseStatusException badRequest(String code) {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, code);
     }
 
-    private static ResponseStatusException conflict(String code) {
+    static ResponseStatusException conflict(String code) {
         return new ResponseStatusException(HttpStatus.CONFLICT, code);
     }
 
@@ -314,6 +314,6 @@ public class InspectionPlanningService {
         String reason) {}
 
     public record PeriodView(Long id, Long residenceId, String residenceName, Kind kind, Status status,
-        Instant announcedAt, LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
+        Instant announcedAt, Instant rescheduledAt, LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
         StaffView caretaker, long flatCount, CounterView counter, long version) {}
 }

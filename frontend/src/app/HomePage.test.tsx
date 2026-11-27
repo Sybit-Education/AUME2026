@@ -130,7 +130,7 @@ it('shows one row per residence with last completed round, current round and nex
   expect(within(mond).getByRole('link', { name: 'Kontrolle planen' }).getAttribute('href')).toBe('/inspection-planning?residence=2')
   expect(within(sonne).getByText('88 bestanden · 12 Nachkontrolle')).toBeDefined()
   expect(within(sonne).getByText('Abgestimmt, nicht angekündigt')).toBeDefined()
-  expect(within(sonne).getByRole('button', { name: 'Ankündigen' })).toBeDefined()
+  expect(within(sonne).getByRole('link', { name: 'Ankündigen' }).getAttribute('href')).toBe('/inspection-planning?announce=8')
   expect(screen.queryByText(/Sam/)).toBeNull()
   expect(vi.mocked(api).mock.calls.some(([path]) => path === appointmentPath)).toBe(false)
 })
