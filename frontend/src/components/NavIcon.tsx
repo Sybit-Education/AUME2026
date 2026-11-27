@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
  * Icons für die Tab-Leiste der Studierenden-App (24 × 24). Farben setzt App.css: inaktiv nur Linie,
  * aktiv zweifarbig (Fläche var(--icon-fill), Linie var(--primary-dark)). Reine Linien tragen fill="none".
  */
-export type NavIconName = 'home' | 'plan' | 'inspection' | 'more'
+export type NavIconName = 'home' | 'plan' | 'inspection' | 'more' | 'bell'
 
 const paths: Record<NavIconName, ReactNode> = {
   home: (
@@ -35,6 +35,7 @@ const paths: Record<NavIconName, ReactNode> = {
       <rect x="13.4" y="13.4" width="6.6" height="6.6" rx="2" />
     </>
   ),
+  bell: <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />,
 }
 
 export default function NavIcon({ name }: { name: NavIconName }) {

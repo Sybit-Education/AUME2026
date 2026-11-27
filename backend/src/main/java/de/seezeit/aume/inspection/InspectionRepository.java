@@ -1,8 +1,9 @@
 package de.seezeit.aume.inspection;
 
 import java.time.Instant;
-import java.util.Collection;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -49,4 +50,16 @@ public interface InspectionRepository extends JpaRepository<InspectionEntity, Lo
     List<InspectionEntity> findPrevious(@Param("flatId") Long flatId,
         @Param("statuses") Collection<InspectionEntity.Status> statuses, @Param("excludedId") Long excludedId,
         @Param("before") Instant before, Pageable limit);
+
+    /** Angekündigte WG-Kontrollen mit noch nicht abgelaufenem Zeitraum. */
+    @Query("""
+        select i from InspectionEntity i join fetch i.period p join fetch i.flat f
+        where i.id > :afterId and i.status in :statuses
+          and p.announcedAt is not null and p.endsOn >= :today
+          and p.residence = f.residence
+        order by i.id
+        """)
+    List<InspectionEntity> findAnnouncedNotificationCandidates(@Param("afterId") long afterId,
+        @Param("today") LocalDate today, @Param("statuses") Collection<InspectionEntity.Status> statuses,
+        Pageable limit);
 }

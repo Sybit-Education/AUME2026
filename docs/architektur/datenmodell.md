@@ -377,12 +377,15 @@ erDiagram
 
 ## Benachrichtigungen
 
-Paket `de.seezeit.aume.notification`. `outbox_jobs` wird in derselben Transaktion wie das Fachereignis geschrieben und vom Worker abgearbeitet ([ADR-0008](adr/0008-run-background-work-through-a-transactional-outbox.md)).
+Paket `de.seezeit.aume.notification`. `inspection_notifications` enthält den gemeinsamen fachlichen Inhalt. `notifications` enthält die persönlichen Zustellungen mit individuellem Gelesen-Zeitpunkt und kann auch allgemeine Hinweise ohne Kontrollnachricht speichern. Die vorhandenen Präferenzen und die Outbox bleiben unabhängig davon. Der Worker aus [ADR-0008](adr/0008-run-background-work-through-a-transactional-outbox.md) ist ein Architekturvorschlag.
 
 ```mermaid
 erDiagram
     users ||--o| notification_preferences : einstellung
     users ||--o{ notifications : hinweis
+    inspections ||--o{ inspection_notifications : kontrollnachricht
+    checklist_versions o|--o{ inspection_notifications : anhangsfassung
+    inspection_notifications o|--o{ notifications : zustellung
 
     notification_preferences {
         bigint user_id PK
@@ -393,11 +396,24 @@ erDiagram
     notifications {
         bigint id PK
         bigint user_id FK
+        bigint inspection_notification_id FK "optional"
         varchar type
         varchar title
         varchar link
         timestamptz created_at
         timestamptz read_at
+    }
+    inspection_notifications {
+        bigint id PK
+        bigint inspection_id FK
+        varchar kind
+        timestamptz announcement_revision_at
+        date starts_on
+        date ends_on
+        time window_start
+        time window_end
+        bigint checklist_version_id FK "optional"
+        timestamptz created_at
     }
     outbox_jobs {
         bigint id PK
@@ -414,6 +430,11 @@ erDiagram
 ```
 
 `outbox_jobs.status`: `PENDING`, `DONE`, `FAILED`.
+
+- Eine gemeinsame Nachricht ist je Kontrolle, Ankündigungsrevision und Nachrichtenart eindeutig. Die Arten sind `ANNOUNCEMENT`, `REMINDER_7_DAYS` und `REMINDER_1_DAY`. Pro gemeinsamer Nachricht ist höchstens eine Zustellung je Person möglich.
+- Zeitraum und Zeitfenster halten den Stand der Nachricht fest. Ausschließlich Ankündigungen können auf eine Checklistenfassung verweisen. Das PDF wird beim berechtigten Download aus dieser Fassung erzeugt. Referenzierte veröffentlichte Fassungen einschließlich ihrer Kriterien und Übersetzungen müssen für spätere Downloads unverändert erhalten bleiben. Fassungen mit Status `RETIRED` bleiben als Anhang verfügbar. Beide Erinnerungen führen gemäß der abgestimmten Abweichung von US-16 (#20) zur interaktiven Checkliste.
+- Die Postfachabfragen für Liste, Einzeleintrag und Ungelesen-Zähler berücksichtigen dieselbe Empfänger-ID und die aktive Mitgliedschaft in der WG der Kontrolle. `validFrom` gilt inklusive, `validTo` exklusiv. Die konkrete Zugriffspolitik beim Wiedereinzug steht aus. Die Abfragen allein würden bei einer erneuten aktiven Mitgliedschaft in derselben WG alte Zustellungen wieder sichtbar machen.
+- Die lesende Kontrollquelle liefert angekündigte geplante Kontrollen und Entwürfe mit noch nicht abgelaufenem Zeitraum. Für die aktuelle Revision gilt `announcedAt` oder ein neueres `rescheduledAt`. Der Scheduler verarbeitet ausschließlich die noch gespeicherte offizielle Revision. Zwischen zwei Läufen überschriebene Revisionen werden bewusst nicht rekonstruiert. Bereits gespeicherte Nachrichten behalten ihren Zeitraum. Der Umgang mit Absagen bleibt offen.
 
 ## Audit
 

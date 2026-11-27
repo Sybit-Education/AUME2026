@@ -34,7 +34,7 @@ export const studentTabs: StudentTab[] = [
   { to: '/', label: 'navigation.start', icon: 'home' },
   { to: '/student/cleaning-plan', label: 'navigation.cleaningPlan', icon: 'plan' },
   { to: '/student/inspection/appointment', label: 'navigation.inspection', icon: 'inspection', activeWithin: ['/student/inspection/*'] },
-  { to: '/student/more', label: 'navigation.more', icon: 'more', activeWithin: ['/student/more', '/student/settings', '/student/flat'] },
+  { to: '/student/more', label: 'navigation.more', icon: 'more', activeWithin: ['/student/more', '/student/settings', '/student/flat', '/student/messages'] },
 ]
 
 const staffRoles = ['CARETAKER', 'CLERK']

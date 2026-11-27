@@ -1,0 +1,106 @@
+.student-messages .student-message {
+  padding: 0;
+}
+
+.student-message .student-message-heading {
+  margin: 0;
+}
+
+.student-message-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.student-message-toggle:hover {
+  background: var(--primary-soft);
+}
+
+.student-message-toggle:focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: -2px;
+}
+
+.student-message-heading-text,
+.student-message-file {
+  overflow-wrap: anywhere;
+}
+
+.student-message-heading-text > span:last-child {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.student-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-bottom: 6px;
+}
+
+.student-message-chevron {
+  color: var(--primary-dark);
+}
+
+.student-message-toggle[aria-expanded="true"] .student-message-chevron {
+  transform: rotate(180deg);
+}
+
+.student-message-body {
+  padding: 0 16px 16px;
+  line-height: 1.5;
+}
+
+.student-message-body p {
+  margin: 0 0 8px;
+}
+
+.student-messages-pagination {
+  justify-content: space-between;
+}
+
+.st-wrap .st-top.st-top-with-notifications {
+  grid-template-columns: 92px minmax(0, 1fr) 92px;
+}
+
+.st-top .student-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.st-top .student-notification-bell {
+  position: relative;
+}
+
+.st-top .student-notification-bell:focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: -2px;
+}
+
+.st-top .student-notification-badge {
+  position: absolute;
+  inset-block-start: 1px;
+  inset-inline-end: 0;
+  display: grid;
+  place-items: center;
+  min-inline-size: 18px;
+  block-size: 18px;
+  padding-inline: 3px;
+  border-radius: 999px;
+  background: var(--bad);
+  color: var(--card);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}

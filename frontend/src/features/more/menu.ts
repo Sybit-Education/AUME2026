@@ -9,6 +9,7 @@ export interface MoreItem {
   label: MoreKey
   hint: MoreKey
   privilege?: string
+  role?: 'STUDENT'
 }
 
 export interface MoreGroup {
@@ -25,6 +26,7 @@ export const moreGroups: MoreGroup[] = [
   {
     title: 'more.living',
     items: [
+      { to: '/student/messages', icon: 'list', label: 'more.messages', hint: 'more.messagesHint', role: 'STUDENT' },
       { to: '/student/flat', icon: 'flat', label: 'more.wg', hint: 'more.wgHint', privilege: 'WG_MEMBERSHIP' },
     ],
   },

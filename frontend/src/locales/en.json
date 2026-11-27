@@ -74,6 +74,9 @@
     "wgFlatFull": "This shared flat is already full.",
     "plan": "The cleaning plan could not be loaded.",
     "planSave": "The change could not be saved. Please try again.",
+    "studentMessages": "The messages could not be loaded.",
+    "studentMessageRead": "The message could not be marked as read.",
+    "studentMessageDownload": "The checklist could not be downloaded.",
     "planTitle": "Please enter a task with at most 120 characters.",
     "planAssignee": "Please choose a person from your flat.",
     "planNotAssignee": "Only the assigned person can tick off this task.",
@@ -319,6 +322,8 @@
     "consequenceLink": "View inspection procedure and consequences"
   },
   "more": {
+    "messages": "Messages",
+    "messagesHint": "Announcements and reminders",
     "title": "More",
     "account": "Account and privacy",
     "settings": "Settings",
@@ -327,6 +332,28 @@
     "wg": "My flat",
     "wgHint": "Join, flatmates, leave",
     "back": "More"
+  },
+  "studentMessages": {
+    "unreadLabel_one": "Messages, {{count}} unread message",
+    "unreadLabel_other": "Messages, {{count}} unread messages",
+    "announcement": "Announcement",
+    "reminder": "Reminder",
+    "new": "New",
+    "announcementTitle": "Cleanliness inspection {{period}}",
+    "announcementText": "The cleanliness inspection for flat {{flat}} will take place during {{period}}.",
+    "reminderWeekTitle": "The inspection period starts in 7 days",
+    "reminderTomorrowTitle": "The inspection period starts tomorrow",
+    "reminderText": "Your inspection period: {{period}}.",
+    "prepareAnnouncement": "Please go through the checklist beforehand.",
+    "prepareReminder": "Go through the checklist together to prepare.",
+    "attachmentHint": "The checklist is attached.",
+    "download": "Download {{file}}",
+    "openChecklist": "Open checklist",
+    "retryRead": "Try marking as read again",
+    "empty": "No messages.",
+    "pagination": "Message pages",
+    "previous": "Previous page",
+    "next": "Next page"
   },
   "settings": {
     "title": "Settings",
