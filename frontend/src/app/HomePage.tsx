@@ -7,8 +7,8 @@ import StudentInspectionDashboardCard from '@/features/student-inspections/Dashb
 import MembershipChips from '@/features/wg/MembershipChips'
 import InspectionOverviewPage from '@/features/inspection-overview/InspectionOverviewPage'
 import { INSPECTION_OVERVIEW_PRIVILEGE } from '@/features/inspection-overview/routes'
-import OverviewPage from '@/features/overview/OverviewPage'
-import { CARETAKER_OVERVIEW_PRIVILEGE } from '@/features/overview/routes'
+import OverviewPage from '@/features/inspections/OverviewPage'
+import { CARETAKER_OVERVIEW_PRIVILEGE } from '@/features/inspections/currentInspections'
 import type { HomeData } from './studentHome'
 
 /**

@@ -1,13 +1,13 @@
 import { redirect, type RouteObject } from 'react-router'
 import { protectedLoader } from '@/lib/auth/loaders'
 import RequirePrivilege from '@/lib/auth/RequirePrivilege'
-import InspectionsPage, { type InspectionsLoaderData } from './InspectionsPage'
+import InspectionsPage from './InspectionsPage'
 import InspectionPage, { type InspectionLoaderData } from './InspectionPage'
 import HistoryPage, { type HistoryLoaderData } from './HistoryPage'
-import { getInspection, getPreviousFindings, listHistory, listInspections, startInspection } from './api'
+import { loadCurrentInspections } from './currentInspections'
+import { getInspection, getPreviousFindings, listHistory, startInspection } from './api'
 import { historyQuery, invalidRange, readHistoryFilter } from './history'
-import { inspectionRequestsAction, RESPOND_PRIVILEGE } from './requestsActions'
-import { listRequests } from './requestsApi'
+import { inspectionRequestsAction } from './requestsActions'
 import { UiError } from '@/lib/errors'
 
 const privilege = 'INSPECTION_PERFORM'
@@ -16,13 +16,7 @@ export const inspectionRoutes: RouteObject[] = [{
   path: 'inspections',
   element: <RequirePrivilege privilege={privilege}><InspectionsPage /></RequirePrivilege>,
   // Oben die Anfragen (#44, nur mit dem Recht zu antworten), darunter die anstehenden Kontrollen.
-  loader: protectedLoader(privilege, async ({ request }, user): Promise<InspectionsLoaderData> => {
-    const [inspections, requests] = await Promise.all([
-      listInspections(request.signal),
-      user.privileges.includes(RESPOND_PRIVILEGE) ? listRequests(request.signal) : Promise.resolve(null),
-    ])
-    return { inspections, requests }
-  }),
+  loader: protectedLoader(privilege, ({ request }, user) => loadCurrentInspections(user, request.signal)),
   action: inspectionRequestsAction,
 }, {
   path: 'inspections/history',
