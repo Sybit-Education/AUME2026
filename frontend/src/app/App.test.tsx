@@ -134,9 +134,18 @@ it('restores an existing session when opening a protected page directly', async 
   expect(login).not.toHaveBeenCalled()
 })
 
+it('hides the profile from clerks and blocks the page', async () => {
+  signedIn = clerk
+  const router = mount('/profile')
+  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
+  expect(router.state.location.pathname).toBe('/forbidden')
+  expect(screen.queryByRole('link', { name: 'Profil' })).toBeNull()
+})
+
 it('shows caretaker assignments, roles and shared flats on the profile', async () => {
-  signedIn = caretaker
+  signedIn = { ...caretaker, privileges: [...caretaker.privileges, 'INSPECTION_PERFORM'] }
   mount('/profile')
+  expect(await screen.findByRole('link', { name: 'Profil' })).toBeDefined()
   await screen.findByText('Petershausen')
   expectHtwgLegalLinks()
   const summary = screen.getByRole('group', { name: 'Profilübersicht' })
