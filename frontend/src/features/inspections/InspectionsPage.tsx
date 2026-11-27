@@ -21,6 +21,12 @@ export interface InspectionsLoaderData {
 
 type Column = 'residence' | 'flat' | 'kind' | 'period' | 'status'
 type StatusKey = 'READY' | 'ANNOUNCED' | 'DRAFT'
+type KindKey = 'initial' | 'individual' | 'followUp'
+
+function kindOf(row: InspectionSummary): KindKey {
+  if (row.round > 0) return 'followUp'
+  return row.periodKind === 'INDIVIDUAL' ? 'individual' : 'initial'
+}
 
 const statusOrder: StatusKey[] = ['DRAFT', 'READY', 'ANNOUNCED']
 
@@ -64,14 +70,14 @@ function UpcomingSection({ inspections }: { inspections: InspectionSummary[] }) 
     residence: t('inspections.residence'), flat: t('inspections.history.flat'), kind: t('inspections.history.kind'),
     period: t('inspections.period'), status: t('inspections.statusLabel'),
   }
-  const kindText = (value: string) => t(value === 'followUp' ? 'inspections.history.followUp' : 'inspections.history.initial')
+  const kindText = (value: string) => t(`inspections.history.${value as KindKey}`)
   const statusText: Record<StatusKey, string> = {
     READY: t('inspections.ready'), ANNOUNCED: t('inspections.announced'), DRAFT: t('inspections.status.DRAFT'),
   }
 
   const rows = inspections
     .filter((row) => contains(row.residenceName, filters.residence) && contains(row.flatLabel, filters.flat))
-    .filter((row) => !filters.kind?.value || (filters.kind.value === 'followUp') === (row.round > 0))
+    .filter((row) => !filters.kind?.value || kindOf(row) === filters.kind.value)
     .filter((row) => overlaps(row.startsOn, row.endsOn, filters.period))
     .filter((row) => !filters.status?.value || statusOf(row) === filters.status.value)
   if (table.sort) {
@@ -87,7 +93,7 @@ function UpcomingSection({ inspections }: { inspections: InspectionSummary[] }) 
     residence: { kind: 'text', label: label.residence, value: filters.residence?.text ?? '' },
     flat: { kind: 'text', label: label.flat, value: filters.flat?.text ?? '' },
     kind: { kind: 'options', label: label.kind, value: filters.kind?.value ?? '', options: [
-      ['', all], ['initial', kindText('initial')], ['followUp', kindText('followUp')],
+      ['', all], ['initial', kindText('initial')], ['individual', kindText('individual')], ['followUp', kindText('followUp')],
     ] },
     period: { kind: 'dates', label: label.period, from: filters.period?.from ?? '', to: filters.period?.to ?? '' },
     status: { kind: 'options', label: label.status, value: filters.status?.value ?? '', options: [
@@ -152,7 +158,7 @@ function UpcomingSection({ inspections }: { inspections: InspectionSummary[] }) 
                   <tr key={inspection.id}>
                     <td>{inspection.residenceName}</td>
                     <td><b>{inspection.flatLabel}</b></td>
-                    <td>{inspection.round > 0 ? t('inspections.round', { round: inspection.round }) : kindText('initial')}</td>
+                    <td>{inspection.round > 0 ? t('inspections.round', { round: inspection.round }) : kindText(kindOf(inspection))}</td>
                     <td className="ins-period">
                       {inspection.startsOn && inspection.endsOn
                         ? formatPeriod(inspection.startsOn, inspection.endsOn, language)

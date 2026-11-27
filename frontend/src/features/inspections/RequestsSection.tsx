@@ -163,7 +163,10 @@ function RequestRow({ request, answerUrl }: { request: InspectionRequest; answer
   return (
     <tr>
       <td>{request.residenceName}</td>
-      <td><b>{request.flatCount}</b></td>
+      <td>
+        <b>{request.flatCount}</b>
+        {request.flatLabels && <div className="xs mut">{request.flatLabels.join(', ')}</div>}
+      </td>
       <td>{t(`inspectionRequests.kind.${request.kind}`)}</td>
       <td className="ins-period">
         {formatPeriod(request.startsOn, request.endsOn, i18n.resolvedLanguage)}

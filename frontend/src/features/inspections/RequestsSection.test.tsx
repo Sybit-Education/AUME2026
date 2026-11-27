@@ -7,6 +7,7 @@ import AuthProvider from '@/lib/auth/AuthProvider'
 import { api, type LoggedInUser } from '@/lib/auth/client'
 import { ensureSession, invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
+import type { InspectionSummary } from './api'
 import type { InspectionRequest } from './requestsApi'
 import { inspectionRoutes } from './routes'
 
@@ -24,6 +25,7 @@ const caretaker: LoggedInUser = {
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['INSPECTION_PLAN'] }
 let signedIn: LoggedInUser
 let requests: InspectionRequest[]
+let upcoming: InspectionSummary[]
 let writeResponse: (() => Response) | null
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
@@ -56,6 +58,7 @@ beforeEach(async () => {
   signedIn = caretaker
   writeResponse = null
   requests = [request()]
+  upcoming = []
   await i18n.changeLanguage('de')
   vi.mocked(api).mockImplementation(async (path, init) => {
     if (path === '/api/me') return Response.json(signedIn)
@@ -66,7 +69,7 @@ beforeEach(async () => {
       return Response.json(requests[0])
     }
     if (String(path).startsWith('/api/inspections?')) {
-      return Response.json({ content: [], page: { number: 0, size: 100, totalElements: 0, totalPages: 0 } })
+      return Response.json({ content: upcoming, page: { number: 0, size: 100, totalElements: upcoming.length, totalPages: 1 } })
     }
     if (String(path).startsWith('/api/inspection-periods/assigned')) {
       return Response.json({ content: requests, page: { number: 0, size: 100, totalElements: requests.length, totalPages: 1 } })
@@ -106,6 +109,26 @@ it('lists all requests with their status, open ones first and with actions', asy
   // Anfragen und anstehende Kontrollen stehen auf derselben Seite untereinander.
   expect(screen.getByRole('heading', { name: 'Anfragen' })).toBeTruthy()
   expect(screen.getByRole('heading', { name: 'Anstehende Kontrollen' })).toBeTruthy()
+})
+
+it('names the flats and the kind of an individual inspection (US-18b)', async () => {
+  requests = [request({ kind: 'INDIVIDUAL', flatCount: 2, flatLabels: ['E-12', 'E-14'] })]
+  const flat = (id: number, label: string, periodKind: InspectionSummary['periodKind']): InspectionSummary => ({
+    id, flatLabel: label, residenceName: 'Egg', status: 'PLANNED', round: 0, startsOn: null, endsOn: null,
+    windowStart: null, windowEnd: null, periodKind,
+  })
+  upcoming = [flat(1, 'E-12', 'INDIVIDUAL'), flat(2, 'E-14', 'REGULAR')]
+  mount()
+  const list = await openList()
+  expect(list.getByText('E-12, E-14')).toBeDefined()
+  expect(list.getByText('Individuelle Kontrolle')).toBeDefined()
+
+  const table = within(await screen.findByRole('table', { name: 'Anstehende Kontrollen' }))
+  expect(within(table.getByText('E-12').closest('tr')!).getByText('Individuelle Kontrolle')).toBeDefined()
+  expect(within(table.getByText('E-14').closest('tr')!).getByText('Erstkontrolle')).toBeDefined()
+
+  fireEvent.click(list.getByRole('link', { name: 'Vorschlag für Sonne beantworten' }))
+  expect(within(await screen.findByRole('dialog')).getByText('2 WGs (E-12, E-14)')).toBeDefined()
 })
 
 it('says so when there are no requests', async () => {

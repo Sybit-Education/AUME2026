@@ -532,6 +532,7 @@
       "kind": "Inspection",
       "all": "All",
       "initial": "Initial inspection",
+      "individual": "Individual inspection",
       "followUp": "Follow-up",
       "from": "From",
       "to": "To",

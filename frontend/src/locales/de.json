@@ -532,6 +532,7 @@
       "kind": "Kontrolle",
       "all": "Alle",
       "initial": "Erstkontrolle",
+      "individual": "Individuelle Kontrolle",
       "followUp": "Nachkontrolle",
       "from": "Von",
       "to": "Bis",

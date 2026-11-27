@@ -149,6 +149,10 @@ class IndividualInspectionTests {
                 select m.inspection.flat.label from InspectionNotificationEntity m
                 where m.inspection.period.id = :id
                 """, String.class).setParameter("id", id).getResultList()).containsExactly("S-02");
+
+        // Objektbetreuung: In den anstehenden Kontrollen ist sie als individuelle Kontrolle erkennbar.
+        mvc.perform(get("/api/inspections?size=100").session(login("caretaker")))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-02' && @.round == 0)].periodKind").value(contains("INDIVIDUAL")));
     }
 
     @Test
