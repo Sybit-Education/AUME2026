@@ -17,6 +17,7 @@ on:
 permissions:
   contents: read
   packages: write
+  # actions: read  # für den auskommentierten Watchtower-Job confirm
 
 jobs:
   publish:
@@ -79,3 +80,32 @@ jobs:
               docker push "${image}:${tag}"
             done
           done
+
+  # Wartet auf das Watchtower-Webhook. Aus, bis das Dispatch-Token freigegeben ist.
+  # confirm:
+  #   needs: publish
+  #   if: github.event_name == 'push' && github.ref_name == 'develop'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Wait for the Watchtower webhook
+  #       env:
+  #         GH_TOKEN: ${{ github.token }}
+  #       run: |
+  #         set -eu
+  #         start=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
+  #         for _ in $(seq 1 40); do
+  #           found=$(gh run list \
+  #             --repo "$GITHUB_REPOSITORY" \
+  #             --workflow watchtower.yml \
+  #             --event repository_dispatch \
+  #             --limit 20 \
+  #             --json conclusion,createdAt \
+  #             --jq "[.[] | select(.createdAt >= \"$start\" and .conclusion == \"success\")] | length")
+  #           if [ "$found" != "0" ]; then
+  #             echo "Watchtower confirmed the develop update."
+  #             exit 0
+  #           fi
+  #           sleep 20
+  #         done
+  #         echo "Watchtower did not confirm the develop update."
+  #         exit 1
