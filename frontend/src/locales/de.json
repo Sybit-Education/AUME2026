@@ -8,6 +8,10 @@
   },
   "auth": {
     "mockLogin": "Testnutzer anmelden",
+    "accountHint": "Anmeldung mit dem Seezeit-Konto.",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "accountLogin": "Mit Seezeit-Konto anmelden",
     "login": "Anmelden",
     "logout": "Abmelden",
     "retry": "Erneut versuchen"

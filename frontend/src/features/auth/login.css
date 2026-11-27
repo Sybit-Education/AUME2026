@@ -1,0 +1,14 @@
+.login-card {
+  max-width: 28rem;
+  margin: 24px auto;
+}
+
+.login-split {
+  border: 0;
+  border-top: 1px solid var(--ln);
+  margin: 16px 0;
+}
+
+.login-account .btn {
+  margin-top: 4px;
+}

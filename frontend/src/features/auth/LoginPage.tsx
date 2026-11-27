@@ -5,6 +5,7 @@ import LegalFooter from '@/components/LegalFooter'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { safeReturnTo } from '@/lib/auth/returnTo'
 import { errorKey, type ErrorKey } from '@/lib/errors'
+import './login.css'
 
 // caretaker2 betreut Petershausen und vertritt Sonne; zum Testen der Zuständigkeit (US-03).
 const mockUsers = ['student', 'caretaker', 'caretaker2', 'clerk'] as const
@@ -24,18 +25,31 @@ export default function LoginPage() {
 
   return (
     <div className="page-stack">
-      <section className="card" aria-labelledby="login-heading">
+      <section className="card login-card" aria-labelledby="login-heading">
         <h2 id="login-heading">{t('auth.login')}</h2>
-        {auth.mode === 'dev' ? (
+        {auth.mode === 'dev' && (
           <>
             <p className="mut">{t('auth.mockLogin')}</p>
             <div className="acts">
               {mockUsers.map((key) => (
-                <button className="btn" key={key} disabled={auth.busy} onClick={() => void signIn(key)}>{t(`roles.${key}`)}</button>
+                <button className="btn" type="button" key={key} disabled={auth.busy} onClick={() => void signIn(key)}>{t(`roles.${key}`)}</button>
               ))}
             </div>
+            <hr className="login-split" />
           </>
-        ) : <button className="btn" disabled={auth.busy} onClick={() => void signIn()}>{t('auth.login')}</button>}
+        )}
+        <form className="login-account" onSubmit={(event) => event.preventDefault()}>
+          <p className="mut">{t('auth.accountHint')}</p>
+          <div className="fld">
+            <label htmlFor="login-email">{t('auth.email')}</label>
+            <input id="login-email" name="email" type="email" autoComplete="email" />
+          </div>
+          <div className="fld">
+            <label htmlFor="login-password">{t('auth.password')}</label>
+            <input id="login-password" name="password" type="password" autoComplete="current-password" />
+          </div>
+          <button className="btn lg blk" type="submit" disabled={auth.busy}>{t('auth.accountLogin')}</button>
+        </form>
         {error && <p className="err" role="alert">{t(error)}</p>}
       </section>
       <LegalFooter />

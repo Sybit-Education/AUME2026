@@ -8,6 +8,10 @@
   },
   "auth": {
     "mockLogin": "Sign in as a test user",
+    "accountHint": "Sign in with the Seezeit account.",
+    "email": "Email",
+    "password": "Password",
+    "accountLogin": "Sign in with Seezeit account",
     "login": "Sign in",
     "logout": "Sign out",
     "retry": "Try again"
