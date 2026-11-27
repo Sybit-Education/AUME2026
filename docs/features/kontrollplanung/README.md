@@ -84,7 +84,7 @@ Fachliche Fehler kommen als `400` oder `409` mit `{"code": …}`: `dates_require
 
 ## Entwicklungsdaten
 
-Im Profil `dev` legt `InspectionPlanningSampleData` für die Anlage Egg einen offenen Gegenvorschlag an. Wohnanlage Sonne bleibt frei, damit dort ein neuer Vorschlag geplant werden kann. Von den Objektbetreuenden hat nur `caretaker` (Sonne) einen Mock-Login.
+Im Profil `dev` legt `InspectionPlanningSampleData` für die Anlage Egg einen offenen Gegenvorschlag an. Wohnanlage Sonne bleibt frei, damit dort ein neuer Vorschlag geplant werden kann. Von den Objektbetreuenden hat nur `caretaker` (Sonne) ein Keycloak-Konto, Anmeldename `objektbetreuer`.
 
 ## Offen
 

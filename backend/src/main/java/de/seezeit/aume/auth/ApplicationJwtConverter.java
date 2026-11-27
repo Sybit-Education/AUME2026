@@ -1,6 +1,5 @@
 package de.seezeit.aume.auth;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-@Profile("!dev")
 public class ApplicationJwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
     private final AppUserService users;
 

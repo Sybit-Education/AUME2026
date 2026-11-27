@@ -1,6 +1,8 @@
 package de.seezeit.aume;
 
+import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
@@ -24,19 +26,27 @@ import de.seezeit.aume.user.UserRepository;
 @Profile("dev")
 @Order(1)
 public class SampleData implements CommandLineRunner {
+    private static final Map<String, String> KEYCLOAK_SUBJECTS = Map.of(
+        "student", "00000000-0000-4000-8000-000000000001",
+        "clerk", "00000000-0000-4000-8000-000000000002",
+        "caretaker", "00000000-0000-4000-8000-000000000003");
+
     private final ResidenceRepository residences;
     private final FlatRepository flats;
     private final StaffAssignmentRepository staff;
     private final UserRepository users;
     private final RoleRepository roles;
+    private final String issuer;
 
     public SampleData(ResidenceRepository residences, FlatRepository flats, StaffAssignmentRepository staff,
-                      UserRepository users, RoleRepository roles) {
+                      UserRepository users, RoleRepository roles,
+                      @Value("${KEYCLOAK_ISSUER_URI}") String issuer) {
         this.residences = residences;
         this.flats = flats;
         this.staff = staff;
         this.users = users;
         this.roles = roles;
+        this.issuer = issuer;
     }
 
     @Override
@@ -92,7 +102,10 @@ public class SampleData implements CommandLineRunner {
     }
 
     private UserEntity user(String key, String name, String role, ResidenceEntity residence) {
-        return users.findByUserKey(key).orElseGet(() -> users.save(create(key, name, role, residence)));
+        var user = users.findByUserKey(key).orElseGet(() -> users.save(create(key, name, role, residence)));
+        var subject = KEYCLOAK_SUBJECTS.get(key);
+        if (subject != null && user.getIdentitySubject() == null) user.linkIdentity(issuer, subject);
+        return user;
     }
 
     private UserEntity create(String key, String name, String role, ResidenceEntity residence) {

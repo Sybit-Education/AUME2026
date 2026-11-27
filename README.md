@@ -17,7 +17,7 @@ Fachliches, Architektur und Absprachen im Team stehen in der [Dokumentation](doc
 
 Das Frontend verwendet React, TypeScript und Vite, das Backend Spring Boot. Die konkreten Abhängigkeiten stehen in `frontend/package.json`, `frontend/package-lock.json` und `backend/pom.xml`. Mit `npm ci` werden die im Lockfile festgelegten Versionen installiert.
 
-Für den lokalen Start mit dem Spring-Profil `dev` werden weder Keycloak noch eine externe Datenbank benötigt. Beim ersten Einrichten ist Internetzugang für Maven- und npm-Abhängigkeiten erforderlich. Die Ports 8080 und 5173 müssen frei sein.
+Für den lokalen Start mit dem Spring-Profil `dev` wird Keycloak unter Port 8081 benötigt. Eine externe Anwendungsdatenbank ist nicht erforderlich. Beim ersten Einrichten ist Internetzugang für Maven- und npm-Abhängigkeiten erforderlich. Die Ports 8080, 8081 und 5173 müssen frei sein.
 
 ## Entwicklungsumgebung einrichten
 
@@ -122,7 +122,7 @@ cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-Das Backend läuft unter http://localhost:8080. Spring Boot DevTools startet die Anwendung neu, sobald die IDE die Klassen neu baut. Maven selbst beobachtet die Quellen nicht. Bei einem Start direkt aus der IDE die Hauptklasse `de.seezeit.aume.Application`, JDK 21 und das Spring-Profil `dev` verwenden, zum Beispiel mit dem Programmargument `--spring.profiles.active=dev`. Ohne dieses Profil werden die Keycloak-Einstellungen benötigt.
+Das Backend läuft unter http://localhost:8080. Spring Boot DevTools startet die Anwendung neu, sobald die IDE die Klassen neu baut. Maven selbst beobachtet die Quellen nicht. Bei einem Start direkt aus der IDE die Hauptklasse `de.seezeit.aume.Application`, JDK 21 und das Spring-Profil `dev` verwenden, zum Beispiel mit dem Programmargument `--spring.profiles.active=dev`. Keycloak muss unter http://localhost:8081 laufen, sonst kann das Backend die Realm-Daten beim Start nicht laden. Das Profil `dev` lädt die Fachdaten. Ohne dieses Profil gibt es keine verknüpften Nutzer.
 
 Für Vorführungen gibt es zusätzlich das Profil `demo` (`"-Dspring-boot.run.profiles=dev,demo"`). Es legt für die Objektbetreuung `caretaker` in „Wohnanlage Sonne“ drei weitere WGs an: S-03 mit einer offenen Anfrage, S-04 angekündigt ab nächster Woche, S-05 angekündigt und bereits laufend. Die Tests nutzen nur `dev` und bleiben davon unberührt.
 
@@ -146,7 +146,7 @@ npm run dev
 
 Anschließend http://localhost:5173 öffnen. `npm ci` ist nach einem frischen Checkout oder Änderungen am Lockfile erforderlich; für spätere Starts genügt `npm run dev` beziehungsweise `npm.cmd run dev`. Beide Prozesse laufen im Vordergrund und werden jeweils mit Strg+C beendet.
 
-### Mock-Anmeldung und Testdaten
+### Anmeldung und Testdaten
 
 Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei Wohnanlagen mit WGs und Zuständigkeiten sowie vier Mock-Nutzer an:
 
@@ -160,7 +160,9 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei 
 `clerk` ist Sonne und Egg zugeordnet, nicht Petershausen. `caretaker` betreut Sonne; `caretaker2` betreut Petershausen und vertritt Sonne. Damit lässt sich prüfen, dass die Objektbetreuung nur Kontrollen ihrer betreuten und vertretenen Anlagen sieht (US-03). Weitere Nutzer in `SampleData` (`caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
 
 
-Das Frontend unter http://localhost:5173 bietet vier Schaltflächen zur Anmeldung an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak wird in diesem Profil nicht benötigt. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
+Das Frontend unter http://localhost:5173 meldet im Profil `dev` die vier Mock-Nutzer ohne Keycloak an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
+
+Außerhalb von `dev` erfolgt die Anmeldung mit Anmeldename und Passwort über Keycloak. `student` öffnet die Studierenden-Ansicht. `sachbearbeiter` ist der Anwendungsnutzer `clerk` und sieht die Sachbearbeitung. `objektbetreuer` ist der Anwendungsnutzer `caretaker` und sieht die Objektbetreuung.
 
 Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `file` (höchstens 10 MB, derselbe CSRF-Schutz wie andere schreibende Aufrufe). Die Datei liegt unter `devdata/uploads` im Repository-Root, wenn das Backend aus `backend/` startet. Im Repository liegt nur `devdata/.gitkeep`. `GET /api/attachments/{id}` liefert die Datei nur an die Person zurück, die sie hochgeladen hat. Der gespeicherte Name ist ein zufälliger Schlüssel, nicht der ursprüngliche Dateiname.
 
@@ -174,22 +176,22 @@ Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `fi
 | PowerShell übergibt das Spring-Profil nicht korrekt | Das Maven-Argument vollständig in Anführungszeichen setzen: `"-Dspring-boot.run.profiles=dev"`. |
 | `Permission denied` bei `./mvnw` | Unter macOS/Linux im Verzeichnis `backend` einmal `chmod +x mvnw` ausführen. |
 | `bad interpreter` oder `sh\r` bei `mvnw` | Die Datei `backend/mvnw` mit LF-Zeilenenden auschecken bzw. im Editor als LF speichern. Unter Windows `mvnw.cmd` verwenden. |
-| Fehlende `KEYCLOAK_*`-Variablen beim lokalen Start | Backend mit dem Profil `dev` starten; in der IDE das Profil ebenfalls eintragen. |
+| Backend startet nicht, weil Keycloak fehlt | Keycloak unter http://localhost:8081 starten. Die Standardwerte für `KEYCLOAK_*` stehen in `backend/src/main/resources/application.yml` und in `infrastructure/compose.yaml`. |
 | Port bereits belegt | Vorherigen Backend-/Vite-Prozess beenden. Vite kann auf einen anderen Port ausweichen; dann die URL aus dem Terminal verwenden. |
-| Frontend erreicht das Backend nicht oder die Mock-Anmeldung fehlt | Backend auf Port 8080 starten. Im Browser http://localhost:8080/api/auth/config und http://localhost:5173/api/auth/config öffnen; beide müssen `{"mode":"dev"}` liefern. |
+| Frontend erreicht das Backend nicht oder die Anmeldung fehlt | Backend auf Port 8080 und Keycloak auf Port 8081 starten. Im Browser http://localhost:8080/api/auth/config und http://localhost:5173/api/auth/config öffnen; beide müssen `"mode":"keycloak"` liefern. |
 | Maven- oder npm-Downloads schlagen fehl | Internetzugang und gegebenenfalls die Proxy-Konfiguration der eigenen Entwicklungsumgebung prüfen. |
 
 ## Start mit Docker
 
 Docker Engine mit Compose v2 unter Linux beziehungsweise Docker Desktop unter Windows/macOS installieren und starten. Dieser Weg baut Java und Node im Container; lokale JDK-/Node-Installationen sind dafür nicht erforderlich.
 
-Die folgenden Befehle funktionieren in PowerShell, Bash und zsh. Aus dem Repository-Root für die Entwicklung mit drei Mock-Nutzern bauen und starten:
+Die folgenden Befehle funktionieren in PowerShell, Bash und zsh. Aus dem Repository-Root bauen und starten:
 
 ```bash
 docker compose -f infrastructure/compose.yaml -f infrastructure/compose.dev.yaml up --build
 ```
 
-`--build` baut die Images neu, bevor die Container starten. Das Frontend ist danach unter http://localhost erreichbar, das Backend unter http://localhost:8080. Die Keycloak-Admin-Oberfläche ist unter http://localhost:8081 erreichbar, Benutzer `admin`. Das Admin-Passwort trägst du lokal in `infrastructure/compose.yaml` ein. Beim Start legt Keycloak den Realm `seezeit` mit den Konten `student`, `sachbearbeiter` und `objektbetreuer` an. Die Anmeldung in der App bleibt der Mock-Login.
+`--build` baut die Images neu, bevor die Container starten. Das Frontend ist danach unter http://localhost erreichbar, das Backend unter http://localhost:8080. Die Keycloak-Admin-Oberfläche ist unter http://localhost:8081 erreichbar, Benutzer `admin`. Das Admin-Passwort steht lokal in `infrastructure/compose.yaml` und wird nicht in der README genannt. Beim Start legt Keycloak den Realm `seezeit` mit den Konten `student`, `sachbearbeiter` und `objektbetreuer` an. Die Anmeldung im Frontend verwendet diese Konten. `student` sieht die Studierenden-Ansicht, `sachbearbeiter` die Sachbearbeitung und `objektbetreuer` die Objektbetreuung. Das Profil `dev` lädt weiterhin die Fachdaten. Änderungen an der Realm-Datei gelten erst nach `down` und einem neuen `up`.
 
 Stoppen mit Strg+C. Container aufräumen:
 
@@ -197,4 +199,4 @@ Stoppen mit Strg+C. Container aufräumen:
 docker compose -f infrastructure/compose.yaml -f infrastructure/compose.dev.yaml down
 ```
 
-Der Entwicklungs-Override aktiviert `dev` ausdrücklich. Nginx leitet `/api` an den Backend-Container weiter. Der Start ohne `dev`-Profil, also mit Keycloak, steht in der [Contributing-Anleitung](CONTRIBUTING.md#keycloak-außerhalb-von-dev).
+Der Entwicklungs-Override aktiviert `dev` ausdrücklich und lädt damit die Fachdaten. Die Anmeldung ist auch in diesem Profil Keycloak. Nginx leitet `/api` an den Backend-Container weiter. Das Backend wartet, bis Keycloak gesund ist.

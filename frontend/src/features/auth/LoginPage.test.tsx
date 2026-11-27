@@ -33,7 +33,7 @@ beforeEach(async () => {
   invalidateSession()
   signedIn = null
   await i18n.changeLanguage('de')
-  vi.mocked(login).mockImplementation(async (key) => { signedIn = key === 'student' ? student : null })
+  vi.mocked(login).mockImplementation(async (username) => { signedIn = username === 'student' ? student : null })
   vi.mocked(logout).mockResolvedValue()
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
@@ -48,22 +48,12 @@ afterEach(() => {
   routers = []
 })
 
-it('signs in with a mock user', async () => {
+it('signs in with the account name and password', async () => {
   mount()
-  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
-  await waitFor(() => expect(login).toHaveBeenCalledWith('student', '/'))
-})
-
-it('keeps the email and password on the page in the dev profile', async () => {
-  mount()
-  const email = await screen.findByLabelText('E-Mail')
-  const password = screen.getByLabelText('Passwort')
-  fireEvent.change(email, { target: { value: 'alex@example.edu' } })
-  fireEvent.change(password, { target: { value: 'secret' } })
+  fireEvent.change(await screen.findByLabelText('Anmeldename'), { target: { value: 'student' } })
+  fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: 'secret' } })
   fireEvent.click(screen.getByRole('button', { name: 'Mit Seezeit-Konto anmelden' }))
-  expect(email).toHaveProperty('value', 'alex@example.edu')
-  expect(password).toHaveProperty('value', 'secret')
-  expect(login).not.toHaveBeenCalled()
+  await waitFor(() => expect(login).toHaveBeenCalledWith('student', 'secret'))
 })
 
 it('shows the account button in the selected language', async () => {
@@ -71,5 +61,5 @@ it('shows the account button in the selected language', async () => {
   await screen.findByRole('button', { name: 'Mit Seezeit-Konto anmelden' })
   await i18n.changeLanguage('en')
   expect(screen.getByRole('button', { name: 'Sign in with Seezeit account' })).toBeDefined()
-  expect(screen.getByLabelText('Email')).toBeDefined()
+  expect(screen.getByLabelText('Username')).toBeDefined()
 })

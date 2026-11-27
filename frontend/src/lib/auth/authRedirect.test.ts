@@ -1,48 +1,47 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
-const keycloak = vi.hoisted(() => ({
-  login: vi.fn<(options: { redirectUri: string; locale?: string }) => Promise<void>>(),
-  updateToken: vi.fn(async () => {}),
-}))
-vi.mock('keycloak-js', () => ({
-  default: class {
-    authenticated = true
-    token = 'test-token'
-    init = async () => true
-    login = keycloak.login
-    updateToken = keycloak.updateToken
-  },
-}))
+function configResponse() {
+  return Response.json({
+    mode: 'keycloak', url: 'https://identity.example.org', realm: 'seezeit', clientId: 'seezeit-frontend',
+  })
+}
 
 beforeEach(() => {
   vi.resetModules()
-  vi.resetAllMocks()
-  vi.stubGlobal('window', { location: { origin: 'https://app.example.org' } })
-  vi.stubGlobal('fetch', vi.fn(async () => Response.json({
-    mode: 'keycloak', url: 'https://identity.example.org', realm: 'seezeit', clientId: 'seezeit-frontend',
-  })))
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    if (String(input).endsWith('/api/auth/config')) return configResponse()
+    return Response.json({ access_token: 'access', refresh_token: 'refresh', expires_in: 300 })
+  }))
 })
 afterEach(() => { vi.unstubAllGlobals() })
 
-it('carries the full internal destination through a fragment-free OIDC callback', async () => {
+it('sends the account name and password to the Keycloak token endpoint', async () => {
   const { login } = await import('./client')
-  await login(undefined, '/residences?page=1#assigned')
-  const callback = new URL(keycloak.login.mock.calls[0][0].redirectUri)
-  expect(callback.origin).toBe('https://app.example.org')
-  expect(callback.pathname).toBe('/login')
-  expect(callback.hash).toBe('')
-  expect(callback.searchParams.get('returnTo')).toBe('/residences?page=1#assigned')
-})
-
-it('does not put an external destination in the OIDC callback', async () => {
-  const { login } = await import('./client')
-  await login(undefined, '//untrusted.example')
-  expect(new URL(keycloak.login.mock.calls[0][0].redirectUri).searchParams.get('returnTo')).toBe('/')
+  await login('sachbearbeiter', 'secret')
+  const call = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith('/protocol/openid-connect/token'))
+  const body = String(call?.[1]?.body)
+  expect(String(call?.[0])).toBe('https://identity.example.org/realms/seezeit/protocol/openid-connect/token')
+  expect(body).toContain('grant_type=password')
+  expect(body).toContain('username=sachbearbeiter')
+  expect(body).toContain('client_id=seezeit-frontend')
 })
 
 it('reports failed token renewal as an expired session without calling the data API', async () => {
-  keycloak.updateToken.mockRejectedValue(new Error('Token expired'))
-  const { api } = await import('./client')
+  vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+    const target = String(input)
+    if (target.endsWith('/api/auth/config')) return configResponse()
+    if (target.endsWith('/protocol/openid-connect/token')) {
+      return Response.json({ access_token: 'access', refresh_token: 'refresh', expires_in: 0 })
+    }
+    return new Response(null, { status: 500 })
+  })
+  const { login, api } = await import('./client')
+  await login('student', 'secret')
+  vi.mocked(fetch).mockClear()
+  vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+    if (String(input).endsWith('/protocol/openid-connect/token')) return new Response(null, { status: 400 })
+    return new Response('residences')
+  })
   await expect(api('/api/residences')).rejects.toMatchObject({ key: 'errors.sessionExpired' })
-  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(vi.mocked(fetch).mock.calls.every(([url]) => String(url).endsWith('/protocol/openid-connect/token'))).toBe(true)
 })

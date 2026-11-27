@@ -30,6 +30,12 @@ const checklistEn = { version: 1, areas: [
 let signedIn: LoggedInUser | null
 let routers: ReturnType<typeof createMemoryRouter>[] = []
 
+async function signIn(username: string) {
+  fireEvent.change(await screen.findByLabelText('Anmeldename'), { target: { value: username } })
+  fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: 'secret' } })
+  fireEvent.click(screen.getByRole('button', { name: 'Mit Seezeit-Konto anmelden' }))
+}
+
 function mount(path = '/') {
   const router = createMemoryRouter(createAppRoutes(), { initialEntries: [path] })
   routers.push(router)
@@ -42,7 +48,9 @@ beforeEach(async () => {
   invalidateSession()
   signedIn = null
   await i18n.changeLanguage('de')
-  vi.mocked(login).mockImplementation(async (key) => { signedIn = key === 'student' ? student : clerk })
+  vi.mocked(login).mockImplementation(async (username) => {
+    signedIn = username === 'student' ? student : username === 'sachbearbeiter' ? clerk : null
+  })
   vi.mocked(logout).mockImplementation(async () => { signedIn = null })
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
@@ -119,12 +127,12 @@ it('shows HTWG legal links at the bottom of login and of every dashboard', async
 
 it('restores the requested path, query and fragment after mock login', async () => {
   const router = mount('/residences?page=1#assigned')
-  fireEvent.click(await screen.findByRole('button', { name: 'Sachbearbeitung' }))
+  await signIn('sachbearbeiter')
   await screen.findByText('Mond')
   expect(router.state.location.pathname).toBe('/residences')
   expect(router.state.location.search).toBe('?page=1')
   expect(router.state.location.hash).toBe('#assigned')
-  expect(login).toHaveBeenCalledWith('clerk', '/residences?page=1#assigned')
+  expect(login).toHaveBeenCalledWith('sachbearbeiter', 'secret')
 })
 
 it('restores an existing session when opening a protected page directly', async () => {
@@ -185,9 +193,9 @@ it('shows caretaker assignments, roles and shared flats on the profile', async (
 
 it('does not call protected APIs before login or with a missing privilege', async () => {
   const router = mount('/residences')
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByLabelText('Anmeldename')
   expect(vi.mocked(api).mock.calls.every(([path]) => path === '/api/me')).toBe(true)
-  fireEvent.click(screen.getByRole('button', { name: 'Studierende' }))
+  await signIn('student')
   await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
   expect(router.state.location.pathname).toBe('/forbidden')
   expect(vi.mocked(api).mock.calls.some(([path]) => path.startsWith('/api/residences'))).toBe(false)
@@ -217,8 +225,8 @@ it('switches UI language and reloads the greeting without signing in again', asy
 
 it('lets students switch the language under More, Settings, Language and keeps it after reloading', async () => {
   const router = mount()
-  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
-  await screen.findByRole('heading', { name: 'Hallo, Alex' })
+  await signIn('student')
+  await screen.findByText('Hallo Alex, willkommen in Sonne.')
   expect(screen.queryByRole('combobox', { name: 'Sprache' })).toBeNull()
   fireEvent.click(screen.getByRole('link', { name: 'Mehr' }))
   fireEvent.click(await screen.findByRole('link', { name: /Einstellungen/ }))
@@ -445,7 +453,7 @@ it('logs out on a protected page and requires login before showing its data agai
   const router = mount('/residences')
   await screen.findByText('Sonne')
   fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByLabelText('Anmeldename')
   expect(screen.queryByText('Sonne')).toBeNull()
   expect(router.state.location.pathname).toBe('/login')
   expect(logout).toHaveBeenCalledTimes(1)
@@ -456,7 +464,7 @@ it('returns an expired session to login while retaining the requested destinatio
   vi.mocked(api).mockImplementation(async (path) => path === '/api/me'
     ? Response.json(clerk) : new Response(null, { status: 401 }))
   const router = mount('/residences?page=1')
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByLabelText('Anmeldename')
   expect(router.state.location.pathname).toBe('/login')
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/residences?page=1')
 })
@@ -467,7 +475,7 @@ it('keeps the pending destination when a session expires during navigation', asy
   await screen.findByRole('heading', { name: 'Übersicht' })
   vi.mocked(api).mockImplementation(async () => new Response(null, { status: 401 }))
   await act(async () => { await router.navigate('/residences?page=1#assigned') })
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByLabelText('Anmeldename')
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/residences?page=1#assigned')
 })
 

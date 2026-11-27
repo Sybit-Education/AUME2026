@@ -6,7 +6,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 
 | URL | Anmeldung / Berechtigung | Inhalt |
 | --- | --- | --- |
-| `/login` | Öffentlich | Drei Mock-Nutzer in `dev`, sonst Keycloak-Anmeldung |
+| `/login` | Öffentlich | Anmeldung mit Anmeldename und Passwort über Keycloak. Im Profil `dev` zusätzlich der Mock-Login. |
 | `/` | Angemeldet | Mit `CLERK_INSPECTION_OVERVIEW_READ` erscheint die Kontrollübersicht je Wohnanlage mit den Filtern `?state=` und `?kind=`. Mit `INSPECTION_OVERVIEW_READ` erscheint die Übersicht der Objektbetreuung (Kennzahlen, anstehende Kontrollen). Sonst erscheint das Dashboard mit Gruß bei `GREETING_READ`, Wohnanlagen-Link bei `RESIDENCE_READ` und unabhängig ladender Kontrollterminkarte für `STUDENT`. |
 | `/inspection-overview/<id>` | Angemeldet, `CLERK_INSPECTION_OVERVIEW_READ` | Kontrollrunden und offene Einzel-WG-Kontrollen einer Wohnanlage |
 | `/residences?page=0` | Angemeldet, `RESIDENCE_READ` | Zugewiesene Wohnanlagen mit Pagination |
@@ -70,7 +70,7 @@ src/
     residences/                 Fachseite, Routen, Navigationspunkt und API-Funktion
   lib/
     auth/
-      client.ts                 API-/CSRF-/Keycloak-Helfer api(), login(), logout()
+      client.ts                 API- und Keycloak-Helfer api(), login(), logout()
       AuthProvider.tsx          Gemeinsamen Sitzungszustand für React bereitstellen
       AuthContext.ts            useAuth() für Komponenten
       session.ts                Sitzungszustand und Laden von /api/me
@@ -114,7 +114,7 @@ export async function listInspections(signal: AbortSignal): Promise<InspectionPa
 }
 ```
 
-`api()` übernimmt Sitzung, CSRF, Bearer-Token und `Accept-Language`. `requireOk()` prüft die Antwort: `401` verwirft den lokalen Nutzerzustand, `403` führt zu `/forbidden`, weitere Fehler werden als übersetzbarer `UiError` weitergegeben. Der TypeScript-Typ ersetzt keine Laufzeitvalidierung der Serverantwort.
+`api()` übernimmt das Bearer-Token und `Accept-Language`. `requireOk()` prüft die Antwort: `401` verwirft den lokalen Nutzerzustand, `403` führt zu `/forbidden`, weitere Fehler werden als übersetzbarer `UiError` weitergegeben. Der TypeScript-Typ ersetzt keine Laufzeitvalidierung der Serverantwort.
 
 ```tsx
 // features/inspections/routes.tsx
@@ -171,7 +171,7 @@ Diesen Eintrag in `app/navigation.ts` importieren und in das Array aufnehmen. `n
 
 Wer eine geschützte URL ohne Sitzung öffnet, wird nach `/login?returnTo=...` weitergeleitet. Nach der Anmeldung wird der ursprüngliche interne Pfad einschließlich Query und Fragment wiederhergestellt. `safeReturnTo()` begrenzt das Ziel auf interne Anwendungsadressen und verhindert Rücksprünge auf die Login-Seite sowie externe Weiterleitungen.
 
-Bei Keycloak führt der Callback auf `/login?returnTo=...`; der eigentliche Zielpfad bleibt als codierter Query-Wert erhalten. Der Callback selbst enthält kein Fragment. `main.tsx` initialisiert Keycloak, bevor der Browser-Router die URL erfasst. Diese Reihenfolge beibehalten, damit OAuth-Callback-Parameter verarbeitet werden können. Die Keycloak-Client-Konfiguration muss den Callback mit seinen Query-Parametern zulassen, zum Beispiel mit einer auf den konkreten Frontend-Origin begrenzten Redirect-URI `https://app.example.org/login*`. Die Post-Logout-Redirect-URI für den Frontend-Origin ebenfalls konfigurieren.
+Das Formular auf `/login` sendet Anmeldename und Passwort an den Token-Endpunkt von Keycloak. `returnTo` bleibt ein interner Query-Wert und wird nach der Anmeldung wiederhergestellt. Der Client muss Direct Access Grants erlauben. Die Web-Origins des Frontends müssen freigegeben sein.
 
 Abmelden verwirft nach erfolgreichem Server-Logout den lokalen Nutzerzustand. Geschützte Seiten gehen zurück zur Anmeldung. Ein API-`401` oder fehlgeschlagene Token-Erneuerung beendet den lokalen Anmeldestatus ebenfalls. Backend-Autorisierung und Zuständigkeitsprüfung bleiben für jeden Endpunkt verbindlich; Seiten- und Navigationsguards ergänzen sie.
 
@@ -197,6 +197,6 @@ Direkte Seitenaufrufe und Browser-Refresh funktionieren im Vite-Dev-Server und i
 - Backend-`401` und `403` sowie fachliche Ladefehler.
 - Query-Parameter, Zurücknavigation und Sprachwechsel, soweit relevant.
 
-Zusätzlich direkte Links und Neuladen im Browser sowie beim verwendeten Hosting prüfen. Live-Keycloak-Anmeldung muss gegen den konfigurierten Realm getestet werden; die automatisierten Redirect-Tests ersetzen diesen Integrationstest nicht.
+Zusätzlich direkte Links und Neuladen im Browser sowie beim verwendeten Hosting prüfen. Die Anmeldung muss gegen den konfigurierten Realm getestet werden; die automatisierten Tests ersetzen diesen Integrationstest nicht.
 
 Grundlagen: [React Router Data Mode](https://reactrouter.com/start/data/installation), [Routenobjekte](https://reactrouter.com/start/data/route-object).

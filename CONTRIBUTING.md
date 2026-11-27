@@ -103,11 +103,11 @@ Repositories bleiben interne Persistenzschnittstellen. Spring Data REST ist im G
 
 ## 5. Rollen, Privilegien und Entwicklungsdaten erweitern
 
-Nutzer haben mehrere Rollen. Die Rollen `STUDENT`, `CARETAKER` und `CLERK` bündeln Berechtigungen. `AppUserService` bildet Rollen und Privilegien auf Spring-Security-Authorities ab (`ROLE_STUDENT` für Rollen, zum Beispiel `GREETING_READ` für Berechtigungen). Die drei Mock-Nutzer verwenden dieselbe Abbildung wie die Keycloak-Anmeldung. Die Startdaten sind wiederholbar, vorhandene Rollenzuweisungen werden nicht überschrieben. Rollen und Berechtigungen werden ausschließlich serverseitig zugewiesen. Es gibt keine öffentliche Nutzerregistrierung oder Rollenverwaltung. Die Mock-Nutzer und ihre Startberechtigungen stehen in der [README](README.md#mock-anmeldung-und-testdaten).
+Nutzer haben mehrere Rollen. Die Rollen `STUDENT`, `CARETAKER` und `CLERK` bündeln Berechtigungen. `AppUserService` bildet Rollen und Privilegien auf Spring-Security-Authorities ab (`ROLE_STUDENT` für Rollen, zum Beispiel `GREETING_READ` für Berechtigungen). Die drei Keycloak-Konten sind mit den Anwendungsnutzern `student`, `caretaker` und `clerk` verknüpft und verwenden dieselbe Rollenabbildung. Die Startdaten sind wiederholbar, vorhandene Rollenzuweisungen werden nicht überschrieben. Rollen und Berechtigungen werden ausschließlich serverseitig zugewiesen. Es gibt keine öffentliche Nutzerregistrierung oder Rollenverwaltung. Die Konten und ihre Startberechtigungen stehen in der [README](README.md#anmeldung-und-testdaten).
 
 `GET /api/me` liefert das angemeldete Nutzerprofil mit `roles` und `privileges`. Die bisherigen Nutzer- und Repository-Suchendpunkte sind entfernt. Wohnanlagen werden auf die Zuordnung des angemeldeten Nutzers begrenzt: Die Sachbearbeitung über `staff_assignments` (`kind = CLERK`, mehrere Anlagen möglich), die Objektbetreuung ebenfalls über `staff_assignments` (Betreuung und Vertretung, US-03), alle anderen Sichten noch über die eine Wohnanlage in `users.residence_id`. WG-Mitgliedschaft und zeitliche Zugriffsregeln folgen mit den betreffenden Domänenmodulen.
 
-Im `dev`-Profil ist `POST /api/auth/dev-login` mit `{"userKey":"student"}` (alternativ `caretaker` oder `clerk`) verfügbar. Vor jedem schreibenden Aufruf wird über `GET /api/auth/csrf` ein Token geladen und unter dem zurückgegebenen `headerName` mitgesendet. Cookies müssen erhalten bleiben. `POST /api/auth/logout` beendet die Sitzung. Der Header `X-Dev-User` authentifiziert nicht mehr. Änderungen an Berechtigungen werden für bestehende Entwicklungssitzungen nach erneuter Anmeldung wirksam.
+Jeder geschützte Aufruf sendet ein Keycloak-Access-Token im Header `Authorization: Bearer`. Das Backend prüft Signatur, Aussteller, Audience und Gültigkeit und sucht den Nutzer über `(identity_issuer, identity_subject)`. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Änderungen an Berechtigungen werden nach erneuter Anmeldung wirksam.
 
 Für die beispielhafte Kontrollübersicht:
 
@@ -116,17 +116,17 @@ Für die beispielhafte Kontrollübersicht:
 3. Die bereits vorhandenen `role(...)`-Aufrufe der berechtigten Rollen um dieses Privileg ergänzen. Bestehende Berechtigungen beibehalten. Keinen zweiten Aufruf für dieselbe Rolle hinter den ersten setzen.
 4. Controller beziehungsweise Service mit `hasAuthority('INSPECTION_READ')` schützen und die Datenzuständigkeit prüfen.
 5. In [SampleData.java](backend/src/main/java/de/seezeit/aume/SampleData.java) oder einem eigenen, ebenfalls auf `dev` begrenzten Seeder synthetische Fachdaten ergänzen. Benötigte Rollen und Nutzer müssen zuvor angelegt sein; die Reihenfolge der vorhandenen Seeder berücksichtigen.
-6. Backend neu starten und Mock-Nutzer erneut anmelden. Erlaubte und verbotene Fälle prüfen.
+6. Backend neu starten und die betroffenen Keycloak-Konten erneut anmelden. Erlaubte und verbotene Fälle prüfen.
 
 **Besonderheit der Seeder:** `SecurityData.role(...)` erstellt nur fehlende Rollen. Bei bereits vorhandenen Rollen werden geänderte Privilegien-Sets nicht übernommen. In der derzeitigen H2-Datenbank mit `ddl-auto: create-drop` wirkt die geänderte Startzuordnung nach einem Backend-Neustart, weil die Datenbank neu aufgebaut wird. Für eine dauerhaft gespeicherte Datenbank braucht eine solche Änderung einen gezielten Datenänderungs- oder Migrationsschritt. Die Zuordnungen nicht bei jedem Start pauschal überschreiben.
 
-Die drei Mock-Nutzer `student`, `caretaker` und `clerk` für die gemeinsame Entwicklungsbasis erhalten. Ihr Login ist auf genau diese Kennungen beschränkt; ein zusätzlich gespeicherter Nutzer bekommt dadurch noch keine Mock-Anmeldung. Weitere Zugriffskonstellationen lassen sich gezielt in Tests aufbauen. Keine echten Personen- oder Zugangsdaten als Beispieldaten einchecken.
+Die drei Anwendungsnutzer `student`, `caretaker` und `clerk` bleiben die gemeinsame Entwicklungsbasis. Keycloak-Anmeldenamen sind `student`, `sachbearbeiter` und `objektbetreuer`. Ein zusätzlich gespeicherter Nutzer erhält dadurch noch kein Keycloak-Konto. `caretaker2`, `caretaker3` und `clerk2` bleiben Stammdaten ohne Konto. Weitere Zugriffskonstellationen lassen sich gezielt in Tests aufbauen. Keine echten Personen- oder Zugangsdaten als Beispieldaten einchecken.
 
-Für ein Feature keine eigene Anmeldung, Token-Verarbeitung oder globale Abschaltung von CSRF einführen. Außerhalb von `dev` wird die Identität über Keycloak verifiziert; Anwendungsrollen bleiben in der Datenbank. Änderungen an diesem Zusammenspiel betreffen die gemeinsame Architektur.
+Für ein Feature keine eigene Anmeldung oder Token-Verarbeitung einführen. Die Identität wird über Keycloak verifiziert; Anwendungsrollen bleiben in der Datenbank. Änderungen an diesem Zusammenspiel betreffen die gemeinsame Architektur.
 
-### Keycloak außerhalb von `dev`
+### Keycloak
 
-Ohne `dev`-Profil sind Mock-Anmeldung und Mock-Daten deaktiviert. Das Backend akzeptiert dann ausschließlich Keycloak-Bearer-Token; das Frontend verwendet den Keycloak-Adapter mit Authorization Code und PKCE. `GET /api/auth/config` liefert die öffentlichen Anmeldeeinstellungen. Folgende Umgebungsvariablen sind erforderlich:
+Die Anmeldung gilt in jedem Profil. Das Profil `dev` schaltet nur die Fachdaten ein. Das Frontend sendet Anmeldename und Passwort an den Token-Endpunkt von Keycloak. `GET /api/auth/config` liefert die öffentlichen Anmeldeeinstellungen. Folgende Umgebungsvariablen sind erforderlich:
 
 | Variable | Beispiel |
 | --- | --- |
@@ -134,19 +134,14 @@ Ohne `dev`-Profil sind Mock-Anmeldung und Mock-Daten deaktiviert. Das Backend ak
 | `KEYCLOAK_REALM` | `seezeit` |
 | `KEYCLOAK_CLIENT_ID` | `seezeit-frontend` |
 | `KEYCLOAK_ISSUER_URI` | `https://identity.example.org/realms/seezeit` |
+| `KEYCLOAK_JWK_SET_URI` | `https://identity.example.org/realms/seezeit/protocol/openid-connect/certs` |
 | `KEYCLOAK_AUDIENCE` | `seezeit-api` |
 
-Der Keycloak-Client muss öffentlich sein (ohne Client-Secret), Standard Flow und PKCE unterstützen sowie passende Redirect-, Logout- und Web-Origin-Adressen für das Frontend erlauben. Der Login-Callback verwendet `/login?returnTo=...`; beispielsweise kann eine auf den konkreten Origin begrenzte Redirect-URI `https://app.example.org/login*` freigegeben werden. Weitere Details stehen in der [Routing-Anleitung](frontend/ROUTING.md#anmeldung-und-rückkehr-zur-angeforderten-seite). Ein Audience-Mapper muss `seezeit-api` in die Access-Token aufnehmen. Der Issuer samt Discovery- und JWKS-Endpunkten muss vom Backend erreichbar sein. Signatur, Issuer, Audience und Gültigkeitszeit werden geprüft.
+Der Keycloak-Client muss öffentlich sein und Direct Access Grants erlauben. Ein Audience-Mapper muss `seezeit-api` in die Access-Token aufnehmen. Der Issuer samt Discovery- und JWKS-Endpunkten muss vom Backend erreichbar sein. Signatur, Issuer, Audience und Gültigkeitszeit werden geprüft. Weitere Details zur Rückkehr auf die angeforderte Seite stehen in der [Routing-Anleitung](frontend/ROUTING.md#anmeldung-und-rückkehr-zur-angeforderten-seite).
 
-Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem bereits angelegten Anwendungsnutzer zugeordnet. Diese Zuordnung und die Rollen müssen durch einen vertrauenswürdigen Provisionierungsprozess gesetzt werden; unbekannte Identitäten erhalten keinen Zugriff. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Ein Provisionierungswerkzeug und ein betriebener Keycloak sind nicht Teil dieses Templates. Die bestehende H2-/`create-drop`-Konfiguration bleibt für das Template erhalten; dauerhafte Speicherung und Migrationen müssen vor einem echten Betrieb eingerichtet werden. ADR-0006 bleibt ein Vorschlag.
+Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem bereits angelegten Anwendungsnutzer zugeordnet. Diese Zuordnung und die Rollen müssen durch einen vertrauenswürdigen Provisionierungsprozess gesetzt werden; unbekannte Identitäten erhalten keinen Zugriff. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Im Profil `dev` verknüpft `SampleData` die drei Konten. Die bestehende H2-/`create-drop`-Konfiguration bleibt für das Template erhalten; dauerhafte Speicherung und Migrationen müssen vor einem echten Betrieb eingerichtet werden. ADR-0006 bleibt ein Vorschlag.
 
-Für diesen Start nur `infrastructure/compose.yaml` verwenden und die Variablen mit `--env-file infrastructure/.env` laden:
-
-```bash
-docker compose -f infrastructure/compose.yaml --env-file infrastructure/.env up --build
-```
-
-Der Docker-Start mit Mock-Nutzern steht in der [README](README.md#start-mit-docker).
+Der Docker-Start mit Fachdaten steht in der [README](README.md#start-mit-docker). Ohne `compose.dev.yaml` läuft Keycloak, die Anwendungsnutzer fehlen aber.
 
 ## 6. Frontend anbinden
 
@@ -326,12 +321,12 @@ Mindestens die für das Feature relevanten Fälle absichern:
 | Angemeldeter Nutzer ohne Privileg | Aktion wird abgewiesen |
 | Berechtigter Nutzer mit fremder Wohnanlagen-/WG-ID | Keine Einsicht und keine Änderung fremder Daten |
 | Ungültige Eingabe oder unerlaubter Zustandswechsel | Vereinbarter Fehler; keine teilweise gespeicherte Änderung |
-| Schreibender Aufruf in einer Entwicklungssitzung | Gültiges CSRF-Token erforderlich |
+| Schreibender Aufruf | Gültiges Bearer-Token erforderlich |
 | Listen oder Detailansichten | Pagination, leere Ergebnisse und fehlende Datensätze funktionieren |
 
-Für sitzungsbasierte MockMvc-Tests das Profil `dev` aktivieren und die echte Mock-Anmeldung mit Sitzung verwenden, wenn der Anmeldeweg Teil des Tests ist. Ein mit `csrf()` erzeugtes Testtoken ersetzt keinen gesonderten Test des tatsächlichen CSRF-Ablaufs. Fachtests benötigen eigene, reproduzierbare Testdaten; sich nicht auf feste Datenbank-IDs oder die Ausführungsreihenfolge anderer Tests verlassen.
+Für MockMvc-Tests das Profil `dev` aktivieren, wenn die Fachdaten gebraucht werden, und den Aufruf mit `Authorization: Bearer` ausstatten. `TestJwtDecoder` ersetzt den echten Decoder, damit die Tests keinen laufenden Keycloak brauchen. Fachtests benötigen eigene, reproduzierbare Testdaten; sich nicht auf feste Datenbank-IDs oder die Ausführungsreihenfolge anderer Tests verlassen.
 
-Frontend-Tests mit `npm test` ausführen. Vitest ist eingerichtet; `src/lib/i18n.test.ts` zeigt Tests für Sprachwahl und Ressourcen, `src/app/App.test.tsx` prüft Interaktionen mit React Testing Library und jsdom. Feature-Tests für relevante Zustände ergänzen. Zusätzlich Lint, Build und die betroffenen Abläufe im Browser mit den Mock-Rollen prüfen. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten.
+Frontend-Tests mit `npm test` ausführen. Vitest ist eingerichtet; `src/lib/i18n.test.ts` zeigt Tests für Sprachwahl und Ressourcen, `src/app/App.test.tsx` prüft Interaktionen mit React Testing Library und jsdom. Feature-Tests für relevante Zustände ergänzen. Zusätzlich Lint, Build und die betroffenen Abläufe im Browser mit den drei Keycloak-Konten prüfen. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten.
 
 ### Prüfkommandos
 

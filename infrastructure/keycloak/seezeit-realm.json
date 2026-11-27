@@ -2,12 +2,34 @@
   "realm": "seezeit",
   "enabled": true,
   "sslRequired": "none",
+  "requiredActions": [
+    {
+      "alias": "VERIFY_PROFILE",
+      "name": "Verify Profile",
+      "providerId": "VERIFY_PROFILE",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 10
+    },
+    {
+      "alias": "UPDATE_PASSWORD",
+      "name": "Update Password",
+      "providerId": "UPDATE_PASSWORD",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 30
+    }
+  ],
   "users": [
     {
       "id": "00000000-0000-4000-8000-000000000001",
       "username": "student",
       "enabled": true,
+      "email": "student@seezeit.local",
+      "emailVerified": true,
+      "requiredActions": [],
       "firstName": "Studierende",
+      "lastName": "Seezeit",
       "credentials": [
         {
           "type": "password",
@@ -20,7 +42,11 @@
       "id": "00000000-0000-4000-8000-000000000002",
       "username": "sachbearbeiter",
       "enabled": true,
+      "email": "sachbearbeiter@seezeit.local",
+      "emailVerified": true,
+      "requiredActions": [],
       "firstName": "Sachbearbeitung",
+      "lastName": "Seezeit",
       "credentials": [
         {
           "type": "password",
@@ -33,7 +59,11 @@
       "id": "00000000-0000-4000-8000-000000000003",
       "username": "objektbetreuer",
       "enabled": true,
+      "email": "objektbetreuer@seezeit.local",
+      "emailVerified": true,
+      "requiredActions": [],
       "firstName": "Objektbetreuung",
+      "lastName": "Seezeit",
       "credentials": [
         {
           "type": "password",
@@ -50,7 +80,7 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "redirectUris": [
         "http://localhost/login*",
         "http://localhost:5173/login*"

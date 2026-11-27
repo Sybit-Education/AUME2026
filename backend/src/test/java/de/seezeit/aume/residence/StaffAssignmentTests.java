@@ -12,10 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import de.seezeit.aume.auth.TestJwtDecoder;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-staff-tests;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
+@Import(TestJwtDecoder.class)
 @Transactional
 class StaffAssignmentTests {
     @Autowired private MockMvc mvc;
@@ -41,7 +44,7 @@ class StaffAssignmentTests {
             .andExpect(jsonPath("$.flats").value(contains("S-01", "S-02")))
             .andExpect(jsonPath("$.caretaker.name").value("Objektbetreuung Egg"))
             .andExpect(jsonPath("$.deputy.name").value("Objektbetreuung Petershausen"));
-        mvc.perform(get("/api/residences").session(session))
+        mvc.perform(get("/api/residences").with(session))
             .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"))
             .andExpect(jsonPath("$.content[1].caretaker.id").value(id("caretaker3")))
             .andExpect(jsonPath("$.content[1].deputy.id").value(id("caretaker2")));
@@ -98,7 +101,7 @@ class StaffAssignmentTests {
         assertThat(staff.existsByResidenceIdAndUserIdAndKind(residenceId("Wohnanlage Sonne"), id("clerk"),
             StaffKind.CLERK)).isTrue();
         // Weiterhin sichtbar und änderbar
-        mvc.perform(get("/api/residences").session(session))
+        mvc.perform(get("/api/residences").with(session))
             .andExpect(jsonPath("$.page.totalElements").value(2));
         assign(session, "Wohnanlage Sonne", id("caretaker"), id("caretaker2")).andExpect(status().isOk());
     }
@@ -157,7 +160,7 @@ class StaffAssignmentTests {
     @Test
     void unknownResidenceIsNotFound() throws Exception {
         var session = login("clerk");
-        mvc.perform(put("/api/residences/99999/staff").session(session).with(csrf())
+        mvc.perform(put("/api/residences/99999/staff").with(session).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON).content(body(id("caretaker"), null)))
             .andExpect(status().isNotFound());
     }
@@ -167,34 +170,28 @@ class StaffAssignmentTests {
     void usersWithoutThePrivilegeCannotChangeOrListCaretakers(String key) throws Exception {
         var session = login(key);
         assign(session, "Wohnanlage Sonne", id("caretaker3"), null).andExpect(status().isForbidden());
-        mvc.perform(get("/api/caretakers").session(session)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/caretakers").with(session)).andExpect(status().isForbidden());
         assertUnchangedSonne();
     }
 
     @Test
     void anonymousAccessIsRejectedAndChangesRequireCsrf() throws Exception {
-        mvc.perform(put("/api/residences/1/staff").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(put("/api/residences/1/staff").contentType(MediaType.APPLICATION_JSON)
             .content(body(id("caretaker"), null))).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/caretakers")).andExpect(status().isUnauthorized());
-
-        var session = login("clerk");
-        mvc.perform(put("/api/residences/" + residenceId("Wohnanlage Sonne") + "/staff").session(session)
-                .contentType(MediaType.APPLICATION_JSON).content(body(id("caretaker3"), null)))
-            .andExpect(status().isForbidden());
-        assertUnchangedSonne();
     }
 
     @Test
     void clerkListsOnlyCaretakersSortedAndPaged() throws Exception {
         var session = login("clerk");
-        mvc.perform(get("/api/caretakers").session(session))
+        mvc.perform(get("/api/caretakers").with(session))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.totalElements").value(3))
             .andExpect(jsonPath("$.content[0].name").value("Objektbetreuung"))
             .andExpect(jsonPath("$.content[1].name").value("Objektbetreuung Egg"))
             .andExpect(jsonPath("$.content[2].name").value("Objektbetreuung Petershausen"))
             .andExpect(jsonPath("$.content[0].userKey").doesNotExist());
-        mvc.perform(get("/api/caretakers").session(session).param("page", "1").param("size", "2"))
+        mvc.perform(get("/api/caretakers").with(session).param("page", "1").param("size", "2"))
             .andExpect(jsonPath("$.content.length()").value(1));
     }
 
@@ -206,9 +203,9 @@ class StaffAssignmentTests {
             .isEqualTo(id("caretaker2"));
     }
 
-    private ResultActions assign(MockHttpSession session, String residence, Long caretaker, Long deputy)
+    private ResultActions assign(RequestPostProcessor session, String residence, Long caretaker, Long deputy)
             throws Exception {
-        return mvc.perform(put("/api/residences/" + residenceId(residence) + "/staff").session(session)
+        return mvc.perform(put("/api/residences/" + residenceId(residence) + "/staff").with(session)
             .with(csrf()).contentType(MediaType.APPLICATION_JSON).content(body(caretaker, deputy)));
     }
 
@@ -224,9 +221,10 @@ class StaffAssignmentTests {
         return residences.findFirstByName(name).orElseThrow().getId();
     }
 
-    private MockHttpSession login(String key) throws Exception {
-        return (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
-            .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"" + key + "\"}"))
-            .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+    private RequestPostProcessor login(String key) {
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + key);
+            return request;
+        };
     }
 }

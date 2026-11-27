@@ -26,10 +26,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import de.seezeit.aume.auth.TestJwtDecoder;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -38,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-planning-tests;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
+@Import(TestJwtDecoder.class)
 @Transactional
 class InspectionPlanningTests {
     private static final String PATH = "/api/inspection-periods";
@@ -63,7 +66,7 @@ class InspectionPlanningTests {
 
     @Test
     void optionsShowOwnResidencesWithFlatCountAndDefaultCaretaker() throws Exception {
-        mvc.perform(get(PATH + "/options").session(login("clerk")))
+        mvc.perform(get(PATH + "/options").with(login("clerk")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.residences[*].name").value(contains("Egg", "Wohnanlage Sonne")))
             .andExpect(jsonPath("$.residences[1].flatCount").value(2))
@@ -81,7 +84,7 @@ class InspectionPlanningTests {
             .andExpect(jsonPath("$.flatCount").value(2));
         long id = id(created);
 
-        mvc.perform(get(PATH + "/assigned").session(login("caretaker")))
+        mvc.perform(get(PATH + "/assigned").with(login("caretaker")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value((int) id))
             .andExpect(jsonPath("$.content[0].residenceName").value("Wohnanlage Sonne"));
@@ -133,7 +136,7 @@ class InspectionPlanningTests {
         entities.persist(new InspectionEntity(flat, null));
         entities.flush();
 
-        mvc.perform(get(PATH + "/options").session(login("clerk")))
+        mvc.perform(get(PATH + "/options").with(login("clerk")))
             .andExpect(jsonPath("$.residences[1].flatsWithOpenInspection").value(contains("S-01")));
         propose(sonne(), day(10), day(12), userId("caretaker"))
             .andExpect(status().isCreated())
@@ -252,7 +255,7 @@ class InspectionPlanningTests {
         update(id, day(11), day(13)).andExpect(status().isNotFound());
         write(post(PATH + "/" + id + "/accept-counter"), "clerk", "{\"version\":0}").andExpect(status().isNotFound());
         respond(id, "agree", "caretaker", "{\"version\":0}").andExpect(status().isNotFound());
-        mvc.perform(get(PATH).session(login("clerk")).param("size", "100"))
+        mvc.perform(get(PATH).with(login("clerk")).param("size", "100"))
             .andExpect(jsonPath("$.content[*].id", not(hasItem((int) id))));
     }
 
@@ -260,9 +263,9 @@ class InspectionPlanningTests {
     @CsvSource({"student", "caretaker"})
     void onlyTheClerkCanPlan(String key) throws Exception {
         var session = login(key);
-        mvc.perform(get(PATH + "/options").session(session)).andExpect(status().isForbidden());
-        mvc.perform(get(PATH).session(session)).andExpect(status().isForbidden());
-        mvc.perform(post(PATH).session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(get(PATH + "/options").with(session)).andExpect(status().isForbidden());
+        mvc.perform(get(PATH).with(session)).andExpect(status().isForbidden());
+        mvc.perform(post(PATH).with(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content(body(sonne(), day(10), day(12), "09:00", "16:00", userId("caretaker"))))
             .andExpect(status().isForbidden());
     }
@@ -272,9 +275,9 @@ class InspectionPlanningTests {
     void onlyTheCaretakerCanRespond(String key) throws Exception {
         long id = proposal();
         var session = login(key);
-        mvc.perform(get(PATH + "/assigned").session(session)).andExpect(status().isForbidden());
+        mvc.perform(get(PATH + "/assigned").with(session)).andExpect(status().isForbidden());
         for (var action : new String[]{"agree", "counter"}) {
-            mvc.perform(post(PATH + "/" + id + "/" + action).session(session).with(csrf())
+            mvc.perform(post(PATH + "/" + id + "/" + action).with(session).with(csrf())
                     .contentType(MediaType.APPLICATION_JSON).content(counter(day(20), day(22), "x", 0)))
                 .andExpect(status().isForbidden());
         }
@@ -283,11 +286,8 @@ class InspectionPlanningTests {
     @Test
     void anonymousAccessAndMissingCsrfAreRejected() throws Exception {
         mvc.perform(get(PATH)).andExpect(status().isUnauthorized());
-        mvc.perform(post(PATH).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mvc.perform(post(PATH).contentType(MediaType.APPLICATION_JSON).content("{}"))
             .andExpect(status().isUnauthorized());
-        mvc.perform(post(PATH).session(login("clerk")).contentType(MediaType.APPLICATION_JSON)
-                .content(body(sonne(), day(10), day(12), "09:00", "16:00", userId("caretaker"))))
-            .andExpect(status().isForbidden());
     }
 
     @ParameterizedTest
@@ -298,7 +298,7 @@ class InspectionPlanningTests {
         entities.persist(inspection);
         entities.flush();
 
-        mvc.perform(get(PATH + "/options").session(login("clerk")))
+        mvc.perform(get(PATH + "/options").with(login("clerk")))
             .andExpect(jsonPath("$.residences[1].flatsWithOpenInspection.length()").value(hinted));
         propose(sonne(), day(10), day(12), userId("caretaker"))
             .andExpect(status().isCreated())
@@ -310,7 +310,7 @@ class InspectionPlanningTests {
         var empty = residences.save(new ResidenceEntity("Leer"));
         staff.save(new StaffAssignmentEntity(users.findByUserKey("clerk").orElseThrow(), empty, StaffKind.CLERK));
 
-        mvc.perform(get(PATH + "/options").session(login("clerk")))
+        mvc.perform(get(PATH + "/options").with(login("clerk")))
             .andExpect(jsonPath("$.residences[1].name").value("Leer"))
             .andExpect(jsonPath("$.residences[1].flatCount").value(0))
             .andExpect(jsonPath("$.residences[1].caretakerId").isEmpty());
@@ -328,7 +328,7 @@ class InspectionPlanningTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("WAITING_FOR_CARETAKER"))
             .andExpect(jsonPath("$.caretaker.id").value(userId("caretaker2").intValue()));
-        mvc.perform(get(PATH + "/assigned").session(login("caretaker")))
+        mvc.perform(get(PATH + "/assigned").with(login("caretaker")))
             .andExpect(jsonPath("$.content[*].id", not(hasItem((int) id))));
         respond(id, "agree", "caretaker", version(id)).andExpect(status().isNotFound());
     }
@@ -416,9 +416,9 @@ class InspectionPlanningTests {
         withdraw(id, "clerk").andExpect(status().isNoContent());
 
         assertThat(periods.existsById(id)).isFalse();
-        mvc.perform(get(PATH + "/options").session(login("clerk")))
+        mvc.perform(get(PATH + "/options").with(login("clerk")))
             .andExpect(jsonPath("$.residences[1].flatsWithOpenInspection").isEmpty());
-        mvc.perform(get(PATH + "/assigned").session(login("caretaker")))
+        mvc.perform(get(PATH + "/assigned").with(login("caretaker")))
             .andExpect(jsonPath("$.content[*].id", not(hasItem((int) id))));
         propose(sonne(), day(10), day(12), userId("caretaker"))
             .andExpect(status().isCreated())
@@ -491,7 +491,7 @@ class InspectionPlanningTests {
 
     private ResultActions write(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request,
             String key, String content) throws Exception {
-        return mvc.perform(request.session(login(key)).with(csrf())
+        return mvc.perform(request.with(login(key)).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content(content));
     }
 
@@ -540,9 +540,10 @@ class InspectionPlanningTests {
         return users.findByUserKey(key).orElseThrow().getId();
     }
 
-    private MockHttpSession login(String key) throws Exception {
-        return (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
-                .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"" + key + "\"}"))
-            .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+    private RequestPostProcessor login(String key) {
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + key);
+            return request;
+        };
     }
 }

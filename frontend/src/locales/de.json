@@ -10,6 +10,7 @@
     "mockLogin": "Testnutzer anmelden",
     "accountHint": "Anmeldung mit dem Seezeit-Konto.",
     "email": "E-Mail",
+    "username": "Anmeldename",
     "password": "Passwort",
     "accountLogin": "Mit Seezeit-Konto anmelden",
     "login": "Anmelden",

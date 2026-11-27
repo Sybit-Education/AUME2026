@@ -3,7 +3,7 @@ import { UiError } from '@/lib/errors'
 
 export interface Session {
   ready: boolean
-  mode: 'dev' | 'keycloak' | null
+  mode: 'keycloak' | null
   user: LoggedInUser | null
 }
 
@@ -63,8 +63,8 @@ export function ensureSession(): Promise<Session> {
   return pending ?? (snapshot.ready ? Promise.resolve(snapshot) : refreshSession())
 }
 
-export async function signIn(userKey: string | undefined, returnTo: string) {
-  await login(userKey, returnTo)
+export async function signIn(username: string, password: string) {
+  await login(username, password)
   revision++
   pending = undefined
   const session = await refreshSession()
@@ -72,6 +72,9 @@ export async function signIn(userKey: string | undefined, returnTo: string) {
 }
 
 export async function signOut() {
-  await logout()
-  forgetUser()
+  try {
+    await logout()
+  } finally {
+    forgetUser()
+  }
 }

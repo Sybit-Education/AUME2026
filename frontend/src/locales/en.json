@@ -10,6 +10,7 @@
     "mockLogin": "Sign in as a test user",
     "accountHint": "Sign in with the Seezeit account.",
     "email": "Email",
+    "username": "Username",
     "password": "Password",
     "accountLogin": "Sign in with Seezeit account",
     "login": "Sign in",
