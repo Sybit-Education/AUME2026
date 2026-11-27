@@ -86,7 +86,7 @@ Offen für die Bewohnenden-Ansicht: Übergabe-Kontrollen (`handover = true`) sin
 
 ## Zuständigkeit (US-03)
 
-Welche Anlagen eine Objektbetreuung sieht, liefert `StaffAccessService.residencesInCare(userId)` (Paket `residence`): alle Anlagen, für die sie in `staff_assignments` als Betreuung oder Vertretung eingetragen ist. Die Vertretung ist fest und hat dieselben Rechte wie die Betreuung. Das alte Feld `users.residence_id` gibt keinen Zugriff mehr. Es gilt für die Liste, das Öffnen und Bearbeiten einer Kontrolle, die Historie und die früheren Mängel; die [Übersicht](../overview/README.md) arbeitet schon so.
+Welche Anlagen eine Objektbetreuung sieht, liefert `StaffAccessService.residencesInCare(userId)` (Paket `residence`): alle Anlagen, für die sie in `staff_assignments` als Betreuung oder Vertretung eingetragen ist. Die Vertretung ist fest und hat bei Kontrollen dieselben Rechte wie die Betreuung; Terminvorschläge beantwortet nur die im Vorschlag eingetragene Betreuung (siehe [Kontroll-Anfragen](../kontroll-anfragen/README.md)). Das alte Feld `users.residence_id` gibt keinen Zugriff mehr. Es gilt für die Liste, das Öffnen und Bearbeiten einer Kontrolle, die Historie, die früheren Mängel und die Anlagenliste (`GET /api/residences`); die [Übersicht](../overview/README.md) arbeitet schon so. Ausnahme: Eine begonnene Kontrolle (`DRAFT`) darf die Person, die sie durchführt, auch nach einem Wechsel der Zuständigkeit noch öffnen, bearbeiten und abschließen.
 
 Zum Ausprobieren: `caretaker2` (Login „Objektbetreuung (Vertretung)“) betreut Petershausen und vertritt Sonne und sieht die Kontrollen beider Anlagen, `caretaker` nur die von Sonne. Dafür legt `InspectionSampleData` in Petershausen eine sofort startbare Kontrolle für WG 3.09 an.
 

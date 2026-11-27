@@ -16,6 +16,12 @@ const rescheduledAppointment = {
   appointmentChanged: true,
   showInitialInspection: false,
 }
+const initialDetails: AppointmentDetails = {
+  ...appointment, kind: 'INITIAL', display: 'UPCOMING', status: 'ANNOUNCED', windowStart: null, windowEnd: null,
+}
+const followUpDetails: AppointmentDetails = {
+  ...initialDetails, kind: 'FOLLOW_UP', showInitialInspection: false,
+}
 
 beforeEach(async () => {
   await i18n.changeLanguage('de')
@@ -33,6 +39,7 @@ it('shows an empty state without an export when nothing has been announced', () 
   expect(screen.queryByRole('button')).toBeNull()
   expect(screen.queryByText('Erstkontrolle')).toBeNull()
   expect(screen.queryByText('Termin geändert')).toBeNull()
+  expect(screen.queryByText('Nachkontrolle')).toBeNull()
 })
 
 it('displays the period and follows the backend change notice flag', () => {
@@ -85,11 +92,35 @@ it('translates the initial inspection label on the summary card', async () => {
   expect(screen.getByText('Initial inspection').className).toBe('chip inf')
 })
 
-it.each([{ loading: true }, { loadFailed: true }])('omits both labels for %j', (state) => {
+it.each([{ loading: true }, { loadFailed: true }])('omits labels for %j', (state) => {
   render(<InspectionAppointment appointment={null} {...state} />)
 
   expect(screen.queryByText('Erstkontrolle')).toBeNull()
   expect(screen.queryByText('Termin geändert')).toBeNull()
+  expect(screen.queryByText('Nachkontrolle')).toBeNull()
+})
+
+it.each(['summary', 'details'] as const)('labels a follow-up in the %s card and prioritizes a pending change', async (variant) => {
+  const { rerender } = render(<MemoryRouter>
+    <InspectionAppointment appointment={followUpDetails} variant={variant} />
+  </MemoryRouter>)
+  expect(screen.getByText('Nachkontrolle').className).toBe('chip process-badge')
+  expect(screen.queryByText('Erstkontrolle')).toBeNull()
+
+  const moved = { ...followUpDetails, ...rescheduledAppointment }
+  rerender(<MemoryRouter><InspectionAppointment appointment={moved} variant={variant} /></MemoryRouter>)
+  expect(screen.getByText('Termin geändert').className).toBe('chip wr')
+  expect(screen.queryByText('Nachkontrolle')).toBeNull()
+  expect(screen.queryByText('Erstkontrolle')).toBeNull()
+
+  rerender(<MemoryRouter>
+    <InspectionAppointment appointment={{ ...moved, appointmentChanged: false }} variant={variant} />
+  </MemoryRouter>)
+  expect(screen.getByText('Nachkontrolle').className).toBe('chip process-badge')
+  expect(screen.queryByText('Termin geändert')).toBeNull()
+
+  await act(async () => { await i18n.changeLanguage('en') })
+  expect(screen.getByText('Follow-up inspection').className).toBe('chip process-badge')
 })
 
 it('downloads the displayed period as a calendar file', () => {
@@ -125,7 +156,7 @@ it.each([
   { status: null, display: 'PAST', heading: 'Kontrollzeitraum', label: null },
   { status: 'RESULT_AVAILABLE', display: 'PAST', heading: 'Letzte Kontrolle', label: 'Ergebnis verfügbar' },
 ] as const)('shows the details for $status / $display', ({ status, display, heading, label }) => {
-  const details: AppointmentDetails = { ...appointment, status, display, windowStart: '09:00', windowEnd: '16:00' }
+  const details: AppointmentDetails = { ...initialDetails, status, display, windowStart: '09:00', windowEnd: '16:00' }
   render(<MemoryRouter><InspectionAppointment appointment={details} canReadChecklist /></MemoryRouter>)
 
   expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
@@ -153,14 +184,14 @@ it.each([
   { windowStart: '25:00', windowEnd: '16:00' },
   { windowStart: '16:00', windowEnd: '09:00' },
 ])('omits the arrival notice for invalid or incomplete windows (%j)', (window) => {
-  const details: AppointmentDetails = { ...appointment, ...window, display: 'UPCOMING', status: 'ANNOUNCED' }
+  const details: AppointmentDetails = { ...initialDetails, ...window }
   render(<InspectionAppointment appointment={details} />)
   expect(screen.queryByText(/Die Objektbetreuung kommt zwischen/)).toBeNull()
 })
 
 it('translates the announcement and its time window in English', async () => {
   const details: AppointmentDetails = {
-    ...appointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00',
+    ...initialDetails, windowStart: '09:00', windowEnd: '16:00',
   }
   render(<InspectionAppointment appointment={details} />)
 
@@ -172,7 +203,7 @@ it('translates the announcement and its time window in English', async () => {
 
 it('keeps the change label on the summary card without showing the timeline', () => {
   const details: AppointmentDetails = {
-    ...rescheduledAppointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00',
+    ...initialDetails, ...rescheduledAppointment, windowStart: '09:00', windowEnd: '16:00',
   }
   const { rerender } = render(
     <MemoryRouter><InspectionAppointment appointment={details} variant="summary" /></MemoryRouter>,

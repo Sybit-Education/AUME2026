@@ -9,7 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
  * Schnittstelle des Moduls {@code residence} für andere Module: Für welche Wohnanlagen ist eine
  * Objektbetreuung zuständig (US-03)? Zuständig ist, wer in {@code staff_assignments} als Betreuung
  * ({@code CARETAKER}) oder Vertretung ({@code DEPUTY}) eingetragen ist; die Vertretung ist fest und
- * hat dieselben Rechte wie die Betreuung.
+ * hat bei Kontrollen dieselben Rechte wie die Betreuung. Terminvorschläge beantwortet nur die im
+ * Vorschlag eingetragene Betreuung (InspectionPlanningService).
  */
 @Service
 @Transactional(readOnly = true)

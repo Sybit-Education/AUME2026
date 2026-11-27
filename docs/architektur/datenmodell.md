@@ -231,7 +231,35 @@ erDiagram
 
 `inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR`. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
 
-`rescheduled_at` ist optional und erfasst den Zeitpunkt der letzten erneuten Ankündigung mit geändertem Start- oder Enddatum. Der Ankündigungsprozess der Sachbearbeitung muss den Zeitpunkt in derselben Transaktion wie die aktualisierten Kalendergrenzen setzen. Bis einschließlich der Erstankündigung bleibt das Feld leer. Eine Speicherung ohne Änderung der Kalendergrenzen lässt den vorhandenen Wert bestehen. Der US-15-Lesepfad verwendet das Feld bereits. Der produktive Schreibpfad gehört zu US-18.
+`rescheduled_at` ist optional und erfasst den Zeitpunkt der letzten Terminänderung nach der Ankündigung. US-18 setzt ihn in derselben Transaktion wie die neuen Werte, und zwar auch dann, wenn sich nur das Uhrzeitfenster ändert. Sonst bekämen die WGs bei einer reinen Uhrzeitänderung keine Nachricht. Bis einschließlich der Erstankündigung bleibt das Feld leer. Ohne Änderung lehnt die API ab (`period_unchanged`). Der US-15-Lesepfad verwendet das Feld bereits.
+
+`inspection_announcements` ist der Versandeintrag aus US-18: eine Zeile je Ankündigung (`kind = ANNOUNCEMENT`) und je Terminänderung (`RESCHEDULE`). `sent_at` ist gleich dem gesetzten `announced_at` bzw. `rescheduled_at`. Zeitraum, Anzahl der WGs und Text halten den Stand beim Versand fest. `channels` ist kommagetrennt, aktuell nur `IN_APP`. `attachment_id` ist optional und verweist auf eine Datei, die die Sachbearbeitung selbst hochgeladen hat.
+
+```mermaid
+erDiagram
+    inspection_periods ||--o{ inspection_announcements : versand
+    users ||--o{ inspection_announcements : sendet
+    residences ||--o{ inspection_announcements : an
+    attachments |o--o{ inspection_announcements : anhang
+
+    inspection_announcements {
+        bigint id PK
+        bigint period_id FK
+        varchar kind
+        bigint sent_by FK
+        timestamptz sent_at
+        bigint residence_id FK
+        int flat_count
+        varchar channels
+        varchar message
+        bigint attachment_id FK "optional"
+        varchar attachment_name
+        date starts_on
+        date ends_on
+        time window_start
+        time window_end
+    }
+```
 
 Hibernate legt die Spalte im aktuellen H2-Schema mit `ddl-auto: create-drop` an. Für persistente Installationen braucht es eine abgestimmte Migration, die die nullable Spalte ergänzt und bestehende Zeiträume ohne Änderungsnachweis leer lässt.
 

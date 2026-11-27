@@ -3,3 +3,4 @@
 /.vscode
 /devdata/*
 !/devdata/.gitkeep
+/infrastructure/develop-vm.env

@@ -24,6 +24,10 @@ const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], p
 const unchangedAppointment = {
   id: 42, startsOn: '2026-12-07', endsOn: '2026-12-11', appointmentChanged: false, showInitialInspection: true,
 } satisfies UpcomingAppointment
+const unchangedDetails: AppointmentDetails = {
+  ...unchangedAppointment,
+  kind: 'INITIAL', display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00',
+}
 
 // The dashboard uses the detail view to show the time window of an announced inspection (#99).
 const DASHBOARD_APPOINTMENT_PATH = '/api/student/inspection-appointment?view=details'
@@ -71,9 +75,15 @@ beforeEach(async () => {
       if (studentInspectionFailure instanceof Error) throw studentInspectionFailure
       if (studentInspectionFailure !== null) return new Response(null, { status: studentInspectionFailure })
       if (!studentInspectionAppointment) return new Response(null, { status: 204 })
-      return Response.json(path.endsWith('?view=details')
-        ? { ...studentInspectionAppointment, display: 'UPCOMING', status: 'ANNOUNCED', windowStart: '09:00', windowEnd: '16:00', ...studentInspectionDetails }
-        : studentInspectionAppointment)
+      if (path === DASHBOARD_APPOINTMENT_PATH) {
+        const details: AppointmentDetails = {
+          ...unchangedDetails,
+          ...studentInspectionAppointment,
+          ...studentInspectionDetails,
+        }
+        return Response.json(details)
+      }
+      return Response.json(studentInspectionAppointment)
     }
     throw new Error(`Unexpected API call: ${path}`)
   })
@@ -161,6 +171,24 @@ it('shows the announced time window on the dashboard without the status timeline
   expect(card.queryByRole('button', { name: 'In Kalender übernehmen' })).toBeNull()
 })
 
+it('labels the same follow-up on the dashboard and the appointment route', async () => {
+  signedIn = student
+  studentInspectionAppointment = { ...unchangedAppointment, showInitialInspection: false }
+  studentInspectionDetails = { kind: 'FOLLOW_UP' }
+  const router = mount()
+
+  const dashboardCard = within(await screen.findByRole('region', { name: 'Nächste Kontrolle' }))
+  expect((await dashboardCard.findByText('Nachkontrolle')).className).toBe('chip process-badge')
+  expect(dashboardCard.queryByText('Erstkontrolle')).toBeNull()
+  fireEvent.click(dashboardCard.getByRole('link', { name: 'Details' }))
+
+  await screen.findByText('Angekündigt')
+  expect(router.state.location.pathname).toBe('/student/inspection/appointment')
+  const detailsCard = within(screen.getByRole('region', { name: 'Nächste Kontrolle' }))
+  expect(detailsCard.getByText('Nachkontrolle').className).toBe('chip process-badge')
+  expect(detailsCard.queryByText('Erstkontrolle')).toBeNull()
+})
+
 it('keeps showing a running inspection as announced on the dashboard', async () => {
   signedIn = student
   studentInspectionAppointment = unchangedAppointment
@@ -239,7 +267,7 @@ it.each([200, 401, 403, 500])('ignores a late student inspection HTTP %s after l
   expect(signal?.aborted).toBe(true)
   await act(async () => {
     resolve(status === 200
-      ? Response.json(unchangedAppointment)
+      ? Response.json(unchangedDetails)
       : new Response(null, { status }))
   })
 

@@ -63,9 +63,10 @@ public class StudentAppointmentDetailsService {
             ResidentStatus status, Display display) {
         var period = inspection.getPeriod();
         var rescheduled = period.getRescheduledAt() != null;
+        var kind = inspection.getRound() > 0 ? Kind.FOLLOW_UP : Kind.INITIAL;
         return new AppointmentDetails(inspection.getId(), period.getStartsOn(), period.getEndsOn(),
             rescheduled && today.isBefore(period.getStartsOn()), inspection.getRound() == 0 && !rescheduled,
-            time(period.getWindowStart()), time(period.getWindowEnd()), status, display);
+            time(period.getWindowStart()), time(period.getWindowEnd()), status, display, kind);
     }
 
     private static String time(LocalTime value) {
@@ -74,8 +75,9 @@ public class StudentAppointmentDetailsService {
 
     public enum ResidentStatus { ANNOUNCED, RESULT_AVAILABLE }
     public enum Display { UPCOMING, CURRENT, PAST }
+    public enum Kind { INITIAL, FOLLOW_UP }
 
     public record AppointmentDetails(Long id, LocalDate startsOn, LocalDate endsOn,
             boolean appointmentChanged, boolean showInitialInspection, String windowStart, String windowEnd,
-            ResidentStatus status, Display display) {}
+            ResidentStatus status, Display display, Kind kind) {}
 }

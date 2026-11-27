@@ -50,7 +50,9 @@ export default function InspectionAppointment({
         {!loading && !loadFailed && appointment && (
           appointment.appointmentChanged
             ? <span className="chip wr">{t('studentInspections.changed')}</span>
-            : appointment.showInitialInspection && <span className="chip inf">{t('studentResult.initial')}</span>
+            : detail?.kind === 'FOLLOW_UP'
+              ? <span className="chip process-badge">{t('studentResult.followUp')}</span>
+              : appointment.showInitialInspection && <span className="chip inf">{t('studentResult.initial')}</span>
         )}
       </div>
       {loading ? <LoadingPage /> : appointment ? (

@@ -2,7 +2,7 @@
 
 Studierende sehen den angekündigten Kontrollzeitraum ihrer WG auf der Startseite. Bei einem vorhandenen Termin führt „Details“ zur direkt aufrufbaren Detailseite `/student/inspection/appointment`. Mit `CHECKLIST_READ` steht daneben „Checkliste“ als direkter Link zu `/student/inspection/checklist`.
 
-**Stand:** Der US-15-Lesepfad einschließlich des Änderungshinweises ist implementiert. Die produktive Anbindung der Terminänderung über US-18 und die Integrationsprüfung mit US-01 stehen aus.
+**Stand:** Der US-15-Lesepfad einschließlich des Änderungshinweises ist implementiert. Die Sachbearbeitung speichert Ankündigungen und Terminänderungen über US-18. Die durchgängige Integrationsprüfung mit US-01 steht aus.
 
 ## Regeln für den bisherigen Abruf
 
@@ -24,7 +24,7 @@ Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabru
 
 | Ergebnis | Verhalten |
 | --- | --- |
-| `200 OK` mit `id`, `startsOn`, `endsOn`, `appointmentChanged` und `showInitialInspection` | Die Startseitenkarte zeigt den Zeitraum. In der Kopfzeile erscheint bei `appointmentChanged: true` das gelbe Label „Termin geändert“, sonst bei `showInitialInspection: true` das blaue Label „Erstkontrolle“. Ist beides `false`, erscheint kein Label. Das gilt auch für geänderte Zeiträume ab ihrem Beginn und unveränderte Nachkontrollen. |
+| `200 OK` mit `id`, `startsOn`, `endsOn`, `appointmentChanged` und `showInitialInspection` | Der Ergebnisreiter erkennt im Leerzustand, dass ein Termin angekündigt ist. Das Feld `kind` gehört zur Detailantwort. |
 | `204 No Content` | Die Karte zeigt „Keine Kontrolle angekündigt“. |
 | `401 Unauthorized` | Die bestehende Sitzungsbehandlung führt zum Login und erhält das Rückkehrziel. |
 | `403 Forbidden` | Die Rolle `STUDENT` fehlt. Das Frontend führt zu `/forbidden`. |
@@ -32,7 +32,7 @@ Die Startseite setzt eine Anmeldung voraus. Die Kontrollkarte und der Terminabru
 
 ## Anbindung an die Sachbearbeitung (US-18)
 
-Bei der erneuten Ankündigung eines bereits angekündigten Kontrollzeitraums mit tatsächlich geändertem Start- oder Enddatum setzt die Sachbearbeitung `InspectionPeriodEntity.rescheduledAt` auf den aktuellen Zeitpunkt. Das geschieht in derselben Transaktion wie die Speicherung des aktualisierten Zeitraums. Vor und bei der Erstankündigung bleibt der Wert leer. Unveränderte Kalendergrenzen lösen keine neue Markierung aus. Jede wirksame weitere Datumsänderung aktualisiert den Zeitpunkt.
+Bei einer Verschiebung eines bereits angekündigten Kontrollzeitraums setzt die Sachbearbeitung `InspectionPeriodEntity.rescheduledAt` auf den aktuellen Zeitpunkt. Der Schreibpfad akzeptiert Änderungen an Start, Ende oder Zeitfenster und speichert die Revision in derselben Transaktion. Vor und bei der Erstankündigung bleibt der Wert leer. Der Studierenden-Lesepfad wertet den Zeitpunkt weiterhin nach den oben genannten Regeln aus.
 
 Die vorhandene Spalte gehört zu `inspection_periods`. Hibernate erzeugt sie im aktuellen H2-Setup. Persistente Umgebungen benötigen eine abgestimmte Migration mit einer nullable Spalte `rescheduled_at`. [Datenmodell](../../architektur/datenmodell.md#kontrollplanung)
 
@@ -50,7 +50,7 @@ Auf `/student/inspection/appointment` exportiert „In Kalender übernehmen“ d
 
 ## Kontrollstatus auf der Terminseite (US-67)
 
-Nur der Reiter **Termin** ruft `GET /api/student/inspection-appointment?view=details` auf. Der Abruf ohne `view` bedient weiterhin die Startseite und den Leerzustand im Ergebnisreiter nach dem bisherigen Vertrag. `INFO_PAGE_READ` schaltet den unabhängig ladenden Abschnitt „Ablauf und Konsequenzen“ frei. Mit `CHECKLIST_READ` führt der Button auf der Terminkarte direkt zur Checkliste.
+Die **Startseite** und der Reiter **Termin** rufen `GET /api/student/inspection-appointment?view=details` auf. Die Startseite zeigt nur Termine mit `status: "ANNOUNCED"`. Der Abruf ohne `view` bedient weiterhin den Leerzustand im Ergebnisreiter. `INFO_PAGE_READ` schaltet den unabhängig ladenden Abschnitt „Ablauf und Konsequenzen“ frei. Mit `CHECKLIST_READ` führt der Button auf der Terminkarte direkt zur Checkliste.
 
 Die Detailansicht ermittelt die aktive WG serverseitig (Berliner Kalenderdatum, `validFrom` inklusiv und `validTo` exklusiv). Sie betrachtet nur Kontrollen dieser WG mit angekündigtem Zeitraum derselben Wohnanlage. Zuerst zählt bei offenen, noch gültigen Zeiträumen der früheste Beginn. Andernfalls zählt die jüngste Ankündigung, gemessen am Beginn des Kontrollzeitraums. Haben zwei relevante Kontrollen denselben Beginn, liefert die API keinen Treffer.
 
@@ -73,11 +73,24 @@ Ein maßgeblicher abgelaufener geplanter Termin, `FINALIZED` oder ein nicht sich
   "windowStart": "09:00",
   "windowEnd": "16:00",
   "status": "ANNOUNCED",
-  "display": "UPCOMING"
+  "display": "UPCOMING",
+  "kind": "INITIAL"
 }
 ```
 
-Die beiden Zeitgrenzen sind lokale Uhrzeiten (`HH:mm` oder `null`). Die Karte zeigt den Ankunftshinweis, wenn beide Werte gültig und aufsteigend sind und die Darstellung bevorstehend oder laufend ist. Vergangene Entwürfe zeigen „Kontrollzeitraum“, sichtbare Veröffentlichungen „Letzte Kontrolle“. Die vorhandenen Labels „Erstkontrolle“ und „Termin geändert“ folgen weiterhin den oben beschriebenen Regeln.
+Die Detailantwort enthält verpflichtend `kind` als `INITIAL` für `round == 0` oder `FOLLOW_UP` für `round > 0`. Die Kontrollart bezieht sich auf die ausgewählte Kontroll-ID und bleibt bei einer Terminverschiebung gleich.
+
+Die beiden Zeitgrenzen sind lokale Uhrzeiten (`HH:mm` oder `null`). Die Karte zeigt den Ankunftshinweis, wenn beide Werte gültig und aufsteigend sind und die Darstellung bevorstehend oder laufend ist. Vergangene Entwürfe zeigen „Kontrollzeitraum“, sichtbare Veröffentlichungen „Letzte Kontrolle“.
+
+Die gemeinsame Terminkarte zeigt höchstens ein Label. „Termin geändert“ hat Vorrang, danach folgen „Nachkontrolle“ und „Erstkontrolle“.
+
+| Termin | Label DE | Label EN | CSS-Klasse |
+| --- | --- | --- | --- |
+| Unveränderte Erstkontrolle | Erstkontrolle | Initial inspection | `chip inf` |
+| Unveränderte Nachkontrolle | Nachkontrolle | Follow-up inspection | `chip process-badge` |
+| Verschobene Erst- oder Nachkontrolle vor dem neuen Beginn | Termin geändert | Inspection date changed | `chip wr` |
+| Verschobene Erstkontrolle ab dem neuen Beginn | – | – | – |
+| Verschobene Nachkontrolle ab dem neuen Beginn | Nachkontrolle | Follow-up inspection | `chip process-badge` |
 
 Auf der Terminseite steht unter dem Zeitraum und dem optionalen Ankunftshinweis der Zeitstrahl mit „Angekündigt“ und „Ergebnis verfügbar“. Bei `ANNOUNCED` ist nur der erste Punkt farbig. Bei `RESULT_AVAILABLE` sind beide Punkte und die Verbindungslinie farbig. Die jeweils aktuelle Station ist fett hervorgehoben. Bei `status: null` entfällt der Zeitstrahl.
 
@@ -86,7 +99,9 @@ Die API liefert `200` mit der Detailansicht, `204` ohne darstellbare Kontrolle, 
 ## Tests
 
 - Im Verzeichnis `frontend` führt `npm test` die Format- und Kalender-Unit-Tests sowie die React- und Routingtests aus. `InspectionAppointment.test.tsx` prüft den Hinweis in DE/EN und den Download mit aktualisierten Kalendergrenzen. `StudentInspectionRoutes.test.tsx` prüft Start- und Detailseite, Details-Link, Änderungshinweis, Leerzustand, Rollen und Sitzungsablauf sowie die sichtbare personalisierte Begrüßung bei Terminfehlern.
-- Im Verzeichnis `backend` führt `./mvnw verify` beziehungsweise `.\mvnw.cmd verify` unter Windows die Backend-Suite aus. `ApplicationTests` prüft mit MockMvc und In-Memory-H2 unter anderem Zugriffsschutz, Terminauswahl und wiederholtes Seeding.
+- Im Verzeichnis `backend` führt `./mvnw verify` beziehungsweise `.\mvnw.cmd verify` unter Windows die Backend-Suite aus.
+- `StudentSampleDataTests` prüft als Seeder-Vertragstest das wiederholte Seeding der Beispielkontrolle für S-01. `StudentInspectionAppointmentTests` prüft mit MockMvc den Terminabruf ohne `view`-Parameter, einschließlich Terminauswahl, Mitgliedschaft und Zugriffsschutz. Die Termintests legen eigene Wohnanlagen, WGs, Konten, Mitgliedschaften und Kontrollen mit relativen Datumswerten an. Die Dev-Runner bleiben aktiv. Die Termintests verwenden weiterhin das aktuelle Kalenderdatum in `Europe/Berlin`. Beide Klassen verwenden getrennte In-Memory-H2-Datenbanken.
+- Gezielter Aufruf unter Windows mit `.\mvnw.cmd "-Dtest=StudentSampleDataTests,StudentInspectionAppointmentTests" test`. Unter macOS und Linux lautet der Aufruf `./mvnw -Dtest=StudentSampleDataTests,StudentInspectionAppointmentTests test`.
 - `StudentInspectionAppointmentIsolationTests` verwendet eine separate In-Memory-H2-Datenbank (`aume-us15-isolation`). Zwei Studierende in getrennten Sitzungen sehen jeweils nur den Termin ihrer eigenen WG, auch mit fremder WG-ID im Request. Gezielter Aufruf unter Windows: `.\mvnw.cmd "-Dtest=StudentInspectionAppointmentIsolationTests" test`. Unter macOS und Linux lautet der Aufruf `./mvnw -Dtest=StudentInspectionAppointmentIsolationTests test`.
 - Die Detailtests in derselben Backend-Klasse prüfen Statuswechsel, Zeitfenster, konkurrierende Termine, Nachkontrollen, Mitgliedschaft und Veröffentlichungsgrenzen. Die Frontend-Tests zur Karte und zu US-23 prüfen Statusdarstellung, direkte Navigation und unabhängige Ladevorgänge.
 
@@ -126,7 +141,7 @@ Die WG ergibt sich wie beim Termin aus der aktiven Mitgliedschaft der angemeldet
 
 ## Offen
 
-- Der produktive Schreibpfad für `rescheduledAt` gehört zur Anbindung über US-18. Die US-15-Tests setzen gezielt vorbereitete Daten ein. Ein vollständiger End-to-End-Nachweis über Änderung und erneute Ankündigung steht aus.
+- Die US-15-Tests setzen gezielt vorbereitete Daten ein. Ein vollständiger End-to-End-Nachweis über Änderung und erneute Ankündigung steht aus.
 - Der Reiter „Verlauf“ ist ein Platzhalter.
 - Die durchgängige Integrationsprüfung mit US-01 (WG-Beitritt und Austritt) steht aus. Termin- und Ergebnisabfrage verwenden bereits dasselbe Mitgliedschaftsmodell und dieselbe Gültigkeitssemantik. In der lokalen Demo liefert der Dev-Seed die Mitgliedschaft.
 - **Kontrollplanung.** Die fachliche Priorisierung gleichrangiger Termine ist noch abzustimmen.

@@ -1,0 +1,39 @@
+name: seezeit-develop
+
+services:
+  frontend:
+    image: ghcr.io/sybit-education/seezeit-portal-frontend:develop
+    pull_policy: always
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  backend:
+    image: ghcr.io/sybit-education/seezeit-portal-backend:develop
+    pull_policy: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  watchtower:
+    image: nickfedor/watchtower:1.24.2
+    restart: unless-stopped
+    env_file:
+      - path: ./develop-vm.env
+        required: false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./watchtower-notify.tmpl:/watchtower-notify.tmpl:ro
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_ROLLING_RESTART: "true"
+      WATCHTOWER_NOTIFICATION_REPORT: "true"
+      WATCHTOWER_NOTIFICATION_TEMPLATE_FILE: /watchtower-notify.tmpl
