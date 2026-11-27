@@ -44,6 +44,35 @@
   overflow-wrap: anywhere;
 }
 
+/* Ankündigung (US-18) */
+.announce-facts {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 12px;
+}
+
+.announce-facts > div {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr;
+  gap: 8px;
+}
+
+.announce-facts dt {
+  color: var(--muted, #66787A);
+}
+
+.announce-facts dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.planning-dialog textarea {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+}
+
 @media (max-width: 1240px) {
   .planning-grid {
     grid-template-columns: minmax(0, 1fr);

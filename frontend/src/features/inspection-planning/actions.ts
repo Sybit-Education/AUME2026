@@ -3,16 +3,22 @@ import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
 import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
-import { acceptCounter, createPeriod, updatePeriod, withdrawPeriod, type PeriodInput } from './api'
+import {
+  acceptCounter, announcePeriod, createPeriod, reschedulePeriod, updatePeriod, withdrawPeriod,
+  type AnnouncementInput, type PeriodInput,
+} from './api'
 
-export type PlanningIntent = 'create' | 'update' | 'accept' | 'withdraw'
+export type PlanningIntent = 'create' | 'update' | 'accept' | 'withdraw' | 'announce' | 'reschedule'
 
 export interface PlanningActionResult {
   intent: PlanningIntent
   error: ErrorKey
 }
 
-const saved: Record<PlanningIntent, string> = { create: 'created', update: 'updated', accept: 'accepted', withdraw: 'withdrawn' }
+const saved: Record<PlanningIntent, string> = {
+  create: 'created', update: 'updated', accept: 'accepted', withdraw: 'withdrawn', announce: 'announced', reschedule: 'rescheduled',
+}
+const intents = Object.keys(saved) as PlanningIntent[]
 
 function number(value: FormDataEntryValue | null): number | null {
   return typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : null
@@ -32,6 +38,16 @@ function periodInput(form: FormData): PeriodInput {
   }
 }
 
+// Den Anhang lädt der Dialog vorher hoch (uploadAttachment); hier kommt nur seine ID an.
+function announcementInput(form: FormData): AnnouncementInput {
+  const attachmentId = number(form.get('attachmentId'))
+  return {
+    message: text(form.get('message')) ?? '',
+    attachmentId,
+    attachmentName: attachmentId === null ? null : text(form.get('attachmentName')),
+  }
+}
+
 // Eine Action schützt der Leseloader nicht: Sitzung und Privileg werden hier selbst geprüft.
 export async function inspectionPlanningAction({ request }: ActionFunctionArgs): Promise<PlanningActionResult | Response> {
   const url = new URL(request.url)
@@ -42,7 +58,7 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
 
   const form = await request.formData()
   const value = form.get('intent')
-  const intent: PlanningIntent = value === 'update' || value === 'accept' || value === 'withdraw' ? value : 'create'
+  const intent: PlanningIntent = intents.find((candidate) => candidate === value) ?? 'create'
   const residenceId = number(form.get('residenceId'))
   const periodId = number(form.get('periodId'))
   const version = number(form.get('version'))
@@ -55,7 +71,11 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
       if (periodId === null || version === null) return { intent, error: 'errors.inspectionPlanningSave' }
       if (intent === 'update') await updatePeriod(periodId, periodInput(form), version, request.signal)
       else if (intent === 'accept') await acceptCounter(periodId, version, request.signal)
-      else await withdrawPeriod(periodId, version, request.signal)
+      else if (intent === 'announce') await announcePeriod(periodId, announcementInput(form), version, request.signal)
+      else if (intent === 'reschedule') {
+        const { startsOn, endsOn, windowStart, windowEnd } = periodInput(form)
+        await reschedulePeriod(periodId, { startsOn, endsOn, windowStart, windowEnd }, version, request.signal)
+      } else await withdrawPeriod(periodId, version, request.signal)
     }
   } catch (cause) {
     if (cause instanceof Response) throw cause
@@ -68,8 +88,7 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
   }
 
   const next = new URLSearchParams(url.search)
-  next.delete('edit')
-  next.delete('review')
+  for (const key of ['edit', 'review', 'announce', 'reschedule']) next.delete(key)
   next.set('saved', saved[intent])
   return redirect(`${url.pathname}?${next}`)
 }

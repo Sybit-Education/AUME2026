@@ -1,9 +1,13 @@
-import { useEffect, useId, useRef, useState, type PropsWithChildren } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Form, Link, useActionData, useLoaderData, useNavigate, useNavigation, useSearchParams } from 'react-router'
+import { Form, Link, useActionData, useLoaderData, useNavigate, useNavigation, useSearchParams, useSubmit } from 'react-router'
 import LoadingPage from '@/components/LoadingPage'
+import { errorKey, type ErrorKey } from '@/lib/errors'
 import type { PlanningActionResult } from './actions'
-import type { InspectionPeriod, PeriodStatus, PlanningData, ResidenceOption, StaffMember } from './api'
+import {
+  uploadAttachment, type AnnouncementDraft, type InspectionPeriod, type PeriodStatus, type PlanningData,
+  type ResidenceOption, type StaffMember,
+} from './api'
 import './inspection-planning.css'
 
 const statusChip: Record<PeriodStatus, string> = {
@@ -24,6 +28,9 @@ function formatWindow(start: string | null, end: string | null) {
   return start && end ? `${start.slice(0, 5)} – ${end.slice(0, 5)}` : '–'
 }
 
+// Dialoge stehen in der URL, damit Links (z. B. aus der Kontrollübersicht) sie direkt öffnen können.
+const NO_DIALOG = { edit: null, review: null, announce: null, reschedule: null }
+
 function urlWith(params: URLSearchParams, changes: Record<string, string | null>) {
   const next = new URLSearchParams(params)
   next.delete('saved')
@@ -43,10 +50,11 @@ interface PeriodDefaults {
   caretakerId: number | null
 }
 
+/** Ohne `caretakers` entfällt die Auswahl der Objektbetreuung (Terminänderung nach der Ankündigung). */
 function PeriodFields({ prefix, defaults, caretakers, caretakerKey }: {
   prefix: string
   defaults: PeriodDefaults
-  caretakers: StaffMember[]
+  caretakers?: StaffMember[]
   caretakerKey?: number
 }) {
   const { t } = useTranslation()
@@ -70,13 +78,15 @@ function PeriodFields({ prefix, defaults, caretakers, caretakerKey }: {
           <input id={`${prefix}-window-end`} name="windowEnd" type="time" defaultValue={defaults.windowEnd} />
         </div>
       </div>
-      <div className="fld">
-        <label htmlFor={`${prefix}-caretaker`}>{t('inspectionPlanning.caretaker')}</label>
-        <select key={caretakerKey} id={`${prefix}-caretaker`} name="caretakerId" required defaultValue={defaults.caretakerId ?? ''}>
-          {defaults.caretakerId === null && <option value="" disabled>{t('inspectionPlanning.chooseCaretaker')}</option>}
-          {caretakers.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
-        </select>
-      </div>
+      {caretakers && (
+        <div className="fld">
+          <label htmlFor={`${prefix}-caretaker`}>{t('inspectionPlanning.caretaker')}</label>
+          <select key={caretakerKey} id={`${prefix}-caretaker`} name="caretakerId" required defaultValue={defaults.caretakerId ?? ''}>
+            {defaults.caretakerId === null && <option value="" disabled>{t('inspectionPlanning.chooseCaretaker')}</option>}
+            {caretakers.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
+          </select>
+        </div>
+      )}
     </>
   )
 }
@@ -256,15 +266,172 @@ function WithdrawDialog({ period, onClose }: { period: InspectionPeriod; onClose
   )
 }
 
-function PeriodRow({ period, actionUrl, onWithdraw }: {
+function Facts({ rows }: { rows: [string, string][] }) {
+  return (
+    <dl className="announce-facts">
+      {rows.map(([term, value]) => (
+        <div key={term}><dt>{term}</dt><dd>{value}</dd></div>
+      ))}
+    </dl>
+  )
+}
+
+/**
+ * Zwei Schritte: Text verfassen, dann bestätigen. Der Anhang wird erst beim Senden hochgeladen, damit abgebrochene
+ * Ankündigungen keine Dateien hinterlassen; die Action bekommt nur seine ID.
+ */
+function AnnounceDialog({ period, draft, error, closeUrl, onClose }: {
   period: InspectionPeriod
-  actionUrl: string
+  draft: AnnouncementDraft
+  error?: PlanningActionResult
+  closeUrl: string
+  onClose: () => void
+}) {
+  const { t, i18n } = useTranslation()
+  const submit = useSubmit()
+  const saving = useNavigation().state === 'submitting'
+  const language = i18n.resolvedLanguage ?? 'de'
+  const [confirming, setConfirming] = useState(false)
+  const [message, setMessage] = useState(draft.message)
+  const [file, setFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<ErrorKey | null>(null)
+  // Nach einem abgelehnten Senden dieselbe Datei nicht erneut hochladen.
+  const uploaded = useRef<{ file: File; id: number } | null>(null)
+  const channels = draft.channels.map((channel) => t(`inspectionPlanning.channel.${channel}`)).join(', ')
+  const name = period.residenceName
+
+  async function send(event: FormEvent) {
+    event.preventDefault()
+    setUploadError(null)
+    let attachmentId: number | null = null
+    if (file) {
+      if (uploaded.current?.file !== file) {
+        setUploading(true)
+        try {
+          uploaded.current = { file, id: await uploadAttachment(file, new AbortController().signal) }
+        } catch (cause) {
+          setUploadError(errorKey(cause, 'errors.announceAttachment'))
+          return
+        } finally {
+          setUploading(false)
+        }
+      }
+      attachmentId = uploaded.current.id
+    }
+    void submit({
+      intent: 'announce', periodId: period.id, version: period.version, message,
+      attachmentId: attachmentId ?? '', attachmentName: file?.name ?? '',
+    }, { method: 'post' })
+  }
+
+  const shownError = uploadError ?? error?.error
+  return (
+    <Dialog title={t('inspectionPlanning.announceTitle', { name })} onClose={onClose}>
+      <form aria-label={t('inspectionPlanning.announceFor', { name })} onSubmit={(event) => { void send(event) }}>
+        <div hidden={confirming}>
+          <Facts rows={[
+            [t('inspectionPlanning.recipients'), t('inspectionPlanning.recipientsValue', { count: draft.flatCount })],
+            [t('inspectionPlanning.period'), `${formatRange(period.startsOn, period.endsOn, language)} · ${formatWindow(period.windowStart, period.windowEnd)}`],
+            [t('inspectionPlanning.channels'), channels],
+          ]} />
+          <div className="fld">
+            <label htmlFor="announce-message">{t('inspectionPlanning.message')}</label>
+            <textarea id="announce-message" rows={11} maxLength={5000} value={message}
+              onChange={(event) => setMessage(event.target.value)} />
+            <div className="hint">{t('inspectionPlanning.messageHint')}</div>
+          </div>
+          <div className="fld">
+            <label htmlFor="announce-attachment">{t('inspectionPlanning.attachment')}</label>
+            <input id="announce-attachment" type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+            <div className="hint">{t('inspectionPlanning.attachmentHint')}</div>
+          </div>
+        </div>
+        {confirming && (
+          <>
+            <p>{t('inspectionPlanning.confirmIntro')}</p>
+            <Facts rows={[
+              [t('inspectionPlanning.residence'), name],
+              [t('inspectionPlanning.flatsLabel'), String(draft.flatCount)],
+              [t('inspectionPlanning.channels'), channels],
+              [t('inspectionPlanning.attachmentLabel'), file?.name ?? t('inspectionPlanning.noAttachment')],
+            ]} />
+          </>
+        )}
+        {shownError && <p className="err" role="alert">{t(shownError)}</p>}
+        <div className="ft">
+          {/* Eigene keys: Sonst wird „Weiter“ beim Klick zum Submit-Button umgebaut und sendet sofort ab. */}
+          {confirming ? (
+            <>
+              <button className="btn gh" type="button" onClick={() => setConfirming(false)}>{t('inspectionPlanning.back')}</button>
+              <button key="send" className="btn" type="submit" disabled={saving || uploading}>{t('inspectionPlanning.sendAnnouncement')}</button>
+            </>
+          ) : (
+            <>
+              <Link className="btn gh" to={closeUrl} replace>{t('inspectionPlanning.cancel')}</Link>
+              <button key="next" className="btn" type="button" disabled={message.trim() === ''} onClick={() => setConfirming(true)}>
+                {t('inspectionPlanning.next')}
+              </button>
+            </>
+          )}
+        </div>
+      </form>
+    </Dialog>
+  )
+}
+
+function RescheduleDialog({ period, error, closeUrl, onClose }: {
+  period: InspectionPeriod
+  error?: PlanningActionResult
+  closeUrl: string
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const saving = useNavigation().state === 'submitting'
+  const name = period.residenceName
+  return (
+    <Dialog title={t('inspectionPlanning.rescheduleTitle', { name })} onClose={onClose}>
+      <Form method="post" aria-label={t('inspectionPlanning.rescheduleFor', { name })}>
+        <input type="hidden" name="intent" value="reschedule" />
+        <input type="hidden" name="periodId" value={period.id} />
+        <input type="hidden" name="version" value={period.version} />
+        <PeriodFields
+          prefix={`reschedule-${period.id}`}
+          defaults={{
+            startsOn: period.startsOn,
+            endsOn: period.endsOn,
+            windowStart: period.windowStart?.slice(0, 5) ?? '',
+            windowEnd: period.windowEnd?.slice(0, 5) ?? '',
+            caretakerId: null,
+          }}
+        />
+        <p className="hint">{t('inspectionPlanning.rescheduleHint', { count: period.flatCount })}</p>
+        {error && <p className="err" role="alert">{t(error.error)}</p>}
+        <div className="ft">
+          <Link className="btn gh" to={closeUrl} replace>{t('inspectionPlanning.cancel')}</Link>
+          <button className="btn" type="submit" disabled={saving}>{t('inspectionPlanning.rescheduleSend')}</button>
+        </div>
+      </Form>
+    </Dialog>
+  )
+}
+
+interface RowUrls {
+  action: string
+  announce: string
+  reschedule: string
+}
+
+function PeriodRow({ period, urls, onWithdraw }: {
+  period: InspectionPeriod
+  urls: RowUrls
   onWithdraw: (id: number) => void
 }) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'de'
   const announced = period.announcedAt !== null
   const counter = period.counter
+  const name = period.residenceName
   return (
     <tr>
       <td>
@@ -280,18 +447,32 @@ function PeriodRow({ period, actionUrl, onWithdraw }: {
       <td>{period.caretaker?.name ?? <span className="mut">{t('inspectionPlanning.noCaretaker')}</span>}</td>
       <td>
         {announced
-          ? <span className="chip t">{t('inspectionPlanning.announced')}</span>
+          // Gleiche Farbe wie „Angekündigt“: Für die Sachbearbeitung ist nach einer Terminänderung nichts mehr offen.
+          ? <span className="chip t">
+              {t(period.rescheduledAt ? 'inspectionPlanning.rescheduled' : 'inspectionPlanning.announced')}
+            </span>
           : <span className={`chip ${statusChip[period.status]}`}>{t(`inspectionPlanning.status.${period.status}`)}</span>}
       </td>
       <td>
-        {!announced && (
+        {announced ? (
           <div className="planning-actions">
-            <Link className={counter ? 'btn sm' : 'btn gh sm'} to={actionUrl}
-              aria-label={t(counter ? 'inspectionPlanning.reviewFor' : 'inspectionPlanning.editFor', { name: period.residenceName })}>
+            <Link className="btn gh sm" to={urls.reschedule} aria-label={t('inspectionPlanning.rescheduleFor', { name })}>
+              {t('inspectionPlanning.reschedule')}
+            </Link>
+          </div>
+        ) : (
+          <div className="planning-actions">
+            {period.status === 'AGREED' && (
+              <Link className="btn sm" to={urls.announce} aria-label={t('inspectionPlanning.announceFor', { name })}>
+                {t('inspectionPlanning.announce')}
+              </Link>
+            )}
+            <Link className={counter ? 'btn sm' : 'btn gh sm'} to={urls.action}
+              aria-label={t(counter ? 'inspectionPlanning.reviewFor' : 'inspectionPlanning.editFor', { name })}>
               {t(counter ? 'inspectionPlanning.review' : 'inspectionPlanning.edit')}
             </Link>
             <button className="btn gh sm" type="button" title={t('inspectionPlanning.withdraw')}
-              aria-label={t('inspectionPlanning.withdrawFor', { name: period.residenceName })}
+              aria-label={t('inspectionPlanning.withdrawFor', { name })}
               onClick={() => onWithdraw(period.id)}>
               <span aria-hidden="true">🗑</span>
             </button>
@@ -317,16 +498,28 @@ export default function InspectionPlanningPage() {
     ?? options.residences.find((option) => option.flatCount > option.flatsWithOpenInspection.length)
     ?? options.residences[0]
   const saved = params.get('saved')
-  const savedKey = saved === 'created' || saved === 'updated' || saved === 'accepted' || saved === 'withdrawn' ? saved : null
+  const savedKeys = ['created', 'updated', 'accepted', 'withdrawn', 'announced', 'rescheduled'] as const
+  const savedKey = savedKeys.find((key) => key === saved) ?? null
   const page = periods.page
-  const openPeriod = (id: string | null) => periods.content.find((period) => String(period.id) === id && period.announcedAt === null)
-  const editing = openPeriod(params.get('edit'))
-  const reviewing = openPeriod(params.get('review'))
+  const byParam = (name: string) => periods.content.find((period) => String(period.id) === params.get(name))
+  const openPeriod = (name: string) => {
+    const period = byParam(name)
+    return period?.announcedAt === null ? period : undefined
+  }
+  const editing = openPeriod('edit')
+  const reviewing = openPeriod('review')
+  const announcing = openPeriod('announce')
+  const draft = announcing?.status === 'AGREED' && data.draft?.periodId === announcing.id ? data.draft : undefined
+  const rescheduling = byParam('reschedule')
   const withdrawing = periods.content.find((period) => period.id === withdrawId && period.announcedAt === null)
-  const closeUrl = urlWith(params, { edit: null, review: null })
+  const closeUrl = urlWith(params, NO_DIALOG)
   const closeDialog = () => { void navigate(closeUrl, { replace: true }) }
-  const editUrl = (id: number) => urlWith(params, { edit: String(id), review: null })
-  const reviewUrl = (id: number) => urlWith(params, { review: String(id), edit: null })
+  const dialogUrl = (name: keyof typeof NO_DIALOG, id: number) => urlWith(params, { ...NO_DIALOG, [name]: String(id) })
+  const rowUrls = (period: InspectionPeriod): RowUrls => ({
+    action: dialogUrl(period.counter ? 'review' : 'edit', period.id),
+    announce: dialogUrl('announce', period.id),
+    reschedule: dialogUrl('reschedule', period.id),
+  })
 
   function chooseResidence(id: string) {
     const next = new URLSearchParams(params)
@@ -370,12 +563,7 @@ export default function InspectionPlanningPage() {
                 </thead>
                 <tbody>
                   {periods.content.map((period) => (
-                    <PeriodRow
-                      key={period.id}
-                      period={period}
-                      actionUrl={period.counter ? reviewUrl(period.id) : editUrl(period.id)}
-                      onWithdraw={setWithdrawId}
-                    />
+                    <PeriodRow key={period.id} period={period} urls={rowUrls(period)} onWithdraw={setWithdrawId} />
                   ))}
                 </tbody>
               </table>
@@ -384,9 +572,9 @@ export default function InspectionPlanningPage() {
           {page.totalPages > 1 && (
             <nav className="acts" aria-label={t('pages.pagination')}>
               <Link className={`btn sec${page.number === 0 ? ' disabled' : ''}`} aria-disabled={page.number === 0}
-                to={urlWith(params, { page: String(Math.max(page.number - 1, 0)), edit: null, review: null })}>{t('pages.previous')}</Link>
+                to={urlWith(params, { ...NO_DIALOG, page: String(Math.max(page.number - 1, 0)) })}>{t('pages.previous')}</Link>
               <Link className={`btn sec${page.number + 1 >= page.totalPages ? ' disabled' : ''}`} aria-disabled={page.number + 1 >= page.totalPages}
-                to={urlWith(params, { page: String(Math.min(page.number + 1, page.totalPages - 1)), edit: null, review: null })}>{t('pages.next')}</Link>
+                to={urlWith(params, { ...NO_DIALOG, page: String(Math.min(page.number + 1, page.totalPages - 1)) })}>{t('pages.next')}</Link>
             </nav>
           )}
         </section>
@@ -407,7 +595,26 @@ export default function InspectionPlanningPage() {
           counter={reviewing.counter}
           error={result?.intent === 'accept' ? result : undefined}
           closeUrl={closeUrl}
-          editUrl={editUrl(reviewing.id)}
+          editUrl={dialogUrl('edit', reviewing.id)}
+          onClose={closeDialog}
+        />
+      )}
+      {announcing && draft && (
+        <AnnounceDialog
+          key={announcing.id}
+          period={announcing}
+          draft={draft}
+          error={result?.intent === 'announce' ? result : undefined}
+          closeUrl={closeUrl}
+          onClose={closeDialog}
+        />
+      )}
+      {rescheduling?.announcedAt && (
+        <RescheduleDialog
+          key={rescheduling.id}
+          period={rescheduling}
+          error={result?.intent === 'reschedule' ? result : undefined}
+          closeUrl={closeUrl}
           onClose={closeDialog}
         />
       )}
