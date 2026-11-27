@@ -1,6 +1,6 @@
 import { api } from '@/lib/auth/client'
 import { requireOk } from '@/lib/auth/response'
-import { UiError } from '@/lib/errors'
+import { UiError, type ErrorKey } from '@/lib/errors'
 
 export type InspectionStatus = 'PLANNED' | 'DRAFT' | 'FINALIZED' | 'PUBLISHED'
 export type OverallResult = 'PASSED' | 'FAILED'
@@ -155,8 +155,20 @@ async function change(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: un
     const error = (await raw.json().catch(() => null)) as { code?: string } | null
     throw new UiError(error?.code === 'period_not_started' ? 'errors.inspectionNotStarted' : 'errors.inspectionConflict')
   }
+  // 400 bei Fotos: eigene Meldung je Grund statt „konnte nicht gespeichert werden“ (US-35).
+  if (raw.status === 400) {
+    const error = (await raw.clone().json().catch(() => null)) as { code?: string } | null
+    const key = error?.code ? photoErrors[error.code] : undefined
+    if (key) throw new UiError(key)
+  }
   const response = requireOk(raw, 'errors.inspectionSave')
   return (await response.json()) as Inspection
+}
+
+const photoErrors: Record<string, ErrorKey> = {
+  too_many_photos: 'errors.photoTooMany',
+  not_an_image: 'errors.photoType',
+  photo_needs_defect: 'errors.photoNeedsDefect',
 }
 
 export const startInspection = (id: number) => change(`/api/inspections/${id}/start`, 'POST')
@@ -177,13 +189,19 @@ export const finalizeInspection = (id: number, overallResult: OverallResult) =>
 /** Höchstzahl der Fotos je Mangel, wie im Backend (US-35). */
 export const MAX_PHOTOS = 5
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024
+/** Erlaubte Formate, wie im Backend: nur Rasterbilder, kein SVG. */
+export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+
+export function isPhotoFile(file: File): boolean {
+  return PHOTO_TYPES.includes(file.type.toLowerCase())
+}
 
 /**
  * Lädt ein Foto in die Entwicklungsablage (`POST /api/attachments`, #79) und verknüpft es mit dem Mangel des
  * Kriteriums (US-35).
  */
 export async function addPhoto(id: number, criterionId: number, file: File): Promise<Inspection> {
-  if (!file.type.startsWith('image/')) throw new UiError('errors.photoType')
+  if (!isPhotoFile(file)) throw new UiError('errors.photoType')
   if (file.size > MAX_PHOTO_BYTES) throw new UiError('errors.photoTooLarge')
   const form = new FormData()
   form.append('file', file)

@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
@@ -54,6 +56,8 @@ class FindingPhotoTests {
         mvc.perform(get(photoPath(draft, photoId)).session(caretaker))
             .andExpect(status().isOk())
             .andExpect(content().contentType("image/jpeg"))
+            .andExpect(header().string("Content-Security-Policy", "sandbox; default-src 'none'"))
+            .andExpect(header().string("X-Content-Type-Options", "nosniff"))
             .andExpect(content().bytes(JPEG));
         mvc.perform(get(photoPath(draft, photoId)).session(login("caretaker2")))
             .andExpect(status().isOk())
@@ -79,6 +83,11 @@ class FindingPhotoTests {
 
         addPhoto(caretaker, draft, upload(login("caretaker2"), "image/jpeg", JPEG)).andExpect(status().isNotFound());
         addPhoto(caretaker, draft, upload(caretaker, "application/pdf", JPEG)).andExpect(status().isBadRequest());
+        // SVG kann Skripte enthalten und ist trotz image/ kein erlaubtes Foto.
+        addPhoto(caretaker, draft, upload(caretaker, "image/svg+xml", "<svg><script>alert(1)</script></svg>"
+            .getBytes(StandardCharsets.UTF_8))).andExpect(status().isBadRequest());
+        // Groß geschriebene Typen gelten wie klein geschriebene.
+        addPhoto(caretaker, draft, upload(caretaker, "IMAGE/PNG", JPEG)).andExpect(status().isOk());
         long attachment = upload(caretaker, "image/jpeg", JPEG);
         addPhoto(caretaker, draft, attachment).andExpect(status().isOk());
         addPhoto(caretaker, draft, attachment).andExpect(status().isConflict());
@@ -100,7 +109,8 @@ class FindingPhotoTests {
         for (int i = 0; i < InspectionService.MAX_PHOTOS; i++) {
             addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG)).andExpect(status().isOk());
         }
-        addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG)).andExpect(status().isBadRequest());
+        addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG)).andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("too_many_photos"));
     }
 
     @Test

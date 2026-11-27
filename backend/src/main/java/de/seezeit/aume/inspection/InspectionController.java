@@ -50,7 +50,6 @@ public class InspectionController {
         return inspections.clear(principal.getName(), id, criterionId);
     }
 
-    /** "Bereich in Ordnung" mit {@code area}, "Alles in Ordnung" ohne. */
     /** Foto zum Mangel (US-35): {@code attachmentId} aus {@code POST /api/attachments}. */
     @PostMapping("/{id}/findings/{criterionId}/photos")
     public InspectionView addPhoto(Principal principal, @PathVariable Long id, @PathVariable Long criterionId,
@@ -64,6 +63,7 @@ public class InspectionController {
         return inspections.removePhoto(principal.getName(), id, criterionId, photoId);
     }
 
+    /** "Bereich in Ordnung" mit {@code area}, "Alles in Ordnung" ohne. */
     @PostMapping("/{id}/mark-ok")
     public InspectionView markOk(Principal principal, @PathVariable Long id,
             @RequestBody(required = false) MarkOkRequest request) {
@@ -86,6 +86,11 @@ public class InspectionController {
     @ExceptionHandler(InspectionService.PeriodNotStartedException.class)
     public ResponseEntity<ErrorView> periodNotStarted() {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorView("period_not_started"));
+    }
+
+    @ExceptionHandler(InspectionService.PhotoRejectedException.class)
+    public ResponseEntity<ErrorView> photoRejected(InspectionService.PhotoRejectedException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorView(e.code()));
     }
 
     public record ErrorView(String code) {}

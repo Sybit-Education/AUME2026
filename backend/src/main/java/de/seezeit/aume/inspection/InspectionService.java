@@ -6,7 +6,9 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,11 @@ import de.seezeit.aume.user.UserEntity;
 public class InspectionService {
     /** Höchstzahl der Fotos je Mangel (US-35). */
     static final int MAX_PHOTOS = 5;
+    /**
+     * Erlaubte Fotoformate: nur Rasterbilder. SVG kann Skripte enthalten und ist deshalb ausgeschlossen,
+     * denn Fotos sehen alle, die für die Anlage zuständig sind.
+     */
+    static final Set<String> PHOTO_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/heic", "image/heif");
     private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
 
     private final InspectionRepository inspections;
@@ -191,21 +198,27 @@ public class InspectionService {
         var inspection = requireDraft(user, id);
         var finding = findings.findByInspectionIdAndCriterionId(inspection.getId(), criterionId)
             .filter(candidate -> candidate.getRating() != Rating.OK)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "photo_needs_defect"));
+            .orElseThrow(() -> new PhotoRejectedException("photo_needs_defect"));
         var attachment = attachments.findById(attachmentId == null ? -1L : attachmentId)
             .filter(candidate -> candidate.getUploadedBy().getId().equals(user.getId()))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "attachment_not_found"));
-        if (!attachment.getContentType().toLowerCase().startsWith("image/")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "not_an_image");
+        if (!isPhotoType(attachment.getContentType())) {
+            throw new PhotoRejectedException("not_an_image");
         }
         if (photos.existsByAttachment_Id(attachment.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "attachment_in_use");
         }
         if (photos.countByFinding_Id(finding.getId()) >= MAX_PHOTOS) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "too_many_photos");
+            throw new PhotoRejectedException("too_many_photos");
         }
         photos.save(new FindingPhotoEntity(finding, attachment));
         return toView(inspection);
+    }
+
+    /** Rasterbild aus {@link #PHOTO_TYPES}; Parameter wie {@code ; charset=...} zählen nicht mit. */
+    static boolean isPhotoType(String contentType) {
+        if (contentType == null) return false;
+        return PHOTO_TYPES.contains(contentType.split(";", 2)[0].strip().toLowerCase(Locale.ROOT));
     }
 
     /** Entfernt die Verknüpfung eines Fotos mit dem Mangel; die Datei selbst bleibt in der Ablage. */
@@ -294,6 +307,20 @@ public class InspectionService {
 
     /** Die Kontrolle gehört zu einem Zeitraum, der noch nicht begonnen hat. */
     public static class PeriodNotStartedException extends RuntimeException {}
+
+    /** Foto passt nicht zum Mangel (400); {@code code} zeigt die Oberfläche als eigene Meldung an. */
+    public static class PhotoRejectedException extends RuntimeException {
+        private final String code;
+
+        PhotoRejectedException(String code) {
+            super(code);
+            this.code = code;
+        }
+
+        public String code() {
+            return code;
+        }
+    }
 
     /** Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. */
     public record InspectionSummary(Long id, String flatLabel, String residenceName, Status status, int round,

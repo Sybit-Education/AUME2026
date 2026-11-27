@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Criterion, Finding, Severity } from './api'
+import { isPhotoFile, MAX_PHOTOS, type Criterion, type Finding, type Severity } from './api'
+import { AddPhotoTile, PhotoRemoveButton } from './FindingPhotos'
 import Select from '@/components/Select'
 
 interface DefectDialogProps {
@@ -20,6 +21,8 @@ export default function DefectDialog({ area, criteria, findings, busy, onCancel,
   // Vorauswahl auf ein Kriterium ohne Mangel, damit ein bestehender Mangel nicht versehentlich ersetzt wird.
   const [criterionId, setCriterionId] = useState((criteria.find((criterion) => !defectOf(criterion.id)) ?? criteria[0])?.id)
   const existing = defectOf(criterionId)
+  // Ersetzt der Dialog einen Mangel, der schon die Höchstzahl an Fotos hat, gibt es kein weiteres Foto.
+  const photoAllowed = (existing?.photoIds ?? []).length < MAX_PHOTOS
   const [severity, setSeverity] = useState<Severity>('LIGHT')
   const [note, setNote] = useState('')
   const [missing, setMissing] = useState(false)
@@ -31,7 +34,7 @@ export default function DefectDialog({ area, criteria, findings, busy, onCancel,
 
   function choosePhoto(file?: File) {
     if (!file) return
-    if (!file.type.startsWith('image/')) {
+    if (!isPhotoFile(file)) {
       setPhotoError(true)
       return
     }
@@ -73,21 +76,17 @@ export default function DefectDialog({ area, criteria, findings, busy, onCancel,
             onChange={(event) => { setNote(event.target.value); setMissing(false) }} />
           {missing && <p className="err" role="alert">{t('inspections.noteRequired')}</p>}
         </div>
-        <div className="fld">
+        {photoAllowed && <div className="fld">
           <span className="lbl" id="defect-photo-label">{t('inspections.photo.optional')}</span>
-          <label className="up" aria-labelledby="defect-photo-label">
-            📷 {t('inspections.photo.choose')}
-            <input type="file" accept="image/*" capture="environment" hidden disabled={busy}
-              onChange={(event) => { choosePhoto(event.target.files?.[0]); event.target.value = '' }} />
-          </label>
+          {!photo && <AddPhotoTile label={t('inspections.photo.choose')} disabled={busy} onChoose={choosePhoto} />}
           {photo && (
-            <div className="ins-photo-preview">
+            <figure className="ins-photo ins-photo-preview">
               <img className="thumb" src={photo.url} alt={t('inspections.photo.selected', { name: photo.file.name })} />
-              <button type="button" className="btn gh sm" disabled={busy} onClick={() => setPhoto(null)}>{t('inspections.photo.remove')}</button>
-            </div>
+              <PhotoRemoveButton label={t('inspections.photo.remove')} disabled={busy} onClick={() => setPhoto(null)} />
+            </figure>
           )}
           {photoError && <p className="err" role="alert">{t('errors.photoType')}</p>}
-        </div>
+        </div>}
         <div className="ft">
           <button className="btn gh" disabled={busy} onClick={onCancel}>{t('inspections.cancel')}</button>
           <button className="btn" disabled={busy} onClick={save}>{t('inspections.saveDefect')}</button>
