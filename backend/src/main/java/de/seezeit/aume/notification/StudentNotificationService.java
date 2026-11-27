@@ -2,6 +2,7 @@ package de.seezeit.aume.notification;
 
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.notification.InspectionNotificationEntity.Kind;
+import de.seezeit.aume.planning.InspectionAnnouncementEntity;
 import de.seezeit.aume.standard.ChecklistPdfService;
 import de.seezeit.aume.standard.ChecklistPdfService.ChecklistPdf;
 import java.time.Clock;
@@ -73,15 +74,17 @@ public class StudentNotificationService {
 
     public record NotificationView(Long id, Kind type, Instant createdAt, Instant occurredAt, Instant readAt,
             String flatLabel, LocalDate startsOn, LocalDate endsOn, String windowStart, String windowEnd,
-            boolean hasChecklistPdf) {
+            boolean hasChecklistPdf, InspectionAnnouncementEntity.Kind announcementKind, String announcementMessage) {
         private static NotificationView from(NotificationEntity notification, boolean hasChecklistPdf) {
             var message = notification.getInspectionNotification();
+            var sourceAnnouncement = message.getSourceAnnouncement();
             var occurredAt = message.getKind() == Kind.ANNOUNCEMENT
                 ? message.getAnnouncementRevisionAt() : notification.getCreatedAt();
             return new NotificationView(notification.getId(), message.getKind(), notification.getCreatedAt(),
                 occurredAt, notification.getReadAt(), message.getInspection().getFlat().getLabel(),
                 message.getStartsOn(), message.getEndsOn(), format(message.getWindowStart()),
-                format(message.getWindowEnd()), hasChecklistPdf);
+                format(message.getWindowEnd()), hasChecklistPdf, message.getAnnouncementKind(),
+                sourceAnnouncement == null ? null : sourceAnnouncement.getMessage());
         }
 
         private static String format(LocalTime time) {

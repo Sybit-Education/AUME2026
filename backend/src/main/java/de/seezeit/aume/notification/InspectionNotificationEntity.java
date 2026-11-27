@@ -1,6 +1,7 @@
 package de.seezeit.aume.notification;
 
 import de.seezeit.aume.inspection.InspectionEntity;
+import de.seezeit.aume.planning.InspectionAnnouncementEntity;
 import de.seezeit.aume.standard.ChecklistVersionEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -36,6 +37,14 @@ public class InspectionNotificationEntity {
     @Column(nullable = false, updatable = false)
     private Instant announcementRevisionAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_announcement_id", updatable = false)
+    private InspectionAnnouncementEntity sourceAnnouncement;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "announcement_kind", updatable = false, length = 20)
+    private InspectionAnnouncementEntity.Kind announcementKind;
+
     @Column(nullable = false, updatable = false)
     private LocalDate startsOn;
 
@@ -59,12 +68,25 @@ public class InspectionNotificationEntity {
     public InspectionNotificationEntity(InspectionEntity inspection, Kind kind, Instant announcementRevisionAt,
             LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
             ChecklistVersionEntity checklistVersion) {
+        this(inspection, kind, announcementRevisionAt, startsOn, endsOn, windowStart, windowEnd, checklistVersion,
+            null, null);
+    }
+
+    InspectionNotificationEntity(InspectionEntity inspection, Kind kind, Instant announcementRevisionAt,
+            LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
+            ChecklistVersionEntity checklistVersion, InspectionAnnouncementEntity sourceAnnouncement,
+            InspectionAnnouncementEntity.Kind announcementKind) {
         if (kind != Kind.ANNOUNCEMENT && checklistVersion != null) {
             throw new IllegalArgumentException("Only announcements can reference a checklist version");
+        }
+        if (kind != Kind.ANNOUNCEMENT && (sourceAnnouncement != null || announcementKind != null)) {
+            throw new IllegalArgumentException("Only announcements can reference an official dispatch or its kind");
         }
         this.inspection = Objects.requireNonNull(inspection);
         this.kind = Objects.requireNonNull(kind);
         this.announcementRevisionAt = Objects.requireNonNull(announcementRevisionAt);
+        this.sourceAnnouncement = sourceAnnouncement;
+        this.announcementKind = announcementKind;
         this.startsOn = Objects.requireNonNull(startsOn);
         this.endsOn = Objects.requireNonNull(endsOn);
         this.windowStart = windowStart;

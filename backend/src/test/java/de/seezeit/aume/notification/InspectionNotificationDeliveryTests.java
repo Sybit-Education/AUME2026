@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import de.seezeit.aume.inspection.InspectionEntity;
 import de.seezeit.aume.notification.InspectionNotificationEntity.Kind;
+import de.seezeit.aume.planning.InspectionAnnouncementEntity;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.MembershipEntity;
@@ -104,6 +105,10 @@ class InspectionNotificationDeliveryTests {
         var revision = message(RESCHEDULED, Kind.ANNOUNCEMENT);
         assertThat(original.getStartsOn()).isEqualTo(FIRST_START);
         assertThat(revision.getStartsOn()).isEqualTo(FIRST_START.plusDays(1));
+        assertThat(original.getAnnouncementKind()).isEqualTo(InspectionAnnouncementEntity.Kind.ANNOUNCEMENT);
+        assertThat(revision.getAnnouncementKind()).isEqualTo(InspectionAnnouncementEntity.Kind.RESCHEDULE);
+        assertThat(original.getSourceAnnouncement()).isNull();
+        assertThat(revision.getSourceAnnouncement()).isNull();
         assertThat(original.getChecklistVersion().getId()).isEqualTo(originalChecklist.getId());
         assertThat(revision.getChecklistVersion().getId()).isEqualTo(newChecklist.getId());
         assertThat(notifications.findVisibleInspectionNotifications(student.getId(), FIRST_START, PAGE)).hasSize(2);
@@ -126,7 +131,10 @@ class InspectionNotificationDeliveryTests {
         now("2040-12-01T23:00:00Z");
         delivery.deliver(inspection.getId(), Kind.REMINDER_7_DAYS);
         delivery.deliver(inspection.getId(), Kind.REMINDER_7_DAYS);
-        assertThat(message(RESCHEDULED, Kind.REMINDER_7_DAYS).getChecklistVersion()).isNull();
+        var weekReminder = message(RESCHEDULED, Kind.REMINDER_7_DAYS);
+        assertThat(weekReminder.getChecklistVersion()).isNull();
+        assertThat(weekReminder.getAnnouncementKind()).isNull();
+        assertThat(weekReminder.getSourceAnnouncement()).isNull();
         assertMissing(ANNOUNCED, Kind.REMINDER_7_DAYS);
         assertThat(notifications.findVisibleInspectionNotifications(student.getId(), FIRST_START.minusDays(6), PAGE))
             .hasSize(1);
@@ -136,7 +144,10 @@ class InspectionNotificationDeliveryTests {
         persist(new MembershipEntity(flat, newMember, FIRST_START));
         now("2040-12-08T11:00:00Z");
         delivery.deliver(inspection.getId(), Kind.REMINDER_1_DAY);
-        assertThat(message(RESCHEDULED, Kind.REMINDER_1_DAY).getChecklistVersion()).isNull();
+        var dayReminder = message(RESCHEDULED, Kind.REMINDER_1_DAY);
+        assertThat(dayReminder.getChecklistVersion()).isNull();
+        assertThat(dayReminder.getAnnouncementKind()).isNull();
+        assertThat(dayReminder.getSourceAnnouncement()).isNull();
         assertThat(notifications.findVisibleInspectionNotifications(newMember.getId(), FIRST_START, PAGE)).hasSize(1);
         assertThat(notifications.findVisibleInspectionNotifications(student.getId(), FIRST_START, PAGE)).isEmpty();
     }

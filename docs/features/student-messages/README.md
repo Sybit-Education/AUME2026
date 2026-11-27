@@ -4,7 +4,9 @@
 
 Das Notification-Modul startet den ersten Scan nach 15 Sekunden. Zwischen zwei Scans liegt eine feste Pause von 15 Sekunden nach Ende des vorherigen Durchlaufs. Die Planung muss keinen NotificationService aufrufen. Ein Zeitraum wird durch `announcedAt` als offiziell angekündigt erkannt. Für die aktuelle Terminrevision zählt `announcedAt` oder ein neueres `rescheduledAt`.
 
-Bewusste Architekturentscheidung: Der Scheduler verarbeitet den jeweils aktuell gespeicherten offiziellen Kontrollzeitraum. Zwischen zwei Läufen überschriebene Revisionen werden weder rekonstruiert noch nachträglich zugestellt. Bereits erzeugte Nachrichten behalten ihren damaligen Zeitraum. Für den Integrationsbetrieb setzt der Scheduler auf die Revisionsdaten aus US-18. Die produktive Ankündigung durch die Sachbearbeitung ist im Basisstand noch offen.
+Der Scheduler verarbeitet den jeweils aktuell gespeicherten offiziellen Kontrollzeitraum aus US-18. Zwischen zwei Läufen überschriebene Revisionen werden weder rekonstruiert noch nachträglich zugestellt. Bereits erzeugte Nachrichten behalten ihren damaligen Zeitraum.
+
+Bei einer neuen Ankündigung wird einmalig nach dem offiziellen Versandeintrag gesucht. Zeitraum-ID, `sentAt` und Art müssen zur ausgewählten Revision passen. Bei genau einem Treffer speichert die gemeinsame Nachricht die unveränderliche Referenz. Fehlt ein eindeutiger Eintrag, bleibt die Referenz leer und das Postfach kann den Standardtext verwenden. Bei Mehrdeutigkeit wird nur der technische Revisionsbezug protokolliert. Eine reine Uhrzeitänderung zählt wie im Schreibpfad der Sachbearbeitung als `RESCHEDULE`. Frühere Zustellungen behalten ihren ursprünglichen Inhalt. Mit der Sachbearbeitung ist abzustimmen, wie lange referenzierte Versandeinträge und deren Anhänge unverändert erhalten bleiben müssen.
 
 | Art | Fälligkeit | Checkliste |
 | --- | --- | --- |
@@ -41,11 +43,15 @@ Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cach
   "endsOn": "2026-12-11",
   "windowStart": "09:00",
   "windowEnd": "16:00",
-  "hasChecklistPdf": true
+  "hasChecklistPdf": true,
+  "announcementKind": "ANNOUNCEMENT",
+  "announcementMessage": "Liebe WG,\n\nbitte räumt den Bereich unter der Spüle frei."
 }
 ```
 
 Die ID bezeichnet die persönliche Zustellung. `type` ist `ANNOUNCEMENT`, `REMINDER_7_DAYS` oder `REMINDER_1_DAY`. `occurredAt` ist bei Ankündigungen der offizielle Revisionszeitpunkt und bei Erinnerungen der Erstellungszeitpunkt der Zustellung. Uhrzeiten im Format `HH:mm` sind optional und werden bei fehlender Grenze als `null` ausgegeben.
+
+`announcementKind` ist bei neu zugestellten Ankündigungen `ANNOUNCEMENT` oder `RESCHEDULE`, auch wenn der Versandeintrag fehlt. `announcementMessage` enthält den unveränderten Text aus der referenzierten Revision, sofern vorhanden. Bei Erinnerungen und bei zuvor zugestellten Nachrichten sind beide Felder `null`. Fehlt ein eindeutiger Versandeintrag, ist nur `announcementMessage` leer. Das erlaubt den bestehenden Standardtext als Fallback.
 
 `hasChecklistPdf` gibt an, ob die aufrufende Person eine referenzierte, veröffentlichte oder zurückgezogene Checklistenfassung dieser Ankündigung herunterladen darf. Der Download prüft die Rechte und die Sichtbarkeit erneut. Er liefert `application/pdf`, `Content-Disposition: attachment`, `Content-Language` und `Cache-Control: no-store`. Der Dateiname lautet `Checkliste_Sauberkeit.pdf` oder `Cleanliness_Checklist.pdf`, abhängig von `Accept-Language`. Fehlende englische Übersetzungen fallen wie in der interaktiven Checkliste auf Deutsch zurück. Ein Download ändert den Lesestatus nicht.
 
@@ -58,6 +64,8 @@ Studierende öffnen das Postfach über die Glocke im gemeinsamen Header oder üb
 Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelesenen Zustellungen „Neu“. Erst beim bewussten Öffnen wird eine ungelesene Nachricht als gelesen markiert. Nach erfolgreichem PUT entfällt „Neu“. Bei einem Fehler lässt sich die Markierung in der geöffneten Karte erneut versuchen.
 
 Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
+
+Die neuen Felder stehen in der API zur Verfügung. Die Nachrichtenkarten verwenden weiterhin die bisherigen Texte und Labels. Die Anzeige des Originaltexts, die Kennzeichnung in der Karte und der Download individueller Dateien folgen in separaten Schritten.
 
 ## Glocke und Ungelesen-Zähler
 
@@ -72,6 +80,8 @@ Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen fü
 ## Prüfungen
 
 `InspectionNotificationDeliveryTests` ruft den Zustelldienst mit kontrollierter Uhr und eigenen Daten auf. `InspectionNotificationSchedulerTests` ruft einzelne Scans direkt auf. Beide Tests sind vom automatischen Scheduler-Lauf unabhängig.
+
+`StudentAnnouncementIntegrationTests` plant und bestätigt eigene Kontrollzeiträume über die Personal-API, kündigt sie offiziell an und verschiebt sie. Der Test prüft Revisionszuordnung und historische Inhalte nach erneutem Lesen aus der Datenbank, unbeteiligte WGs, mehrdeutige Versandeinträge, wiederholte Scans sowie beide Erinnerungen. Für die Scans wird die Benachrichtigungsuhr kontrolliert.
 
 `StudentNotificationTests` prüft die Postfach-API mit eigener H2-Datenbank, kontrollierter Uhr und ersetztem Scheduler. Die Fälle umfassen Pagination, Rollen, WG-Wechsel, Wiedereintritt und paralleles Markieren.
 

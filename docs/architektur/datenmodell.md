@@ -413,6 +413,7 @@ erDiagram
     users ||--o{ notifications : hinweis
     inspections ||--o{ inspection_notifications : kontrollnachricht
     checklist_versions o|--o{ inspection_notifications : anhangsfassung
+    inspection_announcements o|--o{ inspection_notifications : versandeintrag
     inspection_notifications o|--o{ notifications : zustellung
 
     notification_preferences {
@@ -436,6 +437,8 @@ erDiagram
         bigint inspection_id FK
         varchar kind
         timestamptz announcement_revision_at
+        bigint source_announcement_id FK "optional"
+        varchar announcement_kind "optional"
         date starts_on
         date ends_on
         time window_start
@@ -460,6 +463,7 @@ erDiagram
 `outbox_jobs.status`: `PENDING`, `DONE`, `FAILED`.
 
 - Eine gemeinsame Nachricht ist je Kontrolle, Ankündigungsrevision und Nachrichtenart eindeutig. Die Arten sind `ANNOUNCEMENT`, `REMINDER_7_DAYS` und `REMINDER_1_DAY`. Pro gemeinsamer Nachricht ist höchstens eine Zustellung je Person möglich.
+- Bei einer neuen Ankündigung speichert `announcement_kind` die Art der Terminrevision (`ANNOUNCEMENT` oder `RESCHEDULE`). Der unveränderliche Verweis `source_announcement_id` wird nur gesetzt, wenn Zeitraum-ID, Revisionszeitpunkt und Art genau einen offiziellen Versandeintrag ergeben. Beide Felder bleiben bei Erinnerungen und bereits zuvor zugestellten Nachrichten leer. Text und Datei werden über den Versandeintrag referenziert. Die Aufbewahrung referenzierter Einträge und ihrer Anhänge muss mit der Sachbearbeitung abgestimmt werden, damit der ursprüngliche Inhalt verfügbar bleibt. Die Auslieferung individueller Dateien an Studierende steht noch aus.
 - Zeitraum und Zeitfenster halten den Stand der Nachricht fest. Ausschließlich Ankündigungen können auf eine Checklistenfassung verweisen. Das PDF wird beim berechtigten Download aus dieser Fassung erzeugt. Referenzierte veröffentlichte Fassungen einschließlich ihrer Kriterien und Übersetzungen müssen für spätere Downloads unverändert erhalten bleiben. Fassungen mit Status `RETIRED` bleiben als Anhang verfügbar. Beide Erinnerungen führen gemäß der abgestimmten Abweichung von US-16 (#20) zur interaktiven Checkliste.
 - Die Postfachabfragen für Liste, Einzeleintrag und Ungelesen-Zähler berücksichtigen dieselbe Empfänger-ID und die aktive Mitgliedschaft in der WG der Kontrolle. `validFrom` gilt inklusive, `validTo` exklusiv. Die konkrete Zugriffspolitik beim Wiedereinzug steht aus. Die Abfragen allein würden bei einer erneuten aktiven Mitgliedschaft in derselben WG alte Zustellungen wieder sichtbar machen.
 - Die lesende Kontrollquelle liefert angekündigte geplante Kontrollen und Entwürfe mit noch nicht abgelaufenem Zeitraum. Für die aktuelle Revision gilt `announcedAt` oder ein neueres `rescheduledAt`. Der Scheduler verarbeitet ausschließlich die noch gespeicherte offizielle Revision. Zwischen zwei Läufen überschriebene Revisionen werden bewusst nicht rekonstruiert. Bereits gespeicherte Nachrichten behalten ihren Zeitraum. Der Umgang mit Absagen bleibt offen.
