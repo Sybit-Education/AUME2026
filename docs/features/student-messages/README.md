@@ -25,6 +25,7 @@ Alle Endpunkte setzen die Rolle `STUDENT` voraus. Sichtbar sind persönliche Kon
 | `GET /api/student/notifications?page=0&size=20` | `200` mit `content` und `page` (`size`, `number`, `totalElements`, `totalPages`). Offset-Pagination mit Größe 1 bis 100 und fester Reihenfolge nach `createdAt` und Zustell-ID, jeweils absteigend. Ungültige Seitenparameter ergeben `400`. |
 | `GET /api/student/notifications/unread-count` | `200` mit `{ "count": 2 }`. Gezählt werden ausschließlich sichtbare Zustellungen ohne `readAt`. |
 | `PUT /api/student/notifications/{id}/read` | `204` für sichtbare Zustellungen, einschließlich bereits gelesener. `404` für fehlende, fremde und nicht sichtbare Zustellungen. Der erste Gelesen-Zeitpunkt bleibt bei weiteren Aufrufen erhalten. |
+| `GET /api/student/notifications/{id}/checklist.pdf` | `200` mit dem PDF einer sichtbaren Ankündigung und einer veröffentlichten oder zurückgezogenen Fassung. Zusätzlich ist `CHECKLIST_READ` erforderlich. Ohne dieses Recht gilt `403`. Fehlende oder unsichtbare Zustellungen und nicht verfügbare Anhänge ergeben `404`. |
 
 Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cache-Control: no-store` ausgeliefert. Ohne Sitzung gilt `401`, ohne Rolle `STUDENT` gilt `403`. Schreibende Dev-Sitzungsaufrufe verwenden den bestehenden CSRF-Schutz.
 
@@ -39,18 +40,35 @@ Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cach
   "startsOn": "2026-12-07",
   "endsOn": "2026-12-11",
   "windowStart": "09:00",
-  "windowEnd": "16:00"
+  "windowEnd": "16:00",
+  "hasChecklistPdf": true
 }
 ```
 
 Die ID bezeichnet die persönliche Zustellung. `type` ist `ANNOUNCEMENT`, `REMINDER_7_DAYS` oder `REMINDER_1_DAY`. `occurredAt` ist bei Ankündigungen der offizielle Revisionszeitpunkt und bei Erinnerungen der Erstellungszeitpunkt der Zustellung. Uhrzeiten im Format `HH:mm` sind optional und werden bei fehlender Grenze als `null` ausgegeben.
 
+`hasChecklistPdf` gibt an, ob die aufrufende Person eine referenzierte, veröffentlichte oder zurückgezogene Checklistenfassung dieser Ankündigung herunterladen darf. Der Download prüft die Rechte und die Sichtbarkeit erneut. Er liefert `application/pdf`, `Content-Disposition: attachment`, `Content-Language` und `Cache-Control: no-store`. Der Dateiname lautet `Checkliste_Sauberkeit.pdf` oder `Cleanliness_Checklist.pdf`, abhängig von `Accept-Language`. Fehlende englische Übersetzungen fallen wie in der interaktiven Checkliste auf Deutsch zurück. Ein Download ändert den Lesestatus nicht.
+
+Das A4-PDF wird beim Abruf im Arbeitsspeicher aus der referenzierten Checklistenfassung erzeugt. Es enthält Fassungsnummer, Bereiche und Kriterien mit Beschreibungen und leeren Kästchen. Eine neue Checklistenfassung ändert die Auswahl für einen älteren Anhang nicht. Für reproduzierbare Anhänge müssen historische veröffentlichte Fassungen einschließlich Kriterien und Übersetzungen erhalten und unverändert bleiben. Diese Integrationsvoraussetzung gilt auch für Fassungen mit Status `RETIRED`.
+
+## Nachrichtenansicht
+
+Studierende öffnen das Postfach über **Mehr → Kommunikation → Nachrichten** (`/student/messages`). „Mehr“ bleibt aktiv. Die Route verwendet die bestehende Anmeldung und ruft persönliche Kontrollnachrichten seitenweise in der Reihenfolge des Backends ab.
+
+Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelesenen Zustellungen „Neu“. Erst beim bewussten Öffnen wird eine ungelesene Nachricht als gelesen markiert. Nach erfolgreichem PUT entfällt „Neu“. Bei einem Fehler lässt sich die Markierung in der geöffneten Karte erneut versuchen.
+
+Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste. Die aktualisierte Nachrichtenliste und die erfolgreiche Leseaktion sind die Anknüpfungspunkte für den Ungelesen-Zähler in Phase 6.
+
 ## Abweichung vom Arbeitsstand zu US-16 (#20)
 
-Ausschließlich die Ankündigung soll einen PDF-Download anbieten. Beide Erinnerungen führen zur bestehenden interaktiven Checkliste. Das PDF soll beim autorisierten Download aus der referenzierten Fassung erzeugt werden. PDF-Download und Oberfläche folgen in späteren Phasen. Die Verfügbarkeit historischer Fassungen ist noch zu klären.
+Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen führen zur bestehenden interaktiven Checkliste.
 
 ## Prüfungen
 
 `InspectionNotificationDeliveryTests` ruft den Zustelldienst mit kontrollierter Uhr und eigenen Daten auf. `InspectionNotificationSchedulerTests` ruft einzelne Scans direkt auf. Beide Tests sind vom automatischen Scheduler-Lauf unabhängig.
 
 `StudentNotificationTests` prüft die Postfach-API mit eigener H2-Datenbank, kontrollierter Uhr und ersetztem Scheduler. Die Fälle umfassen Pagination, Rollen, WG-Wechsel, Wiedereintritt und paralleles Markieren.
+
+`StudentNotificationPdfTests` prüft Downloadrechte, Dateinamen und Header, Fassungsbindung nach Veröffentlichung einer neuen Checkliste, Lokalisierung und Seitenumbrüche sowie den unveränderten Lesestatus.
+
+`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN-Download und Lesestatus über den App-Router.

@@ -74,6 +74,9 @@
     "wgFlatFull": "Diese WG ist bereits voll belegt.",
     "plan": "Der Putzplan konnte nicht geladen werden.",
     "planSave": "Die Änderung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+    "studentMessages": "Die Nachrichten konnten nicht geladen werden.",
+    "studentMessageRead": "Die Nachricht konnte nicht als gelesen markiert werden.",
+    "studentMessageDownload": "Die Checkliste konnte nicht heruntergeladen werden.",
     "planTitle": "Bitte gib eine Aufgabe mit höchstens 120 Zeichen ein.",
     "planAssignee": "Bitte wähle eine Person aus deiner WG aus.",
     "planNotAssignee": "Nur die zugeteilte Person kann diese Aufgabe abhaken.",
@@ -319,6 +322,9 @@
     "consequenceLink": "Kontrollablauf und Konsequenzen ansehen"
   },
   "more": {
+    "communication": "Kommunikation",
+    "messages": "Nachrichten",
+    "messagesHint": "Ankündigungen und Erinnerungen",
     "title": "Mehr",
     "account": "Konto und Datenschutz",
     "settings": "Einstellungen",
@@ -327,6 +333,26 @@
     "wg": "Meine WG",
     "wgHint": "Beitreten, Mitbewohnende, Austritt",
     "back": "Mehr"
+  },
+  "studentMessages": {
+    "announcement": "Ankündigung",
+    "reminder": "Erinnerung",
+    "new": "Neu",
+    "announcementTitle": "Sauberkeitskontrolle {{period}}",
+    "announcementText": "Die Sauberkeitskontrolle für WG {{flat}} findet im Zeitraum {{period}} statt.",
+    "reminderWeekTitle": "Kontrollzeitraum beginnt in 7 Tagen",
+    "reminderTomorrowTitle": "Kontrollzeitraum beginnt morgen",
+    "reminderText": "Euer Kontrollzeitraum: {{period}}.",
+    "prepareAnnouncement": "Bitte geht vorher die Checkliste durch.",
+    "prepareReminder": "Geht zur Vorbereitung gemeinsam die Checkliste durch.",
+    "attachmentHint": "Die Checkliste liegt als Anhang bei.",
+    "download": "{{file}} herunterladen",
+    "openChecklist": "Zur Checkliste",
+    "retryRead": "Erneut als gelesen markieren",
+    "empty": "Keine Nachrichten vorhanden.",
+    "pagination": "Nachrichtenseiten",
+    "previous": "Vorherige Seite",
+    "next": "Nächste Seite"
   },
   "settings": {
     "title": "Einstellungen",

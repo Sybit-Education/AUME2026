@@ -10,7 +10,10 @@ export default function MorePage() {
   const { user } = useAuth()
   const allowed = (privilege?: string) => !privilege || (user?.privileges.includes(privilege) ?? false)
   const groups = moreGroups
-    .map((group) => ({ ...group, items: group.items.filter((item) => allowed(item.privilege)) }))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => allowed(item.privilege) && (!item.role || user?.roles.includes(item.role))),
+    }))
     .filter((group) => group.items.length > 0)
 
   return (

@@ -23,6 +23,7 @@ import { standardsRoutes } from '@/features/standards/routes'
 import { checklistRoutes } from '@/features/checklist/routes'
 import { inspectionProcessRoutes } from '@/features/inspection-process/routes'
 import { moreRoutes } from '@/features/more/routes'
+import { studentMessagesRoutes } from '@/features/student-messages/routes'
 import { wgRoutes } from '@/features/wg/routes'
 import { planRoutes } from '@/features/putzplan/routes'
 
@@ -74,6 +75,7 @@ export function createAppRoutes(): RouteObject[] {
               ...planRoutes,
               ...wgRoutes,
               ...moreRoutes,
+              ...studentMessagesRoutes,
             ],
           },
           ...residenceRoutes,

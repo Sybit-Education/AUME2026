@@ -44,6 +44,10 @@ Für alle Seiten der Studierenden-App gelten dieselben Regeln (`frontend/src/app
 
 Die Regeln gelten nur innerhalb von `.st-wrap`. Die Seiten für Objektbetreuung und Sachbearbeitung bleiben unverändert.
 
+## Nachrichten
+
+Unter **Mehr → Kommunikation → Nachrichten** erreichen Studierende ihre Ankündigungen und Erinnerungen. „Mehr“ bleibt als unterer Tab aktiv. Die Nachrichten verwenden die gewählte Sprache für Texte, Datumsdarstellung und den PDF-Download. [In-App-Kontrollnachrichten](../student-messages/README.md)
+
 ## Sprache (US-26)
 
 Studierende wählen die Sprache unter **Mehr → Einstellungen → Sprache** (`/student/settings`). In der Studierenden-Ansicht gibt es deshalb keine Sprachauswahl im Kopfbereich mehr. Die Schaltflächen nutzen die gemeinsame i18next-Instanz (`lib/i18n.ts`): Die Auswahl wird unter `aume.language` gespeichert, gilt sofort für alle Texte und bleibt nach dem Neuladen erhalten. Das Layout lädt nach dem Wechsel die Daten der Seite neu, damit auch Texte aus dem Backend wechseln.
