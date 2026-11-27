@@ -91,9 +91,6 @@
 .ins-previous[open] > summary::after {
   transform:rotate(-90deg);
 }
-.ins-previous > summary h3 {
-  display:inline;
-}
 /* Hinweis ohne frühere Kontrollen unter der Überschrift, nicht daneben */
 .ins-previous > summary .ins-previous-sub {
   grid-column:1;

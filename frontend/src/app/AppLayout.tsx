@@ -26,9 +26,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
     Boolean(matchPath({ path: item.to, end: item.to === '/' }, pathname))
     && !item.inactiveWithin?.some((pattern) => matchPath(pattern, pathname))
   const allowed = (privilege?: string) => !privilege || auth.user!.privileges.includes(privilege)
-  // Wohnanlagen: nur die Sachbearbeitung (mit RESIDENCE_ASSIGN_STAFF) sieht den Reiter, die Objektbetreuung nicht.
-  const hiddenByRole = (role?: string) => Boolean(role && auth.user!.roles.includes(role)
-    && !auth.user!.privileges.includes('RESIDENCE_ASSIGN_STAFF'))
   // Titel und Zurück-Ziel der Kopfleiste kommen aus der tiefsten Route mit `handle.title`.
   const page = useMatches().map((match) => match.handle as PageHandle | undefined)
     .filter((handle) => handle?.title).at(-1)
@@ -57,7 +54,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         <h1 className="brand">{t('app.name')}</h1>
         {auth.user && !studentView && (
           <nav className="seg" aria-label={t('navigation.main')}>
-            {navigation.filter((item) => allowed(item.privilege) && !hiddenByRole(item.hiddenForRole)).map((item) => (
+            {navigation.filter((item) => allowed(item.privilege) && (item.visibleFor?.(auth.user!) ?? true)).map((item) => (
               <Link key={item.to} to={item.to} className={mainActive(item) ? 'on' : undefined}
                 aria-current={mainActive(item) ? 'page' : undefined}>
                 {t(item.label)}

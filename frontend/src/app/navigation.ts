@@ -1,5 +1,6 @@
 import type de from '@/locales/de.json'
 import type { NavIconName } from '@/components/NavIcon'
+import type { LoggedInUser } from '@/lib/auth/client'
 import { residenceNavigation } from '@/features/residences/routes'
 import { inspectionPlanningNavigation } from '@/features/inspection-planning/routes'
 import { inspectionHistoryNavigation, inspectionNavigation } from '@/features/inspections/routes'
@@ -10,8 +11,8 @@ type NavigationItem = {
   to: string
   label: `navigation.${keyof typeof de.navigation}`
   privilege?: string
-  /** Für diese Rolle ausgeblendet, sofern sie das Recht nicht über eine weitere Rolle hat. */
-  hiddenForRole?: string
+  /** Zusätzliche Bedingung neben dem Privileg, z. B. Wohnanlagen nicht für die Objektbetreuung. */
+  visibleFor?: (user: LoggedInUser) => boolean
   /** Adressmuster unterhalb von {@code to}, unter denen der Reiter nicht markiert ist (dort gilt ein eigener). */
   inactiveWithin?: readonly string[]
 }

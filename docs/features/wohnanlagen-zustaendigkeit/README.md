@@ -9,6 +9,8 @@ Die Sachbearbeitung sieht ihre Wohnanlagen mit WG-Nummern, Objektbetreuung und V
 - Betreuung ist Pflicht, Vertretung optional. Beide müssen Nutzer vom Typ `CARETAKER` und verschiedene Personen sein.
 - Ändern ersetzt Betreuung und Vertretung vollständig (löschen, dann neu anlegen, damit ein Tausch nicht an der Eindeutigkeit `(user_id, residence_id)` scheitert). Die `CLERK`-Zuordnung bleibt dabei unberührt.
 
+Im Frontend gibt es den Reiter **Wohnanlagen** nur für die Sachbearbeitung. Die Objektbetreuung sieht ihn nicht und bekommt bei `/residences` „Zugriff nicht erlaubt“; ihre Anlagen stehen im Profil (Icon oben rechts, `/profile`). Das Profil gibt es umgekehrt nur für die Objektbetreuung.
+
 ## API
 
 | Methode und Pfad | Privileg | Hinweis |
