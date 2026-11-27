@@ -451,7 +451,7 @@
     "standards": "Sauberkeitsstandards",
     "important": "Wichtig",
     "empty": "Noch keine Informationen.",
-    "germanOnly": "Seezeit stellt diese Texte nur auf Deutsch bereit."
+    "germanFallback": "Für diesen Abschnitt ist derzeit nur der deutsche Text verfügbar."
   },
   "profile": {
     "account": "Mein Profil",

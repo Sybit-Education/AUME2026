@@ -110,13 +110,13 @@ Unterhalb der Kontrollkarte auf `/student/inspection/appointment` erklärt **Abl
 
 Die Überschrift und die drei aufklappbaren Bereiche stehen in einer gemeinsamen umrandeten Karte. Die Akkordeons behalten ihre farbigen Köpfe, Pfeile und `aria-expanded`.
 
-| Bereich | Feld aus `GET /api/info-pages` | Darstellung |
+| Bereich | Felder aus `GET /api/info-pages` (Deutsch / Englisch) | Darstellung |
 | --- | --- | --- |
-| So läuft die Kontrolle ab | `process` | zugeklappt |
-| Was passiert bei Mängeln? | `consequences` | hervorgehoben in weichem Rot (Warnfarben `--warn-*`), Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
-| Sauberkeitsstandards | `standards` | zugeklappt |
+| So läuft die Kontrolle ab | `process` / `processEn` | zugeklappt |
+| Was passiert bei Mängeln? | `consequences` / `consequencesEn` | hervorgehoben in weichem Rot (Warnfarben `--warn-*`), Kennzeichnung „Wichtig“, startet aufgeklappt; Sätze mit Kosten (Kosten, €, Gebühr …) sind zusätzlich farbig und fett markiert |
+| Sauberkeitsstandards | `standards` / `standardsEn` | zugeklappt |
 
-Die Texte pflegt die Sachbearbeitung unter **Informationen** (`/standards/info`). Sie sind reiner Text: Jede Zeile wird ein eigener Absatz. Ist ein Text leer, erscheint „Noch keine Informationen.“ Die Texte gibt es nur auf Deutsch. In der englischen Oberfläche steht deshalb ein kurzer Hinweis darüber.
+Die Texte liefert die API als Klartext. Jede Zeile wird ein eigener Absatz. Die Ansicht zeigt die ausgewählte Sprache und aktualisiert die geladenen Texte beim Sprachwechsel. Fehlt in der englischen Ansicht die Übersetzung eines Abschnitts oder ist sie leer, erscheint dort der deutsche Text, sofern vorhanden, mit einem Hinweis im jeweiligen Abschnitt. Texte aus ausschließlich Leerzeichen gelten als leer. Ist kein Text für die Anzeige verfügbar, erscheint der lokalisierte Leerzustand „Noch keine Informationen.“
 
 Das Feature liegt in `frontend/src/features/inspection-process/` und hat einen eigenen Abruf der API, ohne Import aus `features/standards`.
 

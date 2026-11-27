@@ -24,6 +24,9 @@ const info = {
   process: '1. Ihr bekommt eine Ankündigung.\n2. Die Objektbetreuung prüft die Gemeinschaftsflächen.',
   consequences: 'Bei Mängeln gibt es eine Nachkontrolle. Die Kosten einer Reinigungsfirma trägt die WG.',
   standards: 'Die Standards gelten für alle Wohnanlagen gleich.',
+  processEn: '1. You will receive an announcement.\n2. The caretaker checks the common areas.',
+  consequencesEn: 'A follow-up inspection may be needed. The flat covers the cleaning costs.',
+  standardsEn: 'The standards are the same for all residences.',
   updatedAt: '2026-11-20T10:00:00Z',
 }
 let signedIn: LoggedInUser | null
@@ -131,16 +134,52 @@ it('shows "Noch keine Informationen" for empty texts', async () => {
   expect(screen.getByText('Gleich für alle.')).toBeDefined()
 })
 
-it('shows the page in English and notes that the texts are German only', async () => {
+it('shows the English backend texts in all three sections', async () => {
   await i18n.changeLanguage('en')
   mount('/student/inspection/process')
-  await screen.findByRole('button', { name: /How the inspection works/ })
-  for (const name of [/How the inspection works/, /What happens if issues are found\?/, /Cleanliness standards/]) {
-    expect(section(name)).toBeDefined()
-  }
+  const processSection = await screen.findByRole('button', { name: /How the inspection works/ })
+  fireEvent.click(processSection)
+  fireEvent.click(section(/Cleanliness standards/))
   expect(within(section(/What happens if issues are found\?/)).getByText('Important')).toBeDefined()
-  expect(screen.getByText('Seezeit provides these texts in German only.')).toBeDefined()
+  expect(screen.getByText('1. You will receive an announcement.').tagName).toBe('P')
+  expect(screen.getByText('2. The caretaker checks the common areas.').tagName).toBe('P')
+  expect(screen.getByText('The flat covers the cleaning costs.').tagName).toBe('STRONG')
+  expect(screen.getByText(info.standardsEn)).toBeDefined()
+  expect(screen.queryByText('Seezeit provides these texts in German only.')).toBeNull()
+  expect(screen.queryByText('This section is currently available in German only.')).toBeNull()
   expect(screen.queryByRole('link', { name: /Back to the checklist/ })).toBeNull()
+})
+
+it.each([undefined, null, '', '  '])('falls back per section when processEn is %j', async (processEn) => {
+  await i18n.changeLanguage('en')
+  infoResponse = () => Response.json({ ...info, processEn, consequences: '', standards: '', standardsEn: '' })
+  mount(appointmentPath)
+  fireEvent.click(await screen.findByRole('button', { name: /How the inspection works/ }))
+  fireEvent.click(section(/Cleanliness standards/))
+
+  const processSection = screen.getByRole('region', { name: /How the inspection works/ })
+  const germanParagraph = within(processSection).getByText('1. Ihr bekommt eine Ankündigung.')
+  expect(germanParagraph.getAttribute('lang')).toBe('de')
+  expect(within(processSection).getByText('This section is currently available in German only.')).toBeDefined()
+  expect(screen.getAllByText('This section is currently available in German only.')).toHaveLength(1)
+  expect(screen.getByText('The flat covers the cleaning costs.')).toBeDefined()
+  expect(within(screen.getByRole('region', { name: /Cleanliness standards/ }))
+    .getByText('No information yet.')).toBeDefined()
+})
+
+it('switches the loaded texts with the language and preserves the open section', async () => {
+  mount(appointmentPath)
+  fireEvent.click(await screen.findByRole('button', { name: /So läuft die Kontrolle ab/ }))
+  expect(screen.getByText('1. Ihr bekommt eine Ankündigung.')).toBeDefined()
+
+  await act(async () => { await i18n.changeLanguage('en') })
+  expect((await screen.findByRole('button', { name: /How the inspection works/ })).getAttribute('aria-expanded')).toBe('true')
+  expect(screen.getByText('1. You will receive an announcement.')).toBeDefined()
+  expect(screen.queryByText('1. Ihr bekommt eine Ankündigung.')).toBeNull()
+
+  await act(async () => { await i18n.changeLanguage('de') })
+  expect((await screen.findByRole('button', { name: /So läuft die Kontrolle ab/ })).getAttribute('aria-expanded')).toBe('true')
+  expect(screen.getByText('1. Ihr bekommt eine Ankündigung.')).toBeDefined()
 })
 
 it.each([403, 500])('keeps the appointment state when the info request returns %s', async (status) => {

@@ -4,7 +4,7 @@ import LoadingPage from '@/components/LoadingPage'
 import type { InspectionInfo } from './api'
 import './inspection-process.css'
 
-type SectionKey = keyof InspectionInfo
+type SectionKey = 'process' | 'consequences' | 'standards'
 
 /** Reihenfolge der Bereiche; „Konsequenzen“ ist hervorgehoben und startet aufgeklappt. */
 const sections: { key: SectionKey; important?: boolean }[] = [
@@ -24,25 +24,36 @@ export default function InspectionProcessPage({
   info, loadFailed,
 }: { info?: InspectionInfo; loadFailed?: boolean }) {
   const { t, i18n } = useTranslation()
+  const english = i18n.resolvedLanguage === 'en'
 
   return (
     <section className="card inspection-process-card" aria-labelledby="inspection-process">
       <h2 id="inspection-process" className="inspection-process-title">{t('inspectionProcess.title')}</h2>
       {loadFailed ? <p className="err" role="alert">{t('errors.infoPages')}</p> : !info ? <LoadingPage /> : (
-        <>
-          {i18n.resolvedLanguage !== 'de' && <p className="mut xs">{t('inspectionProcess.germanOnly')}</p>}
-          <div className="process-sections">
-            {sections.map(({ key, important }) => (
-              <InfoSection key={key} id={key} title={t(`inspectionProcess.${key}`)} text={info[key]} important={important} />
-            ))}
-          </div>
-        </>
+        <div className="process-sections">
+          {sections.map(({ key, important }) => {
+            const translated = english ? info[`${key}En`] : ''
+            const hasTranslation = translated.trim() !== ''
+            return (
+              <InfoSection
+                key={key}
+                id={key}
+                title={t(`inspectionProcess.${key}`)}
+                text={hasTranslation ? translated : info[key]}
+                germanFallback={english && !hasTranslation && info[key].trim() !== ''}
+                important={important}
+              />
+            )
+          })}
+        </div>
       )}
     </section>
   )
 }
 
-function InfoSection({ id, title, text, important = false }: { id: SectionKey; title: string; text: string; important?: boolean }) {
+function InfoSection({
+  id, title, text, germanFallback, important = false,
+}: { id: SectionKey; title: string; text: string; germanFallback: boolean; important?: boolean }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(important)
   const bodyId = `inspection-process-${id}`
@@ -63,16 +74,19 @@ function InfoSection({ id, title, text, important = false }: { id: SectionKey; t
         </button>
       </h3>
       <div id={bodyId} className="process-body" hidden={!open}>
-        {text.trim() === '' ? <p className="mut">{t('inspectionProcess.empty')}</p> : <InfoText text={text} />}
+        {germanFallback && <p className="mut xs">{t('inspectionProcess.germanFallback')}</p>}
+        {text.trim() === ''
+          ? <p className="mut">{t('inspectionProcess.empty')}</p>
+          : <InfoText text={text} language={germanFallback ? 'de' : undefined} />}
       </div>
     </section>
   )
 }
 
 /** Zeigt den Text mit seinen Zeilenumbrüchen; Sätze zu Kosten sind fett und farbig markiert. */
-function InfoText({ text }: { text: string }) {
+function InfoText({ text, language }: { text: string; language?: string }) {
   return text.split(/\n+/).filter((line) => line.trim() !== '').map((line, index) => (
-    <p key={index}>{costPattern.test(line) ? highlightCosts(line) : line}</p>
+    <p key={index} lang={language}>{costPattern.test(line) ? highlightCosts(line) : line}</p>
   ))
 }
 

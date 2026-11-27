@@ -451,7 +451,7 @@
     "standards": "Cleanliness standards",
     "important": "Important",
     "empty": "No information yet.",
-    "germanOnly": "Seezeit provides these texts in German only."
+    "germanFallback": "This section is currently available in German only."
   },
   "profile": {
     "account": "My profile",
