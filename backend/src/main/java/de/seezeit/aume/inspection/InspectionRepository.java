@@ -19,13 +19,13 @@ public interface InspectionRepository extends JpaRepository<InspectionEntity, Lo
     /**
      * Kontrollen, die die Objektbetreuung jetzt durchführen kann: begonnene immer, geplante nur, wenn ihr Zeitraum
      * angekündigt ist oder sie keinen Zeitraum haben (z. B. Nachkontrollen). Nach Beginn des Zeitraums sortiert,
-     * Kontrollen ohne Zeitraum zuletzt.
+     * Kontrollen ohne Zeitraum zuletzt; innerhalb davon nach Anlage und WG.
      */
     @Query(value = """
         select i from InspectionEntity i left join i.period p
         where i.flat.residence.id in :residenceIds
           and (i.status = :started or (i.status = :planned and (p is null or p.announcedAt is not null)))
-        order by case when p.startsOn is null then 1 else 0 end, p.startsOn, i.flat.label, i.id""",
+        order by case when p.startsOn is null then 1 else 0 end, p.startsOn, i.flat.residence.name, i.flat.label, i.id""",
         countQuery = """
         select count(i) from InspectionEntity i left join i.period p
         where i.flat.residence.id in :residenceIds

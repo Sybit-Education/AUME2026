@@ -178,8 +178,16 @@ public class InspectionService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    /** Fremde Kontrollen verhalten sich wie nicht vorhanden (404); zuständig sind Betreuung und Vertretung. */
+    /**
+     * Fremde Kontrollen verhalten sich wie nicht vorhanden (404); zuständig sind Betreuung und Vertretung.
+     * Eine begonnene Kontrolle darf die Person, die sie durchführt, auch nach einem Wechsel der Zuständigkeit
+     * noch abschließen, sonst bliebe der halb bewertete Entwurf hängen.
+     */
     private boolean inCare(UserEntity user, InspectionEntity inspection) {
+        if (inspection.getStatus() == Status.DRAFT && inspection.getInspector() != null
+                && inspection.getInspector().getId().equals(user.getId())) {
+            return true;
+        }
         return staffAccess.residencesInCare(user.getId()).contains(inspection.getFlat().getResidence().getId());
     }
 

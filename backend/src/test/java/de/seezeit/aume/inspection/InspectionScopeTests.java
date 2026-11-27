@@ -11,6 +11,8 @@ import com.jayway.jsonpath.JsonPath;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.FlatRepository;
 import de.seezeit.aume.residence.ResidenceRepository;
+import de.seezeit.aume.residence.StaffAssignmentRepository;
+import de.seezeit.aume.residence.StaffKind;
 import de.seezeit.aume.user.CaretakerEntity;
 import de.seezeit.aume.user.RoleRepository;
 import de.seezeit.aume.user.UserRepository;
@@ -45,6 +47,7 @@ class InspectionScopeTests {
     @Autowired private RoleRepository roles;
     @Autowired private InspectionService inspectionService;
     @Autowired private InspectionHistoryService history;
+    @Autowired private StaffAssignmentRepository staff;
 
     @Test
     void deputyAlsoSeesTheResidenceSheDeputizesFor() throws Exception {
@@ -105,6 +108,35 @@ class InspectionScopeTests {
         assertThat(history.history("caretaker-unassigned", new InspectionHistoryService.HistoryFilter(
             null, null, null, null, null, null, null), new InspectionHistoryService.HistoryOrder(null, null),
             Pageable.ofSize(100))).isEmpty();
+    }
+
+    @Test
+    void inspectorCanFinishHerDraftAfterLosingTheAssignment() throws Exception {
+        Long draft = plannedIn("Wohnanlage Sonne");
+        Long other = plannedIn("Wohnanlage Sonne");
+        var caretaker = login("caretaker");
+        mvc.perform(post("/api/inspections/" + draft + "/start").session(caretaker).with(csrf()))
+            .andExpect(status().isOk());
+
+        var caretakerId = users.findByUserKey("caretaker").orElseThrow().getId();
+        staff.deleteAll(staff.findByUserIdAndKindIn(caretakerId, StaffKind.CARETAKING));
+        staff.flush();
+
+        mvc.perform(get("/api/inspections/" + draft).session(caretaker))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("DRAFT"));
+        mvc.perform(get("/api/inspections/" + other).session(caretaker)).andExpect(status().isNotFound());
+        mvc.perform(post("/api/inspections/" + other + "/start").session(caretaker).with(csrf()))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void residenceListFollowsTheAssignments() throws Exception {
+        mvc.perform(get("/api/residences").session(login("caretaker2")))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content[0].name").value("Petershausen"))
+            .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"));
     }
 
     @Test
