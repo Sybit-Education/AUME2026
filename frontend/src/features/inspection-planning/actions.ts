@@ -5,7 +5,7 @@ import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
 import {
   acceptCounter, announcePeriod, createPeriod, reschedulePeriod, updatePeriod, withdrawPeriod,
-  type AnnouncementInput, type PeriodInput,
+  OCCASIONS, type AnnouncementInput, type NewPeriodInput, type PeriodInput,
 } from './api'
 
 export type PlanningIntent = 'create' | 'update' | 'accept' | 'withdraw' | 'announce' | 'reschedule'
@@ -38,6 +38,16 @@ function periodInput(form: FormData): PeriodInput {
   }
 }
 
+function newPeriodInput(form: FormData): NewPeriodInput {
+  if (form.get('kind') !== 'INDIVIDUAL') return periodInput(form)
+  return {
+    ...periodInput(form),
+    kind: 'INDIVIDUAL',
+    flatIds: form.getAll('flatIds').map(number).filter((id) => id !== null),
+    occasion: OCCASIONS.find((occasion) => occasion === form.get('occasion')) ?? null,
+  }
+}
+
 // Den Anhang lädt der Dialog vorher hoch (uploadAttachment); hier kommt nur seine ID an.
 function announcementInput(form: FormData): AnnouncementInput {
   const attachmentId = number(form.get('attachmentId'))
@@ -66,7 +76,7 @@ export async function inspectionPlanningAction({ request }: ActionFunctionArgs):
   try {
     if (intent === 'create') {
       if (residenceId === null) return { intent, error: 'errors.inspectionPlanningSave' }
-      await createPeriod(residenceId, periodInput(form), request.signal)
+      await createPeriod(residenceId, newPeriodInput(form), request.signal)
     } else {
       if (periodId === null || version === null) return { intent, error: 'errors.inspectionPlanningSave' }
       if (intent === 'update') await updatePeriod(periodId, periodInput(form), version, request.signal)

@@ -8,13 +8,15 @@ export type RequestStatus = 'WAITING_FOR_CARETAKER' | 'COUNTER_PROPOSED' | 'AGRE
 export interface InspectionRequest {
   id: number
   residenceName: string
-  kind: 'REGULAR'
+  kind: 'REGULAR' | 'INDIVIDUAL'
   status: RequestStatus
   startsOn: string
   endsOn: string
   windowStart: string | null
   windowEnd: string | null
   flatCount: number
+  /** Nur bei individuellen Kontrollen (US-18b): die ausgewählten WGs. */
+  flatLabels: string[] | null
   counter: { startsOn: string; endsOn: string; windowStart: string | null; windowEnd: string | null; reason: string } | null
   version: number
 }

@@ -12,7 +12,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
-/** Kontrollzeitraum einer Wohnanlage, dessen Abstimmung mit der Objektbetreuung und Ankündigung. */
+/**
+ * Kontrollzeitraum einer Wohnanlage, dessen Abstimmung mit der Objektbetreuung und Ankündigung. Eine reguläre Kontrolle
+ * umfasst alle freien WGs der Anlage, eine individuelle nur die ausgewählten (US-18b).
+ */
 @Entity
 @Table(name = "inspection_periods")
 @Getter
@@ -22,7 +25,10 @@ public class InspectionPeriodEntity {
     /** Stand der Abstimmung. Ob angekündigt wurde, zeigt {@code announcedAt}. */
     public enum Status { WAITING_FOR_CARETAKER, COUNTER_PROPOSED, AGREED }
 
-    public enum Kind { REGULAR }
+    public enum Kind { REGULAR, INDIVIDUAL }
+
+    /** Anlass einer individuellen Kontrolle. */
+    public enum Occasion { SAMPLE, COMPLAINT, OTHER }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -65,6 +71,11 @@ public class InspectionPeriodEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Kind kind = Kind.REGULAR;
+
+    /** Nur bei {@link Kind#INDIVIDUAL} gesetzt. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private Occasion occasion;
 
     /** Person, die dem Zeitraum zustimmen muss. */
     @ManyToOne(fetch = FetchType.LAZY)

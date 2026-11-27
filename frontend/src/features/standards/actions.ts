@@ -3,7 +3,7 @@ import { SessionExpired } from '@/lib/auth/response'
 import { loginDestination } from '@/lib/auth/returnTo'
 import { ensureSession, forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
-import { saveInfoPages } from './api'
+import { ENGLISH, saveInfoPages } from './api'
 
 export type InfoPagesActionResult = { saved: true } | { error: ErrorKey }
 
@@ -21,6 +21,9 @@ export async function saveInfoPagesAction({ request }: ActionFunctionArgs): Prom
       process: text('process'),
       consequences: text('consequences'),
       standards: text('standards'),
+      processEn: ENGLISH.process,
+      consequencesEn: ENGLISH.consequences,
+      standardsEn: ENGLISH.standards,
     }, request.signal)
     return { saved: true }
   } catch (cause) {
