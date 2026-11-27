@@ -30,6 +30,16 @@ public class ResidentChecklistService {
         return checklists.currentPublished().map(version -> view(version, locale));
     }
 
+    /** Lesesicht einer konkreten aktuellen oder früher veröffentlichten Fassung. */
+    public Optional<ChecklistView> forPublishedVersion(ChecklistVersionEntity version, Locale locale) {
+        return isPublishedVersion(version) ? Optional.of(view(version, locale)) : Optional.empty();
+    }
+
+    static boolean isPublishedVersion(ChecklistVersionEntity version) {
+        return version != null && (version.getStatus() == ChecklistVersionEntity.Status.PUBLISHED
+            || version.getStatus() == ChecklistVersionEntity.Status.RETIRED);
+    }
+
     private ChecklistView view(ChecklistVersionEntity version, Locale locale) {
         var criteria = checklists.criteria(version);
         var translated = translatedTexts(criteria, locale);

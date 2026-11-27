@@ -32,7 +32,7 @@ interface NotificationRepository extends JpaRepository<NotificationEntity, Long>
     List<NotificationEntity> findVisibleInspectionNotifications(
         @Param("userId") Long userId, @Param("today") LocalDate today, Pageable page);
 
-    @EntityGraph(attributePaths = "inspectionNotification.inspection.flat")
+    @EntityGraph(attributePaths = {"inspectionNotification.inspection.flat", "inspectionNotification.checklistVersion"})
     @Query(value = "select n " + VISIBLE_INSPECTION_NOTIFICATIONS + "order by n.createdAt desc, n.id desc",
         countQuery = "select count(n) " + VISIBLE_INSPECTION_NOTIFICATIONS)
     Page<NotificationEntity> pageVisibleInspectionNotifications(

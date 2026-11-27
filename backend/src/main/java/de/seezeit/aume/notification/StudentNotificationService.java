@@ -2,6 +2,8 @@ package de.seezeit.aume.notification;
 
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.notification.InspectionNotificationEntity.Kind;
+import de.seezeit.aume.standard.ChecklistPdfService;
+import de.seezeit.aume.standard.ChecklistPdfService.ChecklistPdf;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -9,6 +11,7 @@ import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,19 +25,34 @@ public class StudentNotificationService {
 
     private final NotificationRepository notifications;
     private final AppUserService users;
+    private final ChecklistPdfService checklistPdfs;
     private final Clock clock;
 
-    StudentNotificationService(NotificationRepository notifications, AppUserService users,
+    StudentNotificationService(NotificationRepository notifications, AppUserService users, ChecklistPdfService checklistPdfs,
             @Qualifier("inspectionNotificationClock") Clock clock) {
         this.notifications = notifications;
         this.users = users;
+        this.checklistPdfs = checklistPdfs;
         this.clock = clock;
     }
 
-    public Page<NotificationView> list(String userKey, int page, int size) {
+    public Page<NotificationView> list(String userKey, int page, int size, boolean canReadChecklist) {
         var userId = users.requireUser(userKey).getId();
         return notifications.pageVisibleInspectionNotifications(userId, LocalDate.now(clock), PageRequest.of(page, size))
-            .map(NotificationView::from);
+            .map(notification -> NotificationView.from(notification,
+                canReadChecklist && hasChecklistPdf(notification.getInspectionNotification())));
+    }
+
+    public Optional<ChecklistPdf> checklistPdf(String userKey, long id, Locale locale) {
+        var userId = users.requireUser(userKey).getId();
+        return notifications.findVisibleInspectionNotification(userId, LocalDate.now(clock), id)
+            .map(NotificationEntity::getInspectionNotification)
+            .filter(this::hasChecklistPdf)
+            .flatMap(message -> checklistPdfs.render(message.getChecklistVersion(), locale));
+    }
+
+    private boolean hasChecklistPdf(InspectionNotificationEntity message) {
+        return message.getKind() == Kind.ANNOUNCEMENT && checklistPdfs.isAvailable(message.getChecklistVersion());
     }
 
     public UnreadCount unreadCount(String userKey) {
@@ -54,15 +72,16 @@ public class StudentNotificationService {
     public record UnreadCount(long count) {}
 
     public record NotificationView(Long id, Kind type, Instant createdAt, Instant occurredAt, Instant readAt,
-            String flatLabel, LocalDate startsOn, LocalDate endsOn, String windowStart, String windowEnd) {
-        private static NotificationView from(NotificationEntity notification) {
+            String flatLabel, LocalDate startsOn, LocalDate endsOn, String windowStart, String windowEnd,
+            boolean hasChecklistPdf) {
+        private static NotificationView from(NotificationEntity notification, boolean hasChecklistPdf) {
             var message = notification.getInspectionNotification();
             var occurredAt = message.getKind() == Kind.ANNOUNCEMENT
                 ? message.getAnnouncementRevisionAt() : notification.getCreatedAt();
             return new NotificationView(notification.getId(), message.getKind(), notification.getCreatedAt(),
                 occurredAt, notification.getReadAt(), message.getInspection().getFlat().getLabel(),
                 message.getStartsOn(), message.getEndsOn(), format(message.getWindowStart()),
-                format(message.getWindowEnd()));
+                format(message.getWindowEnd()), hasChecklistPdf);
         }
 
         private static String format(LocalTime time) {
