@@ -80,7 +80,7 @@ function AnswerDialog({ request, error, closeUrl, counterUrl, onClose }: {
         <dd><b>{formatPeriod(request.startsOn, request.endsOn, i18n.resolvedLanguage)}</b></dd>
         {hours && <><dt>{t('inspectionRequests.time')}</dt><dd>{hours}</dd></>}
         <dt>{t('inspectionRequests.flatsLabel')}</dt>
-        <dd>{t('inspectionRequests.flats', { count: request.flatCount })}</dd>
+        <dd>{t('inspectionRequests.flats', { count: request.flatCount })}{request.flatLabels && ` (${request.flatLabels.join(', ')})`}</dd>
       </dl>
       <p className="xs mut">{t('inspectionRequests.agreeHint')}</p>
       {error && <p className="err" role="alert">{t(error.error)}</p>}

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.inspection.InspectionSchedulingService;
 import de.seezeit.aume.planning.InspectionPeriodEntity.Kind;
+import de.seezeit.aume.planning.InspectionPeriodEntity.Occasion;
 import de.seezeit.aume.planning.InspectionPeriodEntity.Status;
 import de.seezeit.aume.residence.FlatEntity;
 import de.seezeit.aume.residence.FlatRepository;
@@ -33,7 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-/** Kontrollzeitraum einer Wohnanlage planen und mit der Objektbetreuung abstimmen (US-17). */
+/**
+ * Kontrollzeitraum einer Wohnanlage planen und mit der Objektbetreuung abstimmen (US-17). Eine individuelle Kontrolle
+ * (US-18b) läuft genauso ab, gilt aber nur für die ausgewählten WGs.
+ */
 @Service
 @Transactional(readOnly = true)
 public class InspectionPlanningService {
@@ -75,7 +79,8 @@ public class InspectionPlanningService {
             var residenceFlats = flatsByResidence.getOrDefault(residence.getId(), List.of());
             return new ResidenceOption(residence.getId(), residence.getName(), residenceFlats.size(),
                 caretakerByResidence.get(residence.getId()),
-                residenceFlats.stream().filter(flat -> open.contains(flat.getId())).map(FlatEntity::getLabel).toList());
+                residenceFlats.stream().filter(flat -> open.contains(flat.getId())).map(FlatEntity::getLabel).toList(),
+                residenceFlats.stream().map(flat -> new FlatOption(flat.getId(), flat.getLabel())).toList());
         }).toList();
         var people = caretakers.findAll(Sort.by("name", "id")).stream()
             .map(person -> new StaffView(person.getId(), person.getName())).toList();
@@ -100,18 +105,35 @@ public class InspectionPlanningService {
         validateWindow(request.windowStart(), request.windowEnd());
         var caretaker = requireCaretaker(request.caretakerId());
 
+        var kind = request.kind() == null ? Kind.REGULAR : request.kind();
         var residenceFlats = flats.findByResidenceIdInOrderByLabel(List.of(residence.getId()));
         var open = inspections.flatsWithOpenInspection(residenceFlats.stream().map(FlatEntity::getId).toList());
-        var free = residenceFlats.stream().filter(flat -> !open.contains(flat.getId())).toList();
+        var free = kind == Kind.REGULAR
+            ? residenceFlats.stream().filter(flat -> !open.contains(flat.getId())).toList()
+            : selectedFlats(residenceFlats, open, request);
         if (free.isEmpty()) throw conflict("no_flats_available");
 
         var period = new InspectionPeriodEntity(residence, request.startsOn(), request.endsOn(), user);
+        period.setKind(kind);
+        period.setOccasion(kind == Kind.INDIVIDUAL ? request.occasion() : null);
         period.setWindowStart(request.windowStart());
         period.setWindowEnd(request.windowEnd());
         period.setCaretaker(caretaker);
         periods.saveAndFlush(period);
         inspections.schedule(free, period);
-        return view(period, free.size());
+        return view(period, free.size(), flatLabels(period, free.stream().map(FlatEntity::getLabel).toList()));
+    }
+
+    /** Individuelle Kontrolle: Anlass und mindestens eine WG der Anlage, die noch keine offene Kontrolle hat. */
+    private static List<FlatEntity> selectedFlats(List<FlatEntity> residenceFlats, Set<Long> open,
+            CreatePeriodRequest request) {
+        if (request.occasion() == null) throw badRequest("occasion_required");
+        var ids = request.flatIds() == null ? Set.<Long>of() : Set.copyOf(request.flatIds());
+        if (ids.isEmpty()) throw badRequest("flats_required");
+        var selected = residenceFlats.stream().filter(flat -> ids.contains(flat.getId())).toList();
+        if (selected.size() != ids.size()) throw badRequest("unknown_flat");
+        if (selected.stream().anyMatch(flat -> open.contains(flat.getId()))) throw conflict("flat_has_open_inspection");
+        return selected;
     }
 
     /** Neuer Zeitraum: Jede Änderung, auch an der Person, muss die Objektbetreuung erneut bestätigen. */
@@ -259,27 +281,35 @@ public class InspectionPlanningService {
 
     private PeriodView saved(InspectionPeriodEntity period) {
         periods.flush();
-        var count = inspections.flatCountByPeriod(List.of(period.getId())).getOrDefault(period.getId(), 0L);
-        return view(period, count);
+        var ids = List.of(period.getId());
+        var count = inspections.flatCountByPeriod(ids).getOrDefault(period.getId(), 0L);
+        return view(period, count, flatLabels(period, inspections.flatLabelsByPeriod(ids).get(period.getId())));
     }
 
     private Page<PeriodView> views(Page<InspectionPeriodEntity> page) {
         var ids = new ArrayList<Long>();
         page.forEach(period -> ids.add(period.getId()));
         var counts = inspections.flatCountByPeriod(ids);
-        return page.map(period -> view(period, counts.getOrDefault(period.getId(), 0L)));
+        var labels = inspections.flatLabelsByPeriod(ids);
+        return page.map(period -> view(period, counts.getOrDefault(period.getId(), 0L),
+            flatLabels(period, labels.get(period.getId()))));
     }
 
-    private static PeriodView view(InspectionPeriodEntity period, long flatCount) {
+    /** Die WG-Nummern stehen nur bei individuellen Kontrollen in der Antwort; regulär gilt die ganze Anlage. */
+    private static List<String> flatLabels(InspectionPeriodEntity period, List<String> labels) {
+        return period.getKind() != Kind.INDIVIDUAL ? null : labels == null ? List.of() : labels;
+    }
+
+    private static PeriodView view(InspectionPeriodEntity period, long flatCount, List<String> flatLabels) {
         var caretaker = period.getCaretaker();
         var counter = period.getStatus() != Status.COUNTER_PROPOSED ? null
             : new CounterView(period.getCounterStartsOn(), period.getCounterEndsOn(),
                 period.getCounterWindowStart(), period.getCounterWindowEnd(), period.getCounterReason());
         return new PeriodView(period.getId(), period.getResidence().getId(), period.getResidence().getName(),
-            period.getKind(), period.getStatus(), period.getAnnouncedAt(), period.getRescheduledAt(), period.getStartsOn(), period.getEndsOn(),
+            period.getKind(), period.getOccasion(), period.getStatus(), period.getAnnouncedAt(), period.getRescheduledAt(), period.getStartsOn(), period.getEndsOn(),
             period.getWindowStart(), period.getWindowEnd(),
             caretaker == null ? null : new StaffView(caretaker.getId(), caretaker.getName()),
-            flatCount, counter, period.getVersion());
+            flatCount, flatLabels, counter, period.getVersion());
     }
 
     static LocalDate today() {
@@ -294,8 +324,15 @@ public class InspectionPlanningService {
         return new ResponseStatusException(HttpStatus.CONFLICT, code);
     }
 
+    /** Ohne {@code kind} entsteht eine reguläre Kontrolle; {@code flatIds} und {@code occasion} nur bei individueller. */
     public record CreatePeriodRequest(Long residenceId, LocalDate startsOn, LocalDate endsOn,
-        LocalTime windowStart, LocalTime windowEnd, Long caretakerId) {}
+            LocalTime windowStart, LocalTime windowEnd, Long caretakerId, Kind kind, List<Long> flatIds,
+            Occasion occasion) {
+        public CreatePeriodRequest(Long residenceId, LocalDate startsOn, LocalDate endsOn, LocalTime windowStart,
+                LocalTime windowEnd, Long caretakerId) {
+            this(residenceId, startsOn, endsOn, windowStart, windowEnd, caretakerId, Kind.REGULAR, null, null);
+        }
+    }
 
     public record UpdatePeriodRequest(LocalDate startsOn, LocalDate endsOn, LocalTime windowStart,
         LocalTime windowEnd, Long caretakerId, Long version) {}
@@ -308,12 +345,14 @@ public class InspectionPlanningService {
     public record OptionsView(List<ResidenceOption> residences, List<StaffView> caretakers) {}
 
     public record ResidenceOption(Long id, String name, int flatCount, Long caretakerId,
-        List<String> flatsWithOpenInspection) {}
+        List<String> flatsWithOpenInspection, List<FlatOption> flats) {}
+
+    public record FlatOption(Long id, String label) {}
 
     public record CounterView(LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
         String reason) {}
 
-    public record PeriodView(Long id, Long residenceId, String residenceName, Kind kind, Status status,
+    public record PeriodView(Long id, Long residenceId, String residenceName, Kind kind, Occasion occasion, Status status,
         Instant announcedAt, Instant rescheduledAt, LocalDate startsOn, LocalDate endsOn, LocalTime windowStart, LocalTime windowEnd,
-        StaffView caretaker, long flatCount, CounterView counter, long version) {}
+        StaffView caretaker, long flatCount, List<String> flatLabels, CounterView counter, long version) {}
 }

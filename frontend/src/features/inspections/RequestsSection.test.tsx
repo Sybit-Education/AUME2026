@@ -30,7 +30,7 @@ let routers: ReturnType<typeof createMemoryRouter>[] = []
 function request(overrides: Partial<InspectionRequest> = {}): InspectionRequest {
   return {
     id: 7, residenceName: 'Sonne', kind: 'REGULAR', status: 'WAITING_FOR_CARETAKER', startsOn: '2026-12-01', endsOn: '2026-12-03',
-    windowStart: '09:00:00', windowEnd: '16:00:00', flatCount: 2, counter: null, version: 3, ...overrides,
+    windowStart: '09:00:00', windowEnd: '16:00:00', flatCount: 2, flatLabels: null, counter: null, version: 3, ...overrides,
   }
 }
 

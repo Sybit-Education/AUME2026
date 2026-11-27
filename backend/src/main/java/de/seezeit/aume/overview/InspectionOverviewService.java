@@ -74,16 +74,17 @@ public class InspectionOverviewService {
             .map(this::roundOf)
             .sorted(Comparator.comparing(RoundView::startsOn).reversed().thenComparing(RoundView::id, Comparator.reverseOrder()))
             .toList();
-        // Nachkontrollen (round > 0) und Einzelkontrollen ohne Runde; geplante Erstkontrollen
-        // ohne Zeitraum gehören nicht hierher und bleiben den anderen Features unangetastet.
+        // Nachkontrollen (round > 0), individuelle Kontrollen (US-18b) und Einzelkontrollen ohne Runde; geplante
+        // Erstkontrollen ohne Zeitraum gehören nicht hierher und bleiben den anderen Features unangetastet.
         var open = entityManager.createQuery("""
-                select i from InspectionEntity i join fetch i.flat f left join fetch i.period
+                select i from InspectionEntity i join fetch i.flat f left join fetch i.period p
                 where f.residence = :residence and i.status not in :done
-                  and (i.round > 0 or (i.period is null and i.round = 0 and i.status <> :planned))
+                  and (i.round > 0 or p.kind = :individual
+                    or (p is null and i.round = 0 and i.status <> :planned))
                 order by i.id
                 """, InspectionEntity.class)
             .setParameter("residence", residence).setParameter("done", DONE)
-            .setParameter("planned", Status.PLANNED)
+            .setParameter("planned", Status.PLANNED).setParameter("individual", InspectionPeriodEntity.Kind.INDIVIDUAL)
             .getResultStream().map(this::openOf).toList();
         return new ResidenceDetail(residence.getId(), residence.getName(), rounds, open);
     }
@@ -134,10 +135,13 @@ public class InspectionOverviewService {
             : inspection.getPeriod().getKind().name();
     }
 
+    /** Nur Runden der ganzen Anlage; individuelle Kontrollen stehen bei den offenen Einzel-WG-Kontrollen (AK 2). */
     private List<InspectionPeriodEntity> periodsOf(ResidenceEntity residence) {
         return entityManager.createQuery(
-                "select p from InspectionPeriodEntity p where p.residence = :residence", InspectionPeriodEntity.class)
-            .setParameter("residence", residence).getResultList();
+                "select p from InspectionPeriodEntity p where p.residence = :residence and p.kind = :regular",
+                InspectionPeriodEntity.class)
+            .setParameter("residence", residence).setParameter("regular", InspectionPeriodEntity.Kind.REGULAR)
+            .getResultList();
     }
 
     private List<ResidenceEntity> assigned(String userKey) {

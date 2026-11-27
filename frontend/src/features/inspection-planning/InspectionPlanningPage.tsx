@@ -5,8 +5,8 @@ import LoadingPage from '@/components/LoadingPage'
 import { errorKey, type ErrorKey } from '@/lib/errors'
 import type { PlanningActionResult } from './actions'
 import {
-  uploadAttachment, type AnnouncementDraft, type InspectionPeriod, type PeriodStatus, type PlanningData,
-  type ResidenceOption, type StaffMember,
+  OCCASIONS, uploadAttachment, type AnnouncementDraft, type InspectionPeriod, type PeriodKind, type PeriodStatus,
+  type PlanningData, type ResidenceOption, type StaffMember,
 } from './api'
 import './inspection-planning.css'
 
@@ -100,38 +100,78 @@ function NewPeriodForm({ residences, caretakers, residence, error, onResidence }
 }) {
   const { t } = useTranslation()
   const saving = useNavigation().state === 'submitting'
+  const [kind, setKind] = useState<PeriodKind>('REGULAR')
+  const [selected, setSelected] = useState<number[]>([])
   const open = residence.flatsWithOpenInspection
   const noneFree = residence.flatCount === 0 || open.length >= residence.flatCount
+  const individual = kind === 'INDIVIDUAL'
+
+  function toggle(id: number, checked: boolean) {
+    setSelected((current) => checked ? [...current, id] : current.filter((value) => value !== id))
+  }
+
   return (
     <Form method="post" aria-label={t('inspectionPlanning.newPeriod')}>
       <input type="hidden" name="intent" value="create" />
       <div className="fld">
         <label htmlFor="new-residence">{t('inspectionPlanning.residence')}</label>
-        <select id="new-residence" name="residenceId" value={residence.id} onChange={(event) => onResidence(event.target.value)}>
+        <select id="new-residence" name="residenceId" value={residence.id}
+          onChange={(event) => { setSelected([]); onResidence(event.target.value) }}>
           {residences.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
         </select>
-        <div className="hint">{t('inspectionPlanning.flatCount', { count: residence.flatCount })}</div>
+        {!individual && <div className="hint">{t('inspectionPlanning.flatCount', { count: residence.flatCount })}</div>}
       </div>
       <div className="fld">
         <label htmlFor="new-kind">{t('inspectionPlanning.kindLabel')}</label>
-        <select id="new-kind" disabled defaultValue="REGULAR">
+        <select id="new-kind" name="kind" value={kind} onChange={(event) => setKind(event.target.value as PeriodKind)}>
           <option value="REGULAR">{t('inspectionPlanning.kind.REGULAR')}</option>
+          <option value="INDIVIDUAL">{t('inspectionPlanning.kind.INDIVIDUAL')}</option>
         </select>
       </div>
+      {individual && (
+        <>
+          <fieldset className="fld planning-flats">
+            <legend className="lbl">{t('inspectionPlanning.flatsSelect')}</legend>
+            {residence.flats.map((flat) => {
+              const busy = open.includes(flat.label)
+              return (
+                <label key={flat.id} className="planning-flat">
+                  <input type="checkbox" name="flatIds" value={flat.id} disabled={busy}
+                    checked={selected.includes(flat.id)} onChange={(event) => toggle(flat.id, event.target.checked)} />
+                  {flat.label}
+                  {busy && <span className="xs mut"> · {t('inspectionPlanning.flatOpen')}</span>}
+                </label>
+              )
+            })}
+            <div className="hint">{t('inspectionPlanning.flatsHint')}</div>
+          </fieldset>
+          <div className="fld">
+            <label htmlFor="new-occasion">{t('inspectionPlanning.occasionLabel')}</label>
+            <select id="new-occasion" name="occasion" required defaultValue="">
+              <option value="" disabled>{t('inspectionPlanning.chooseOccasion')}</option>
+              {OCCASIONS.map((occasion) => (
+                <option key={occasion} value={occasion}>{t(`inspectionPlanning.occasion.${occasion}`)}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
       <PeriodFields
         prefix="new"
         caretakers={caretakers}
         caretakerKey={residence.id}
         defaults={{ startsOn: '', endsOn: '', windowStart: '09:00', windowEnd: '16:00', caretakerId: residence.caretakerId }}
       />
-      {open.length > 0 && (
+      {!individual && open.length > 0 && (
         <p className="note wr" role="note">
           {t(noneFree ? 'inspectionPlanning.allFlatsOpen' : 'inspectionPlanning.openFlats', { flats: open.join(', ') })}
         </p>
       )}
       {error && <p className="err" role="alert">{t(error.error)}</p>}
       <div className="acts">
-        <button className="btn" type="submit" disabled={saving || noneFree}>{t('inspectionPlanning.send')}</button>
+        <button className="btn" type="submit" disabled={saving || noneFree || (individual && selected.length === 0)}>
+          {t('inspectionPlanning.send')}
+        </button>
       </div>
     </Form>
   )
@@ -331,7 +371,9 @@ function AnnounceDialog({ period, draft, error, closeUrl, onClose }: {
       <form aria-label={t('inspectionPlanning.announceFor', { name })} onSubmit={(event) => { void send(event) }}>
         <div hidden={confirming}>
           <Facts rows={[
-            [t('inspectionPlanning.recipients'), t('inspectionPlanning.recipientsValue', { count: draft.flatCount })],
+            [t('inspectionPlanning.recipients'), draft.flatLabels
+              ? t('inspectionPlanning.recipientsFlats', { flats: draft.flatLabels.join(', ') })
+              : t('inspectionPlanning.recipientsValue', { count: draft.flatCount })],
             [t('inspectionPlanning.period'), `${formatRange(period.startsOn, period.endsOn, language)} · ${formatWindow(period.windowStart, period.windowEnd)}`],
             [t('inspectionPlanning.channels'), channels],
           ]} />
@@ -339,7 +381,7 @@ function AnnounceDialog({ period, draft, error, closeUrl, onClose }: {
             <label htmlFor="announce-message">{t('inspectionPlanning.message')}</label>
             <textarea id="announce-message" rows={11} maxLength={5000} value={message}
               onChange={(event) => setMessage(event.target.value)} />
-            <div className="hint">{t('inspectionPlanning.messageHint')}</div>
+            <div className="hint">{t(draft.kind === 'INDIVIDUAL' ? 'inspectionPlanning.messageHintIndividual' : 'inspectionPlanning.messageHint')}</div>
           </div>
           <div className="fld">
             <label htmlFor="announce-attachment">{t('inspectionPlanning.attachment')}</label>
@@ -352,7 +394,8 @@ function AnnounceDialog({ period, draft, error, closeUrl, onClose }: {
             <p>{t('inspectionPlanning.confirmIntro')}</p>
             <Facts rows={[
               [t('inspectionPlanning.residence'), name],
-              [t('inspectionPlanning.flatsLabel'), String(draft.flatCount)],
+              [t('inspectionPlanning.flatsLabel'), draft.flatLabels
+                ? `${draft.flatCount} (${draft.flatLabels.join(', ')})` : String(draft.flatCount)],
               [t('inspectionPlanning.channels'), channels],
               [t('inspectionPlanning.attachmentLabel'), file?.name ?? t('inspectionPlanning.noAttachment')],
             ]} />
@@ -436,7 +479,11 @@ function PeriodRow({ period, urls, onWithdraw }: {
     <tr>
       <td>
         <b>{period.residenceName}</b>
-        <div className="xs mut">{t('inspectionPlanning.flats', { count: period.flatCount })}</div>
+        <div className="xs mut">
+          {period.flatLabels
+            ? `${t('inspectionPlanning.kind.INDIVIDUAL')} · ${period.flatLabels.join(', ')}${period.occasion ? ` · ${t(`inspectionPlanning.occasion.${period.occasion}`)}` : ''}`
+            : t('inspectionPlanning.flats', { count: period.flatCount })}
+        </div>
       </td>
       <td className="planning-period">
         {formatRange(period.startsOn, period.endsOn, language)}
