@@ -1,0 +1,16 @@
+name: Watchtower
+
+on:
+  repository_dispatch:
+    types:
+      - develop-deployed
+
+permissions:
+  contents: read
+
+jobs:
+  confirmed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record the Watchtower webhook
+        run: echo "Watchtower reported a running develop update."

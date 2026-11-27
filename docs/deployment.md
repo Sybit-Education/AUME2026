@@ -23,11 +23,23 @@ Frontend und Backend werden als Images veröffentlicht. Die Develop-VM zieht sie
 
 [`.github/workflows/rebuild-release.yml`](../.github/workflows/rebuild-release.yml) baut montags um 04:00 UTC das neueste veröffentlichte `v*`-Release erneut und schiebt denselben Versionstag plus `latest`. Der Git-Tag bleibt liegen. Ohne Release endet der Lauf erfolgreich. Der Zeitplan läuft erst, wenn die Datei auf `main` liegt. Manuell starten geht über *Run workflow*.
 
+## VM einrichten
+
+Jede VM bekommt dieselben Pakete. Docker und Compose v2 installieren und den Benutzer in die Gruppe `docker` aufnehmen:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose-v2
+sudo usermod -aG docker "$USER"
+```
+
+Danach neu anmelden, damit die Gruppe gilt. `docker compose version` muss eine v2-Version ausgeben. Ohne dieses Plugin liest `docker` die Option `-f` selbst und bricht ab.
+
 ## Develop-VM
 
 Die VM steht im Hochschulnetz, nicht im öffentlichen Internet. Ports 80 und 8080 bleiben auf das VPN beschränkt.
 
-Docker Engine und Compose v2 installieren. Nach grünem Publish auf `develop`:
+Nach grünem Publish auf `develop`:
 
 ```bash
 git clone https://github.com/Sybit-Education/AUME2026.git
@@ -35,6 +47,17 @@ cd AUME2026
 git switch develop
 docker compose -f infrastructure/compose.develop-vm.yaml up -d
 ```
+
+Ohne `infrastructure/develop-vm.env` setzt Watchtower keine Notification-URL und ruft GitHub nicht auf. Image-Updates laufen trotzdem. Die Vorlage und das Benachrichtigungs-Template liegen schon im Repository.
+
+Erst wenn das Dispatch-Token freigegeben ist, die Vorlage kopieren, `TOKEN` ersetzen und den Stack neu starten:
+
+```bash
+cp infrastructure/develop-vm.env.example infrastructure/develop-vm.env
+docker compose -f infrastructure/compose.develop-vm.yaml up -d
+```
+
+Das Token gilt nur für dieses Repository, Berechtigung Contents: Read and write. Die Datei bleibt auf der VM. Danach sendet Watchtower `repository_dispatch` mit `develop-deployed`, sobald ein beobachteter Container ein neues Image läuft. Ein abgelehnter Aufruf stoppt das Update nicht. Es gibt keinen Abruf der Seiten-URL. [`.github/workflows/watchtower.yml`](../.github/workflows/watchtower.yml) nimmt den Aufruf an und muss dafür auf `main` liegen. Der Job `confirm` in `publish.yml` ist auskommentiert, bis das Token freigegeben ist. Ein Lauf ohne Image-Wechsel sendet keinen Aufruf.
 
 [`infrastructure/compose.develop-vm.yaml`](../infrastructure/compose.develop-vm.yaml) startet Frontend, Backend und `nickfedor/watchtower:1.24.2`. Das Backend läuft mit `SPRING_PROFILES_ACTIVE=dev`. Die Sample-Daten kommen aus diesem Profil. Die H2-Datenbank liegt im Speicher und ist nach einem Neustart wieder der Seed des aktuellen Images.
 
