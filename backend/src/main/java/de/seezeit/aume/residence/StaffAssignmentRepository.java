@@ -9,4 +9,5 @@ public interface StaffAssignmentRepository extends JpaRepository<StaffAssignment
     List<StaffAssignmentEntity> findByResidenceIdInAndKindIn(Collection<Long> residenceIds, Collection<StaffKind> kinds);
     Optional<StaffAssignmentEntity> findByResidenceIdAndKind(Long residenceId, StaffKind kind);
     boolean existsByResidenceIdAndUserIdAndKind(Long residenceId, Long userId, StaffKind kind);
+    List<StaffAssignmentEntity> findByUserIdAndKindIn(Long userId, Collection<StaffKind> kinds);
 }

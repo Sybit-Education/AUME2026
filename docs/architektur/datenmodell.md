@@ -4,7 +4,7 @@ Die JPA-Entities im Backend sind das Schema. Hibernate legt die Tabellen im Prof
 
 Jedes Modul schreibt nur in die eigenen Tabellen ([ADR-0003](adr/0003-structure-the-backend-as-a-modular-monolith.md)). Fremdschlüssel über Modulgrenzen sind die gemeinsamen Verträge. Dateien selbst liegen im privaten Dateispeicher, in der Datenbank steht nur `attachments` ([ADR-0005](adr/0005-use-postgresql-and-private-attachment-storage.md)).
 
-`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal. Für die Sachbearbeitung gilt bereits `staff_assignments`. `users.user_type` ist die Sicht und einer von `STUDENT`, `CARETAKER` oder `CLERK`. Die Tabelle bleibt eine.
+`users.residence_id` stammt aus dem Template (genau eine Wohnanlage pro Nutzer). Fachlich ersetzen das `memberships` für Bewohnende und `staff_assignments` für Personal. Für die Sachbearbeitung gilt bereits `staff_assignments`, für die Objektbetreuung bei Kontrollen ebenfalls (Betreuung und Vertretung, US-03). `users.user_type` ist die Sicht und einer von `STUDENT`, `CARETAKER` oder `CLERK`. Die Tabelle bleibt eine.
 
 ## Überblick
 
@@ -184,6 +184,7 @@ erDiagram
         varchar slug UK
         varchar title
         varchar body
+        varchar body_en
         bigint updated_by FK
         timestamptz updated_at
     }
@@ -217,6 +218,7 @@ erDiagram
         timestamptz rescheduled_at
         varchar status
         varchar kind
+        varchar occasion
         bigint caretaker_id FK
         time window_start
         time window_end
@@ -229,7 +231,7 @@ erDiagram
     }
 ```
 
-`inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR`. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
+`inspection_periods.status`: `WAITING_FOR_CARETAKER`, `COUNTER_PROPOSED`, `AGREED`. `kind`: `REGULAR` (alle freien WGs der Anlage) oder `INDIVIDUAL` (nur ausgewählte WGs, US-18b). `occasion` ist nur bei `INDIVIDUAL` gesetzt: `SAMPLE`, `COMPLAINT`, `OTHER`. Welche WGs dazugehören, steht an den `inspections` des Zeitraums. Angekündigt ist ein Zeitraum, sobald `announced_at` gesetzt ist. `version` ist das Optimistic-Lock-Feld.
 
 `rescheduled_at` ist optional und erfasst den Zeitpunkt der letzten Terminänderung nach der Ankündigung. US-18 setzt ihn in derselben Transaktion wie die neuen Werte, und zwar auch dann, wenn sich nur das Uhrzeitfenster ändert. Sonst bekämen die WGs bei einer reinen Uhrzeitänderung keine Nachricht. Bis einschließlich der Erstankündigung bleibt das Feld leer. Ohne Änderung lehnt die API ab (`period_unchanged`). Der US-15-Lesepfad verwendet das Feld bereits.
 

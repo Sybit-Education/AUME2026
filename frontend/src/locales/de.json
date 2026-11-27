@@ -22,6 +22,7 @@
   "roles": {
     "student": "Studierende",
     "caretaker": "Objektbetreuung",
+    "caretaker2": "Objektbetreuung (Vertretung)",
     "clerk": "Sachbearbeitung"
   },
   "errors": {
@@ -97,7 +98,11 @@
     "requestGone": "Diese Anfrage gibt es nicht mehr. Die Sachbearbeitung hat sie zurückgezogen oder einer anderen Person zugeordnet.",
     "inspectionNotStarted": "Die Kontrolle kann erst ab Beginn des Zeitraums gestartet werden.",
     "selfCheck": "Der Selbstcheck konnte nicht geladen werden.",
-    "selfCheckSave": "Der Selbstcheck konnte nicht gespeichert werden."
+    "selfCheckSave": "Der Selbstcheck konnte nicht gespeichert werden.",
+    "periodOccasionRequired": "Bitte wähle einen Anlass.",
+    "periodFlatsRequired": "Bitte wähle mindestens eine WG.",
+    "periodUnknownFlat": "Eine gewählte WG gehört nicht zu dieser Wohnanlage.",
+    "periodFlatOpen": "Eine gewählte WG hat inzwischen eine offene Kontrolle. Bitte prüfe die Auswahl."
   },
   "navigation": {
     "main": "Hauptnavigation",
@@ -146,7 +151,8 @@
     "runningProgress": "Läuft · {{controlled}} von {{total}}",
     "kinds": {
       "REGULAR": "Reguläre Kontrolle",
-      "FOLLOW_UP": "Nachkontrolle"
+      "FOLLOW_UP": "Nachkontrolle",
+      "INDIVIDUAL": "Individuelle Kontrolle"
     },
     "outcomes": {
       "OPEN": "Noch offen",
@@ -175,7 +181,18 @@
     "flats_other": "{{count}} WGs",
     "kindLabel": "Kontrollart",
     "kind": {
-      "REGULAR": "Reguläre Kontrolle"
+      "REGULAR": "Reguläre Kontrolle",
+      "INDIVIDUAL": "Individuelle Kontrolle"
+    },
+    "flatsSelect": "WGs",
+    "flatsHint": "Nur die ausgewählten WGs bekommen die Kontrolle und die Nachricht.",
+    "flatOpen": "offene Kontrolle",
+    "occasionLabel": "Anlass",
+    "chooseOccasion": "Anlass wählen",
+    "occasion": {
+      "SAMPLE": "Stichprobe",
+      "COMPLAINT": "Beschwerde",
+      "OTHER": "Sonstiges"
     },
     "startsOn": "Startdatum",
     "endsOn": "Enddatum",
@@ -253,7 +270,9 @@
     "withdraw": "Zurückziehen",
     "withdrawFor": "Vorschlag für {{name}} zurückziehen",
     "withdrawTitle": "Vorschlag zurückziehen?",
-    "withdrawConfirm": "Der Vorschlag für {{name}} wird gelöscht. Die geplanten WG-Kontrollen werden entfernt."
+    "withdrawConfirm": "Der Vorschlag für {{name}} wird gelöscht. Die geplanten WG-Kontrollen werden entfernt.",
+    "recipientsFlats": "Nur ausgewählte WGs: {{flats}}",
+    "messageHintIndividual": "Vorbefüllt aus der Vorlage für individuelle Kontrollen. Der Anlass steht bewusst nicht im Text. Du kannst den Text vor dem Senden ändern."
   },
   "standards": {
     "title": "Standards und Kriterien",
@@ -264,7 +283,8 @@
     "standards": "Sauberkeitsstandards",
     "save": "Speichern",
     "saved": "Gespeichert. Bewohnende sehen die neuen Texte.",
-    "readOnly": "Du kannst diese Texte nur lesen."
+    "readOnly": "Du kannst diese Texte nur lesen.",
+    "english": "Englisch (fest hinterlegt)"
   },
   "residences": {
     "name": "Wohnanlage",
@@ -517,6 +537,7 @@
       "kind": "Kontrolle",
       "all": "Alle",
       "initial": "Erstkontrolle",
+      "individual": "Individuelle Kontrolle",
       "followUp": "Nachkontrolle",
       "from": "Von",
       "to": "Bis",
@@ -700,7 +721,8 @@
     "close": "Schließen",
     "kindLabel": "Kontrolle",
     "kind": {
-      "REGULAR": "Reguläre Kontrolle"
+      "REGULAR": "Reguläre Kontrolle",
+      "INDIVIDUAL": "Individuelle Kontrolle"
     },
     "time": "Uhrzeit",
     "flatsLabel": "WGs"

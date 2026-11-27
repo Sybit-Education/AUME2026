@@ -4,7 +4,7 @@ Die Objektbetreuung arbeitet bei einer Kontrolle die veröffentlichte Checkliste
 
 ## Ablauf
 
-1. **Kontrollen → Aktuell** (`/inspections`) listet unter **Anstehende Kontrollen** (unter der Tabelle Anfragen) als Tabelle (Wohnanlage, WG, Erst- oder Nachkontrolle, Zeitraum mit Uhrzeit darunter, Status *Angekündigt*, *Geplant* oder *In Bearbeitung*) die Kontrollen der eigenen Wohnanlage, die jetzt durchgeführt werden können: begonnene (`DRAFT`) immer, geplante (`PLANNED`) nur, wenn ihr Zeitraum angekündigt ist oder sie keinen Zeitraum haben (z. B. Nachkontrollen). Sortiert nach Beginn des Zeitraums, Kontrollen ohne Zeitraum zuletzt. Noch nicht angekündigte Zeiträume stehen unter [Kontroll-Anfragen](../kontroll-anfragen/README.md). Angekündigte Kontrollen, deren Zeitraum noch nicht begonnen hat, stehen zum Planen schon in der Liste, statt „Kontrolle starten“ steht dort aber „ab TT.MM.“; starten lassen sie sich erst ab dem ersten Tag des Zeitraums.
+1. **Kontrollen → Aktuell** (`/inspections`) listet unter **Anstehende Kontrollen** (unter der Tabelle Anfragen) als Tabelle (Wohnanlage, WG, Erst- oder Nachkontrolle, Zeitraum mit Uhrzeit darunter, Status *Angekündigt*, *Geplant* oder *In Bearbeitung*) die Kontrollen der Wohnanlagen, die die angemeldete Person betreut oder vertritt (US-03), die jetzt durchgeführt werden können: begonnene (`DRAFT`) immer, geplante (`PLANNED`) nur, wenn ihr Zeitraum angekündigt ist oder sie keinen Zeitraum haben (z. B. Nachkontrollen). Sortiert nach Beginn des Zeitraums, Kontrollen ohne Zeitraum zuletzt. Noch nicht angekündigte Zeiträume stehen unter [Kontroll-Anfragen](../kontroll-anfragen/README.md). Angekündigte Kontrollen, deren Zeitraum noch nicht begonnen hat, stehen zum Planen schon in der Liste, statt „Kontrolle starten“ steht dort aber „ab TT.MM.“; starten lassen sie sich erst ab dem ersten Tag des Zeitraums.
 2. **Kontrolle starten** in der Liste startet die Kontrolle direkt und öffnet die Checkliste (Adresse `/inspections/{id}?start=1`, danach ohne den Parameter, damit Neuladen nicht erneut startet; klappt der Start nicht, öffnet die Seite mit dem Hinweis). Der Start bindet die aktuell veröffentlichte Checkliste unveränderlich an die Kontrolle (ADR-0007) und setzt den Status von `PLANNED` auf `DRAFT`.
 3. Je Bereich (Küche, Boden, Treppe, Bad) zeigt die Seite die Kriterien mit Beschreibung. Bewertet wird über:
    - **Bereich in Ordnung**: alle noch unbewerteten Kriterien des Bereichs auf `OK`
@@ -17,7 +17,7 @@ Die Objektbetreuung arbeitet bei einer Kontrolle die veröffentlichte Checkliste
 
 | Rolle | Berechtigung | Zugriff |
 | --- | --- | --- |
-| Objektbetreuung (`CARETAKER`) | `INSPECTION_PERFORM` | nur Kontrollen von WGs der eigenen Wohnanlage; fremde Kontrollen antworten mit 404 |
+| Objektbetreuung (`CARETAKER`) | `INSPECTION_PERFORM` | nur Kontrollen von WGs der Anlagen, die sie laut `staff_assignments` betreut (`CARETAKER`) oder vertritt (`DEPUTY`); fremde Kontrollen antworten mit 404 (US-03) |
 | Studierende, Sachbearbeitung | – | 403 |
 
 Daten: `inspections` und `inspection_findings` (Paket `inspection`), Kriterien aus `checklist_versions`/`checklist_criteria` über `ChecklistService` (Paket `standard`). Je Kontrolle und Kriterium gibt es höchstens einen Befund.
@@ -30,7 +30,7 @@ Alle Endpunkte verlangen `INSPECTION_PERFORM`. Änderungen sind nur im Status `D
 
 | Methode und Pfad | Zweck |
 | --- | --- |
-| `GET /api/inspections?page=&size=` | durchführbare Kontrollen der eigenen Wohnanlage wie oben, mit `residenceName` sowie `startsOn`, `endsOn`, `windowStart`, `windowEnd` des Zeitraums (leer ohne Zeitraum); paginiert, die Reihenfolge legt das Backend fest |
+| `GET /api/inspections?page=&size=` | durchführbare Kontrollen der betreuten und vertretenen Wohnanlagen wie oben, mit `residenceName` sowie `startsOn`, `endsOn`, `windowStart`, `windowEnd` des Zeitraums (leer ohne Zeitraum); paginiert, die Reihenfolge legt das Backend fest |
 | `GET /api/inspections/{id}` | Kontrolle mit Kriterien und Befunden |
 | `POST /api/inspections/{id}/start` | `PLANNED` → `DRAFT`, Checkliste binden; 409 ohne veröffentlichte Checkliste oder wenn sie keine Kriterien hat; 409 mit `{"code": "period_not_started"}`, solange der Zeitraum der Kontrolle noch nicht begonnen hat |
 | `PUT /api/inspections/{id}/findings/{criterionId}` | Befund setzen: `{rating, severity, note, buildingCauseSuspected}`. Die Notiz wird getrimmt und darf danach höchstens 2000 Zeichen haben; `severity` und `buildingCauseSuspected` werden bei `OK` nicht gespeichert |
@@ -83,4 +83,10 @@ return results.resultsForFlat(membership.getFlat().getId(), since);
 ```
 
 Offen für die Bewohnenden-Ansicht: Übergabe-Kontrollen (`handover = true`) sind laut Datenmodell für neue Mietende gedacht und müssten dann auch vor dem Einzug sichtbar sein.
+
+## Zuständigkeit (US-03)
+
+Welche Anlagen eine Objektbetreuung sieht, liefert `StaffAccessService.residencesInCare(userId)` (Paket `residence`): alle Anlagen, für die sie in `staff_assignments` als Betreuung oder Vertretung eingetragen ist. Die Vertretung ist fest und hat bei Kontrollen dieselben Rechte wie die Betreuung; Terminvorschläge beantwortet nur die im Vorschlag eingetragene Betreuung (siehe [Kontroll-Anfragen](../kontroll-anfragen/README.md)). Das alte Feld `users.residence_id` gibt keinen Zugriff mehr. Es gilt für die Liste, das Öffnen und Bearbeiten einer Kontrolle, die Historie, die früheren Mängel und die Anlagenliste (`GET /api/residences`); die [Übersicht](../overview/README.md) arbeitet schon so. Ausnahme: Eine begonnene Kontrolle (`DRAFT`) darf die Person, die sie durchführt, auch nach einem Wechsel der Zuständigkeit noch öffnen, bearbeiten und abschließen.
+
+Zum Ausprobieren: `caretaker2` (Login „Objektbetreuung (Vertretung)“) betreut Petershausen und vertritt Sonne und sieht die Kontrollen beider Anlagen, `caretaker` nur die von Sonne. Dafür legt `InspectionSampleData` in Petershausen eine sofort startbare Kontrolle für WG 3.09 an.
 

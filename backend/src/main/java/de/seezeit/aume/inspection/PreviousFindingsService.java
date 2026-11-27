@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import de.seezeit.aume.auth.AppUserService;
+import de.seezeit.aume.residence.StaffAccessService;
 import de.seezeit.aume.inspection.FindingEntity.Rating;
 import de.seezeit.aume.inspection.FindingEntity.Severity;
 import de.seezeit.aume.inspection.InspectionEntity.Result;
@@ -27,18 +28,21 @@ public class PreviousFindingsService {
     private final InspectionRepository inspections;
     private final FindingRepository findings;
     private final AppUserService users;
+    private final StaffAccessService staffAccess;
 
     public PreviousFindingsService(InspectionRepository inspections, FindingRepository findings,
-            AppUserService users) {
+            AppUserService users, StaffAccessService staffAccess) {
         this.inspections = inspections;
         this.findings = findings;
         this.users = users;
+        this.staffAccess = staffAccess;
     }
 
     public List<PreviousInspection> previous(String userKey, Long id) {
         var user = users.requireUser(userKey);
         var current = inspections.findById(id)
-            .filter(inspection -> inspection.getFlat().getResidence().getId().equals(user.getResidence().getId()))
+            .filter(inspection -> staffAccess.residencesInCare(user.getId())
+                .contains(inspection.getFlat().getResidence().getId()))
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         // Für eine abgeschlossene Kontrolle zählt nur, was davor lag; vor dem Start alles bis jetzt.
         var before = current.getInspectedAt() != null ? current.getInspectedAt() : Instant.now();

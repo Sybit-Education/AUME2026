@@ -148,18 +148,19 @@ Anschließend http://localhost:5173 öffnen. `npm ci` ist nach einem frischen Ch
 
 ### Mock-Anmeldung und Testdaten
 
-Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei Wohnanlagen mit WGs und Zuständigkeiten sowie drei Mock-Nutzer an:
+Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei Wohnanlagen mit WGs und Zuständigkeiten sowie vier Mock-Nutzer an:
 
 | Nutzer | Rolle | Berechtigung |
 | --- | --- | --- |
 | `student` | `STUDENT` | `GREETING_READ`, `INFO_PAGE_READ`, `CHECKLIST_READ`, `WG_MEMBERSHIP` |
 | `caretaker` | `CARETAKER` | `RESIDENCE_READ`, `INSPECTION_PERIOD_RESPOND`, `INSPECTION_PERFORM`, `INSPECTION_OVERVIEW_READ` |
+| `caretaker2` | `CARETAKER` | wie `caretaker` |
 | `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF`, `INSPECTION_PLAN`, `INFO_PAGE_READ`, `INFO_PAGE_EDIT`, `STANDARDS_VIEW`, `CLERK_INSPECTION_OVERVIEW_READ` |
 
-`clerk` ist Sonne und Egg zugeordnet, nicht Petershausen. Weitere Nutzer in `SampleData` (`caretaker2`, `caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
+`clerk` ist Sonne und Egg zugeordnet, nicht Petershausen. `caretaker` betreut Sonne; `caretaker2` betreut Petershausen und vertritt Sonne. Damit lässt sich prüfen, dass die Objektbetreuung nur Kontrollen ihrer betreuten und vertretenen Anlagen sieht (US-03). Weitere Nutzer in `SampleData` (`caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
 
 
-Das Frontend unter http://localhost:5173 bietet drei Schaltflächen zur Anmeldung an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak wird in diesem Profil nicht benötigt. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
+Das Frontend unter http://localhost:5173 bietet vier Schaltflächen zur Anmeldung an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak wird in diesem Profil nicht benötigt. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
 
 Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `file` (höchstens 10 MB, derselbe CSRF-Schutz wie andere schreibende Aufrufe). Die Datei liegt unter `devdata/uploads` im Repository-Root, wenn das Backend aus `backend/` startet. Im Repository liegt nur `devdata/.gitkeep`. `GET /api/attachments/{id}` liefert die Datei nur an die Person zurück, die sie hochgeladen hat. Der gespeicherte Name ist ein zufälliger Schlüssel, nicht der ursprüngliche Dateiname.
 

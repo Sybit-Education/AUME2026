@@ -1,11 +1,13 @@
 package de.seezeit.aume.inspection;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import de.seezeit.aume.inspection.InspectionEntity.Status;
 import de.seezeit.aume.inspection.ScheduledInspectionRepository.PeriodFlatCount;
+import de.seezeit.aume.inspection.ScheduledInspectionRepository.PeriodFlatLabel;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.FlatEntity;
 import org.springframework.stereotype.Service;
@@ -46,5 +48,13 @@ public class InspectionSchedulingService {
         if (periodIds.isEmpty()) return Map.of();
         return inspections.countByPeriod(periodIds).stream()
             .collect(Collectors.toMap(PeriodFlatCount::getPeriodId, PeriodFlatCount::getFlatCount));
+    }
+
+    /** WG-Nummern je Zeitraum, sortiert. Gebraucht für individuelle Kontrollen (US-18b). */
+    public Map<Long, List<String>> flatLabelsByPeriod(Collection<Long> periodIds) {
+        if (periodIds.isEmpty()) return Map.of();
+        return inspections.findFlatLabelsByPeriod(periodIds).stream()
+            .collect(Collectors.groupingBy(PeriodFlatLabel::getPeriodId,
+                Collectors.mapping(PeriodFlatLabel::getFlatLabel, Collectors.toList())));
     }
 }

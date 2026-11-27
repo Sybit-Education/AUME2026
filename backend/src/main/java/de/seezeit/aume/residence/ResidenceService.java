@@ -46,17 +46,22 @@ public class ResidenceService {
 
     /**
      * Die Sachbearbeitung sieht die ihr zugeordneten Wohnanlagen ({@link StaffKind#CLERK}) mit WGs und
-     * Zuständigkeit, gebündelt für die ganze Seite geladen. Alle anderen Sichten behalten das bisherige
-     * Verhalten: ihre Anlage aus dem Nutzerprofil, nur ID und Name.
+     * Zuständigkeit, gebündelt für die ganze Seite geladen. Die Objektbetreuung sieht die Anlagen, die sie
+     * betreut oder vertritt (US-03), nur ID und Name. Alle anderen Sichten behalten das bisherige Verhalten:
+     * ihre Anlage aus dem Nutzerprofil.
      */
     public Page<?> list(String userKey, Pageable pageable) {
         var user = users.requireUser(userKey);
+        var sorted = pageable.getSort().isSorted() ? pageable
+            : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("name", "id"));
+        if (user instanceof CaretakerEntity) {
+            return residences.findAssignedByKinds(user.getId(), StaffKind.CARETAKING, sorted)
+                .map(residence -> new ResidenceSummary(residence.getId(), residence.getName()));
+        }
         if (!(user instanceof ClerkEntity)) {
             return residences.findById(user.getResidence().getId(), pageable)
                 .map(residence -> new ResidenceSummary(residence.getId(), residence.getName()));
         }
-        var sorted = pageable.getSort().isSorted() ? pageable
-            : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("name", "id"));
         var page = residences.findAssigned(user.getId(), StaffKind.CLERK, sorted);
         var views = views(page.getContent());
         return page.map(residence -> views.get(residence.getId()));
