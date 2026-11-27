@@ -13,6 +13,7 @@ Das Frontend verwendet React Router im Data Mode mit `createBrowserRouter`. Die 
 | `/standards/info` | Angemeldet, `STANDARDS_VIEW` | Informationen für Bewohnende; bearbeiten mit `INFO_PAGE_EDIT`, sonst schreibgeschützt |
 | `/residences?page=0&edit=<id>` | Zusätzlich `RESIDENCE_ASSIGN_STAFF` | Sachbearbeitung: Tabelle mit WGs und Zuständigkeit; `edit` öffnet das Bearbeiten, Speichern über die Route-Action |
 | `/inspection-planning?residence=<id>` | Angemeldet, `INSPECTION_PLAN` | Kontrollzeitraum einer Wohnanlage planen und abstimmen |
+| `/inspection-planning?announce=<id>` / `?reschedule=<id>` | Angemeldet, `INSPECTION_PLAN` | Abgestimmte Kontrolle ankündigen bzw. angekündigten Termin ändern (US-18). Die Kontrollübersicht verlinkt `announce`. |
 | `/student` | Angemeldet | Leitet zur gemeinsamen Startseite `/` weiter |
 | `/student/inspection` | Angemeldet, Rolle `STUDENT` | Gemeinsames Layout der Kontroll-Reiter, Index leitet zu `/student/inspection/appointment` weiter |
 | `/student/inspection/appointment` | Angemeldet, Rolle `STUDENT` | Reiter „Termin“: Kontrolltermin und Status der eigenen WG mit Kalenderexport für anstehende oder laufende Zeiträume. Ablauf und Konsequenzen laden mit `INFO_PAGE_READ` unabhängig von der Terminkarte. |

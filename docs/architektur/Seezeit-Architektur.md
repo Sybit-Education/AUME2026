@@ -89,7 +89,7 @@ Das Compose-Zielbild umfasst Reverse Proxy, Frontend, Backend, Identitätsdienst
 
 ADR-0009 schlägt eingeschränkte Containerrechte, geschützte Secrets außerhalb von Git, kontrollierte Image-Versionen, Healthchecks und Überwachung vor. Sicherungen müssen Fachdaten, Identitätsdaten und Anhänge konsistent erfassen und außerhalb des Anwendungshosts liegen. Ein einzelner Host bleibt ein Ausfallpunkt. Die dort genannten Wiederherstellungsziele von 24 Stunden Datenverlust und acht Stunden Wiederanlauf sind unbestätigte Vorschläge.
 
-Das Integrationsteam verantwortet gemäß Rollenvereinbarung Umgebungen und CI/CD. Vor Echtdatenbetrieb sind Betreiber, EU-Standort, Sicherungsplan, Wiederherstellungstest und Wartung nach Projektende zu klären. Releases brauchen abgestimmte Migrationen und einen Wiederherstellungsplan; ein Rückwechsel des Images allein macht eine Schemaänderung nicht rückgängig.
+Der aktuelle Veröffentlichungs- und VM-Ablauf steht im [Deployment](../deployment.md). Das Integrationsteam verantwortet gemäß Rollenvereinbarung Umgebungen und CI/CD. Vor Echtdatenbetrieb sind Betreiber, EU-Standort, Sicherungsplan, Wiederherstellungstest und Wartung nach Projektende zu klären. Releases brauchen abgestimmte Migrationen und einen Wiederherstellungsplan; ein Rückwechsel des Images allein macht eine Schemaänderung nicht rückgängig.
 
 ## 7. Zusammenarbeit und offene Entscheidungen
 

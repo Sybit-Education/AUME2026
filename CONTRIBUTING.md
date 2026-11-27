@@ -303,13 +303,13 @@ Der Ordner `infrastructure/` bündelt den späteren Betrieb des Gesamtsystems. D
 - `.env.example` ist die Vorlage für lokale Umgebungsvariablen. Echte Werte kommen in eine `.env`, die nicht eingecheckt wird.
 - Die Dockerfiles liegen in `frontend/` und `backend/`. Jedes Image wird aus seinem eigenen Projekt gebaut. Compose verweist darauf.
 
-Der lokale Docker-Start mit dem `dev`-Profil steht in der [README](README.md#start-mit-docker).
+Der lokale Docker-Start mit dem `dev`-Profil steht in der [README](README.md#start-mit-docker). Änderungen an den Compose-Stacks oder am Deployment in [docs/deployment.md](docs/deployment.md) nachziehen.
 
 Aktuell verwendet das Backend eine H2-Datenbank im Speicher. `ddl-auto: create-drop` baut das Schema beim Start auf; Entwicklungsdaten gehen beim Neustart verloren. Das ist keine Migrationsstrategie für einen dauerhaften Betrieb. PostgreSQL und weitere Architekturbausteine sind in den ADRs beschrieben; deren Status und tatsächlichen Implementierungsstand vor einer Erweiterung prüfen.
 
 Im Profil `dev` nimmt das Backend Dateien unter `devdata/uploads` an, wenn das Arbeitsverzeichnis `backend/` ist. Im Repository liegt `devdata/.gitkeep`; die Dateien selbst sind ignoriert. `POST /api/attachments` speichert eine Datei (Multipart-Feld `file`, höchstens 10 MB) als Zeile in `attachments`. `GET /api/attachments/{id}` gibt sie nur an die hochladende Person aus.
 
-Neue Konfiguration mit nachvollziehbaren Namen dokumentieren. Falls Umgebungsvariablen oder Dienste hinzukommen, auch `infrastructure/.env.example`, die betroffene Compose-Konfiguration und diese Anleitung ergänzen. Variablen, die den Start der Entwicklungsumgebung ändern, zusätzlich in der README nennen. Eine `.env` wird beim direkten Maven-Start nicht automatisch als Spring-Konfiguration geladen; erforderliche Werte müssen im Prozess beziehungsweise in der IDE gesetzt werden. Zugangsdaten und lokale Pfade gehören nicht in versionierte Konfigurationen.
+Neue Konfiguration mit nachvollziehbaren Namen dokumentieren. Falls Umgebungsvariablen oder Dienste hinzukommen, auch `infrastructure/.env.example`, die betroffene Compose-Konfiguration und diese Anleitung ergänzen. Compose-Stacks und Deployment stehen in [docs/deployment.md](docs/deployment.md); diese Datei ist bei solchen Änderungen zu bearbeiten. Variablen, die den Start der Entwicklungsumgebung ändern, zusätzlich in der README nennen. Eine `.env` wird beim direkten Maven-Start nicht automatisch als Spring-Konfiguration geladen; erforderliche Werte müssen im Prozess beziehungsweise in der IDE gesetzt werden. Zugangsdaten und lokale Pfade gehören nicht in versionierte Konfigurationen.
 
 Neue Abhängigkeiten im jeweiligen Projekt ergänzen: Backend in `pom.xml`, Frontend mit npm inklusive aktualisiertem `package-lock.json`. Die gemeinsame Build- und Deployment-Konfiguration bei Änderungen mitprüfen.
 

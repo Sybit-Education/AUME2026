@@ -1,0 +1,73 @@
+name: Rebuild release
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve current release tag
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          tag=$(gh release list \
+            --repo "$GITHUB_REPOSITORY" \
+            --exclude-drafts \
+            --exclude-pre-releases \
+            --limit 50 \
+            --json tagName \
+            --jq '[.[] | select(.tagName | test("^v"))] | .[0].tagName // empty')
+          if [ -z "$tag" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No published v* release to rebuild."
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.release.outputs.found == 'true'
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+
+      - uses: docker/login-action@v3
+        if: steps.release.outputs.found == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rebuild and push the current release
+        if: steps.release.outputs.found == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -eu
+          tags="$RELEASE_TAG latest"
+          owner=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          source="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+          for spec in "seezeit-portal-frontend frontend" "seezeit-portal-backend backend"; do
+            name=${spec%% *}
+            context=${spec##* }
+            image="ghcr.io/${owner}/${name}"
+            tag_args=()
+            for tag in $tags; do
+              tag_args+=(-t "${image}:${tag}")
+            done
+            docker build \
+              --label "org.opencontainers.image.source=${source}" \
+              "${tag_args[@]}" \
+              "$context"
+            for tag in $tags; do
+              docker push "${image}:${tag}"
+            done
+          done

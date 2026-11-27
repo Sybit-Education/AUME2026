@@ -29,6 +29,8 @@ export interface InspectionPeriod {
   kind: 'REGULAR'
   status: PeriodStatus
   announcedAt: string | null
+  /** Gesetzt, sobald ein angekündigter Termin geändert wurde (US-18). */
+  rescheduledAt: string | null
   startsOn: string
   endsOn: string
   windowStart: string | null
@@ -44,9 +46,27 @@ export interface PeriodPage {
   page: { number: number; size: number; totalElements: number; totalPages: number }
 }
 
+export type Channel = 'IN_APP'
+
+export interface AnnouncementDraft {
+  periodId: number
+  residenceName: string
+  flatCount: number
+  channels: Channel[]
+  message: string
+}
+
 export interface PlanningData {
   options: PlanningOptions
   periods: PeriodPage
+  /** Nur geladen, wenn der Ankündigen-Dialog offen ist. */
+  draft?: AnnouncementDraft
+}
+
+export interface AnnouncementInput {
+  message: string
+  attachmentId: number | null
+  attachmentName: string | null
 }
 
 export interface PeriodInput {
@@ -69,6 +89,10 @@ const saveErrors: Record<string, ErrorKey> = {
   period_changed: 'errors.periodChanged',
   invalid_period_status: 'errors.periodInvalidStatus',
   period_started: 'errors.periodStarted',
+  message_required: 'errors.announceMessageRequired',
+  message_too_long: 'errors.announceMessageTooLong',
+  unknown_attachment: 'errors.announceAttachment',
+  period_unchanged: 'errors.periodUnchanged',
 }
 
 export async function getPlanningOptions(signal: AbortSignal): Promise<PlanningOptions> {
@@ -109,4 +133,25 @@ export function acceptCounter(id: number, version: number, signal: AbortSignal):
 
 export function withdrawPeriod(id: number, version: number, signal: AbortSignal): Promise<void> {
   return send(`/api/inspection-periods/${id}/withdraw`, 'POST', { version }, signal)
+}
+
+export async function getAnnouncementDraft(id: number, signal: AbortSignal): Promise<AnnouncementDraft> {
+  const response = requireOk(await api(`/api/inspection-periods/${id}/announcement-draft`, { signal }), 'errors.inspectionPlanning')
+  return (await response.json()) as AnnouncementDraft
+}
+
+/** Nutzt den bestehenden Upload aus dem Modul attachment (nur im Profil dev registriert). */
+export async function uploadAttachment(file: File, signal: AbortSignal): Promise<number> {
+  const body = new FormData()
+  body.append('file', file)
+  const response = requireOk(await api('/api/attachments', { method: 'POST', body, signal }), 'errors.announceAttachment')
+  return ((await response.json()) as { id: number }).id
+}
+
+export function announcePeriod(id: number, input: AnnouncementInput, version: number, signal: AbortSignal): Promise<void> {
+  return send(`/api/inspection-periods/${id}/announce`, 'POST', { ...input, version }, signal)
+}
+
+export function reschedulePeriod(id: number, input: Omit<PeriodInput, 'caretakerId'>, version: number, signal: AbortSignal): Promise<void> {
+  return send(`/api/inspection-periods/${id}/reschedule`, 'POST', { ...input, version }, signal)
 }
