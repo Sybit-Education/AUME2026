@@ -39,6 +39,8 @@ export interface Finding {
   severity: Severity | null
   note: string | null
   buildingCauseSuspected: boolean
+  /** Fotos zum Mangel (US-35); fehlt bei älteren Antworten. */
+  photoIds?: number[]
 }
 
 export interface Inspection {
@@ -171,3 +173,30 @@ export const markOk = (id: number, area?: string) =>
 
 export const finalizeInspection = (id: number, overallResult: OverallResult) =>
   change(`/api/inspections/${id}/finalize`, 'POST', { overallResult })
+
+/** Höchstzahl der Fotos je Mangel, wie im Backend (US-35). */
+export const MAX_PHOTOS = 5
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024
+
+/**
+ * Lädt ein Foto in die Entwicklungsablage (`POST /api/attachments`, #79) und verknüpft es mit dem Mangel des
+ * Kriteriums (US-35).
+ */
+export async function addPhoto(id: number, criterionId: number, file: File): Promise<Inspection> {
+  if (!file.type.startsWith('image/')) throw new UiError('errors.photoType')
+  if (file.size > MAX_PHOTO_BYTES) throw new UiError('errors.photoTooLarge')
+  const form = new FormData()
+  form.append('file', file)
+  const uploaded = requireOk(await api('/api/attachments', { method: 'POST', body: form }), 'errors.photoUpload')
+  const { id: attachmentId } = (await uploaded.json()) as { id: number }
+  return change(`/api/inspections/${id}/findings/${criterionId}/photos`, 'POST', { attachmentId })
+}
+
+export const removePhoto = (id: number, criterionId: number, photoId: number) =>
+  change(`/api/inspections/${id}/findings/${criterionId}/photos/${photoId}`, 'DELETE')
+
+/** Lädt ein Foto über `api`, damit auch die Anmeldung per Token gilt, und liefert eine Objekt-URL. */
+export async function loadPhoto(id: number, photoId: number, signal: AbortSignal): Promise<string> {
+  const response = requireOk(await api(`/api/inspections/${id}/photos/${photoId}`, { signal }), 'errors.photoLoad')
+  return URL.createObjectURL(await response.blob())
+}

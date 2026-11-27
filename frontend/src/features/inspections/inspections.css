@@ -262,3 +262,45 @@
 .ins-defect {
   margin:8px 0 4px;
 }
+
+/* Fotos zum Mangel (US-35) */
+.ins-photos {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  margin:8px 0 2px;
+}
+.ins-photo {
+  margin:0;
+  display:grid;
+  gap:4px;
+  justify-items:start;
+}
+.ins-photo-open {
+  border:0;
+  padding:0;
+  background:none;
+  cursor:zoom-in;
+}
+.ins-photo-open:disabled {
+  cursor:default;
+}
+.ins-photo-empty {
+  display:grid;
+  place-items:center;
+  font-size:11px;
+  color:var(--mut);
+  background:#f3f7f7;
+  text-align:center;
+  padding:4px;
+}
+.ins-photo-preview {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:6px;
+}
+.mdl .fld > .up {
+  justify-self:start;
+}

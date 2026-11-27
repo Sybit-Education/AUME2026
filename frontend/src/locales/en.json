@@ -93,7 +93,11 @@
     "requestGone": "This request no longer exists. The administrative staff withdrew it or assigned it to someone else.",
     "inspectionNotStarted": "The inspection can only be started once its period has begun.",
     "selfCheck": "The self-check could not be loaded.",
-    "selfCheckSave": "The self-check could not be saved."
+    "selfCheckSave": "The self-check could not be saved.",
+    "photoType": "Please choose an image.",
+    "photoTooLarge": "The photo is too large (10 MB at most).",
+    "photoUpload": "The photo could not be uploaded. Please try again.",
+    "photoLoad": "The photo could not be loaded."
   },
   "navigation": {
     "main": "Main navigation",
@@ -533,7 +537,21 @@
     "tabCurrent": "Current",
     "ready": "Ready to start",
     "defectLabel": "Defect",
-    "defectOf": "Defect for {{criterion}}"
+    "defectOf": "Defect for {{criterion}}",
+    "photo": {
+      "label": "Photo of the defect {{criterion}}",
+      "alt": "{{label}}, image {{number}}",
+      "optional": "Photo (optional)",
+      "choose": "Take or choose a photo",
+      "add": "Add photo",
+      "remove": "Remove photo",
+      "open": "Enlarge {{alt}}",
+      "unavailable": "Photo not available",
+      "selected": "Selected photo {{name}}",
+      "saved": "Photo saved.",
+      "removed": "Photo removed.",
+      "savedWithDefect": "Defect and photo saved."
+    }
   },
   "wg": {
     "title": "My shared flat",

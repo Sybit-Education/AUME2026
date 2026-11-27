@@ -51,6 +51,19 @@ public class InspectionController {
     }
 
     /** "Bereich in Ordnung" mit {@code area}, "Alles in Ordnung" ohne. */
+    /** Foto zum Mangel (US-35): {@code attachmentId} aus {@code POST /api/attachments}. */
+    @PostMapping("/{id}/findings/{criterionId}/photos")
+    public InspectionView addPhoto(Principal principal, @PathVariable Long id, @PathVariable Long criterionId,
+            @RequestBody PhotoRequest request) {
+        return inspections.addPhoto(principal.getName(), id, criterionId, request == null ? null : request.attachmentId());
+    }
+
+    @DeleteMapping("/{id}/findings/{criterionId}/photos/{photoId}")
+    public InspectionView removePhoto(Principal principal, @PathVariable Long id, @PathVariable Long criterionId,
+            @PathVariable Long photoId) {
+        return inspections.removePhoto(principal.getName(), id, criterionId, photoId);
+    }
+
     @PostMapping("/{id}/mark-ok")
     public InspectionView markOk(Principal principal, @PathVariable Long id,
             @RequestBody(required = false) MarkOkRequest request) {
@@ -64,6 +77,8 @@ public class InspectionController {
     }
 
     public record MarkOkRequest(String area) {}
+
+    public record PhotoRequest(Long attachmentId) {}
 
     public record FinalizeRequest(Result overallResult) {}
 
