@@ -47,7 +47,6 @@ Keine neuen Tabellen und kein neuer Backend-Code. Genutzt wird die API der Kontr
 
 ## Offen
 
-- Die **Overview der Objektbetreuung** (#41, Branch `gruppe_3/overview`) hat einen noch deaktivierten Knopf „Beantworten“. Nach dem Merge verlinkt er auf `/inspections` bzw. `/inspections?answer=<id>`.
 - Eine **Vertretung** sieht die Anfragen nicht: Das Backend liefert nur Zeiträume der eingetragenen Objektbetreuung.
 
 ## Prüfen

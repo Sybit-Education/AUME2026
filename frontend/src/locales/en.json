@@ -88,7 +88,6 @@
     "planNotAssignee": "Only the assigned person can tick off this task.",
     "planNotDue": "This task is not due this week.",
     "planCriterion": "This suggestion is no longer in the current checklist.",
-    "overview": "The overview could not be loaded.",
     "inspectionRequests": "The inspection requests could not be loaded.",
     "inspectionRequestSave": "The answer could not be sent.",
     "requestReasonRequired": "Please enter a reason.",
@@ -665,43 +664,8 @@
     "tiles": {
       "proposals": "Proposals to answer",
       "announced": "Announced inspections",
-      "followUps": "Follow-up inspections",
-      "openDamages": "Open damages"
-    },
-    "notAvailable": "Missing: damage reports",
-    "upcoming": "Upcoming",
-    "none": "No upcoming inspections.",
-    "columns": {
-      "flat": "Flat",
-      "kind": "Inspection",
-      "date": "Period",
-      "state": "Status",
-      "action": "Action"
-    },
-    "kind": {
-      "INITIAL": "Initial inspection",
-      "FOLLOW_UP": "Follow-up {{round}}"
-    },
-    "period": "{{from}} to {{to}}",
-    "dueBy": "by {{date}}",
-    "noDate": "No period yet",
-    "state": {
-      "PROPOSED": "Proposal",
-      "COUNTER_PROPOSED": "Counter-proposal",
-      "AGREED": "Agreed",
-      "ANNOUNCED": "Announced",
-      "PLANNED": "Planned",
-      "IN_PROGRESS": "In progress"
-    },
-    "start": "Start inspection",
-    "continue": "Continue",
-    "answer": "Answer",
-    "waiting": {
-      "PROPOSED": "Waiting for the assigned caretaker",
-      "COUNTER_PROPOSED": "Waiting for the clerk",
-      "AGREED": "Waiting for the announcement"
-    },
-    "missing": "Missing: answering proposals"
+      "followUps": "Follow-up inspections"
+    }
   },
   "inspectionRequests": {
     "title": "Requests",

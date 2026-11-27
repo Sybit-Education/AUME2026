@@ -6,11 +6,16 @@ export function formatPeriod(from: string, to: string, language: string | undefi
   return new Intl.DateTimeFormat(language ?? 'de', DATE).formatRange(day(from), day(to))
 }
 
-/** Heutiger Kalendertag (JJJJ-MM-TT) in der Zeitzone des Geräts. */
+const BERLIN_DAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit',
+})
+
+/**
+ * Heutiger Kalendertag (JJJJ-MM-TT) in Berlin, wie im Backend: Dort entscheidet derselbe Tag, ob eine Kontrolle
+ * schon gestartet werden darf. Ein Gerät in einer anderen Zeitzone zählt so nicht anders.
+ */
 export function today(): string {
-  const now = new Date()
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  return BERLIN_DAY.format(new Date())
 }
 
 /** Kurzes Datum ohne Jahr, z. B. „01.12.“. */
