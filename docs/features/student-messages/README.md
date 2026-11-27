@@ -28,6 +28,7 @@ Alle Endpunkte setzen die Rolle `STUDENT` voraus. Sichtbar sind persönliche Kon
 | `GET /api/student/notifications/unread-count` | `200` mit `{ "count": 2 }`. Gezählt werden ausschließlich sichtbare Zustellungen ohne `readAt`. |
 | `PUT /api/student/notifications/{id}/read` | `204` für sichtbare Zustellungen, einschließlich bereits gelesener. `404` für fehlende, fremde und nicht sichtbare Zustellungen. Der erste Gelesen-Zeitpunkt bleibt bei weiteren Aufrufen erhalten. |
 | `GET /api/student/notifications/{id}/checklist.pdf` | `200` mit dem PDF einer sichtbaren Ankündigung und einer veröffentlichten oder zurückgezogenen Fassung. Zusätzlich ist `CHECKLIST_READ` erforderlich. Ohne dieses Recht gilt `403`. Fehlende oder unsichtbare Zustellungen und nicht verfügbare Anhänge ergeben `404`. |
+| `GET /api/student/notifications/{id}/attachment` | `200` mit der Originaldatei des Versandeintrags einer sichtbaren persönlichen Ankündigung. Für diese Datei genügt die Rolle `STUDENT` mit der berechtigten Zustellung. Bei fehlender oder unsichtbarer Zustellung, fehlendem Anhang, fehlender Datei oder fehlendem Speicheradapter gilt `404`. |
 
 Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cache-Control: no-store` ausgeliefert. Ohne Sitzung gilt `401`, ohne Rolle `STUDENT` gilt `403`. Schreibende Dev-Sitzungsaufrufe verwenden den bestehenden CSRF-Schutz.
 
@@ -45,7 +46,8 @@ Die GET-Aufrufe ändern den Lesestatus nicht. Die API-Antworten werden mit `Cach
   "windowEnd": "16:00",
   "hasChecklistPdf": true,
   "announcementKind": "ANNOUNCEMENT",
-  "announcementMessage": "Liebe WG,\n\nbitte räumt den Bereich unter der Spüle frei."
+  "announcementMessage": "Liebe WG,\n\nbitte räumt den Bereich unter der Spüle frei.",
+  "attachment": { "fileName": "Hinweise für die Küche.pdf" }
 }
 ```
 
@@ -57,6 +59,16 @@ Die ID bezeichnet die persönliche Zustellung. `type` ist `ANNOUNCEMENT`, `REMIN
 
 Das A4-PDF wird beim Abruf im Arbeitsspeicher aus der referenzierten Checklistenfassung erzeugt. Es enthält Fassungsnummer, Bereiche und Kriterien mit Beschreibungen und leeren Kästchen. Eine neue Checklistenfassung ändert die Auswahl für einen älteren Anhang nicht. Für reproduzierbare Anhänge müssen historische veröffentlichte Fassungen einschließlich Kriterien und Übersetzungen erhalten und unverändert bleiben. Diese Integrationsvoraussetzung gilt auch für Fassungen mit Status `RETIRED`.
 
+### Individuelle Anhänge
+
+`attachment` enthält nur den bereinigten Dateinamen und kann gleichzeitig mit `hasChecklistPdf: true` vorkommen. Bei Erinnerungen, Ankündigungen ohne referenzierten Anhang und ohne Speicheradapter ist das Feld `null`. Die Liste liest Metadaten. Ob die Datei noch im Speicher vorhanden ist, wird beim Download geprüft.
+
+Die Download-URL verwendet die persönliche Zustell-ID. Der Server prüft die Sichtbarkeit erneut und liest die Datei aus dem Versandeintrag der gespeicherten Revision. Frühere Ankündigungen behalten ihre Originaldatei. Eine Terminänderung ohne eigenen Anhang erhält keine Datei aus einer früheren Revision. Der Download ändert weder den Lesestatus noch den Ungelesen-Zähler.
+
+Der neue Endpunkt liefert `Content-Disposition: attachment` mit UTF-8-Dateiname, `Content-Length`, `Cache-Control: no-store` und `X-Content-Type-Options: nosniff`. Pfadanteile und Steuerzeichen werden aus dem Dateinamen entfernt. Der MIME-Typ beruht auf den Upload-Metadaten. Nicht verwendbare Typangaben werden durch `application/octet-stream` ersetzt. Die vorhandenen allgemeinen Datei-Endpunkte behalten ihre Eigentümerprüfung.
+
+Der bestehende private Speicheradapter und der Upload stehen nur im Profil `dev` zur Verfügung. Außerhalb dieses Profils bleiben Nachrichten, Originaltexte und generierte Checklisten-PDFs verfügbar. Das Integrationsteam muss die dauerhafte private Dateispeicherung und die Aufbewahrung der Originaldateien vor einem produktiven Einsatz individueller Anhänge klären.
+
 ## Nachrichtenansicht
 
 Studierende öffnen das Postfach über die Glocke im gemeinsamen Header oder über **Mehr → Wohnen → Nachrichten** (`/student/messages`). „Mehr“ bleibt aktiv. Die Route verwendet die bestehende Anmeldung und ruft persönliche Kontrollnachrichten seitenweise in der Reihenfolge des Backends ab.
@@ -65,7 +77,7 @@ Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelese
 
 Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
 
-Die neuen Felder stehen in der API zur Verfügung. Die Nachrichtenkarten verwenden weiterhin die bisherigen Texte und Labels. Die Anzeige des Originaltexts, die Kennzeichnung in der Karte und der Download individueller Dateien folgen in separaten Schritten.
+Originaltext, Revisionskennzeichnung, Anhangmetadaten und individueller Download stehen in der API zur Verfügung. Die Nachrichtenkarten verwenden weiterhin die bisherigen Texte, Labels und Aktionen. Die Einbindung der neuen Angaben und des Downloads in die Karte folgt in Schritt 3.
 
 ## Glocke und Ungelesen-Zähler
 
@@ -86,6 +98,8 @@ Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen fü
 `StudentNotificationTests` prüft die Postfach-API mit eigener H2-Datenbank, kontrollierter Uhr und ersetztem Scheduler. Die Fälle umfassen Pagination, Rollen, WG-Wechsel, Wiedereintritt und paralleles Markieren.
 
 `StudentNotificationPdfTests` prüft Downloadrechte, Dateinamen und Header, Fassungsbindung nach Veröffentlichung einer neuen Checkliste, Lokalisierung und Seitenumbrüche sowie den unveränderten Lesestatus.
+
+`StudentNotificationAttachmentTests` prüft mit eigenen Daten und temporärem Dateispeicher Originalbytes, Dateinamen, Header, getrennte PDF-Berechtigung, historische Anhänge, WG-Sichtbarkeit und unveränderten Lesestatus. Ein separater Kontext ohne `dev` prüft den Betrieb ohne Speicheradapter.
 
 `StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN-Download und Lesestatus über den App-Router.
 
