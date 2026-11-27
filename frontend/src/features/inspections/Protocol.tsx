@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import type { Finding } from './api'
 import { areaIcon, type AreaState } from './summary'
+import FindingPhotos from './FindingPhotos'
 
-/** Protokoll einer abgeschlossenen Kontrolle: je Bereich die Mängel mit Schwere und Notiz (nur lesend). */
-export default function Protocol({ states, findings }: { states: AreaState[]; findings: Finding[] }) {
+/** Protokoll einer abgeschlossenen Kontrolle: je Bereich die Mängel mit Schwere, Notiz und Fotos (nur lesend). */
+export default function Protocol({ inspectionId, states, findings }: { inspectionId: number; states: AreaState[]; findings: Finding[] }) {
   const { t } = useTranslation()
   const byCriterion = new Map(findings.map((finding) => [finding.criterionId, finding]))
   return (
@@ -32,6 +33,8 @@ export default function Protocol({ states, findings }: { states: AreaState[]; fi
                   )}
                 {finding.buildingCauseSuspected && <span className="chip inf">{t('inspections.buildingCause')}</span>}
                 {finding.note && <div>{finding.note}</div>}
+                <FindingPhotos inspectionId={inspectionId} photoIds={finding.photoIds ?? []}
+                  label={t('inspections.photo.label', { criterion: criterion.title })} />
               </div>
             ))}
           </div>

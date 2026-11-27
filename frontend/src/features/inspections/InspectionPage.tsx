@@ -8,11 +8,13 @@ import { loginDestination } from '@/lib/auth/returnTo'
 import { forgetUser } from '@/lib/auth/session'
 import { errorKey, UiError, type ErrorKey } from '@/lib/errors'
 import {
-  clearFinding, downloadProtocol, finalizeInspection, getInspection, markOk, rateCriterion, startInspection,
+  addPhoto, clearFinding, downloadProtocol, finalizeInspection, getInspection, markOk, MAX_PHOTOS, rateCriterion,
+  removePhoto, startInspection,
   type Criterion, type Finding, type Inspection, type OverallResult, type PreviousInspection, type Severity,
 } from './api'
 import { areaIcon, areas, suggestedResult, type AreaState } from './summary'
 import DefectDialog from './DefectDialog'
+import FindingPhotos from './FindingPhotos'
 import { formatDate } from './history'
 import Protocol from './Protocol'
 import { criterionKey, earlierDefects, type EarlierDefect } from './previous'
@@ -158,7 +160,10 @@ function InspectionView({ initial, previous, startError }: {
                 earlier={earlier.get(criterionKey(criterion.area, criterion.title))} editable={editable} busy={busy}
                 onResolve={(item) => void run(() => rateCriterion(inspection.id, item.criterionId, { ...item, rating: 'RESOLVED_ON_SITE' }))}
                 onToggleBuilding={(item) => void run(() => rateCriterion(inspection.id, item.criterionId, { ...item, buildingCauseSuspected: !item.buildingCauseSuspected }))}
-                onDelete={(item) => void run(() => clearFinding(inspection.id, item.criterionId), t('inspections.defectDeleted'))} />
+                onDelete={(item) => void run(() => clearFinding(inspection.id, item.criterionId), t('inspections.defectDeleted'))}
+                inspectionId={inspection.id}
+                onAddPhoto={(item, file) => void run(() => addPhoto(inspection.id, item.criterionId, file), t('inspections.photo.saved'))}
+                onRemovePhoto={(item, photoId) => void run(() => removePhoto(inspection.id, item.criterionId, photoId), t('inspections.photo.removed'))} />
             ))}
             {editable && (
               <div className="acts">
@@ -175,17 +180,20 @@ function InspectionView({ initial, previous, startError }: {
         <>
           <Summary inspection={inspection} states={states} open={open} busy={busy}
             onFinalize={(result) => void run(() => finalizeInspection(inspection.id, result), t('inspections.finalized'))} />
-          {done && <Protocol states={states} findings={inspection.findings} />}
+          {done && <Protocol inspectionId={inspection.id} states={states} findings={inspection.findings} />}
         </>
       )}
 
       {dialogOpen && current && (
         <DefectDialog area={current.area} criteria={current.criteria} findings={inspection.findings} busy={busy}
           onCancel={() => setDialogOpen(false)}
-          onSave={async (criterionId: number, severity: Severity, note: string) => {
-            if (await run(() => rateCriterion(inspection.id, criterionId, { rating: 'DEFICIENT', severity, note }), t('inspections.defectSaved'))) {
-              setDialogOpen(false)
-            }
+          onSave={async (criterionId: number, severity: Severity, note: string, photo?: File) => {
+            const saved = await run(() => rateCriterion(inspection.id, criterionId, { rating: 'DEFICIENT', severity, note }),
+              photo ? undefined : t('inspections.defectSaved'))
+            if (!saved) return
+            setDialogOpen(false)
+            // Erst der Mangel, dann das Foto: Scheitert der Upload, bleibt der Mangel erhalten und die Meldung zeigt den Fehler.
+            if (photo) await run(() => addPhoto(inspection.id, criterionId, photo), t('inspections.photo.savedWithDefect'))
           }} />
       )}
       {toast && <div className="toast" role="status">{toast}</div>}
@@ -202,13 +210,17 @@ interface CriterionRowProps {
   onResolve: (finding: Finding) => void
   onToggleBuilding: (finding: Finding) => void
   onDelete: (finding: Finding) => void
+  inspectionId: number
+  onAddPhoto: (finding: Finding, file: File) => void
+  onRemovePhoto: (finding: Finding, photoId: number) => void
 }
 
 /**
  * Kriterium der Checkliste. Ein erfasster Mangel steht im aufklappbaren Bereich unter der Beschreibung; Kriterien mit
  * Mangel sind deshalb von Anfang an aufgeklappt und lassen sich über den Pfeil wie gewohnt zuklappen.
  */
-function CriterionRow({ criterion, finding, earlier, editable, busy, onResolve, onToggleBuilding, onDelete }: CriterionRowProps) {
+function CriterionRow({ criterion, finding, earlier, editable, busy, onResolve, onToggleBuilding, onDelete, inspectionId, onAddPhoto,
+  onRemovePhoto }: CriterionRowProps) {
   const { t, i18n } = useTranslation()
   const defect = finding && finding.rating !== 'OK' ? finding : undefined
   return (
@@ -235,6 +247,10 @@ function CriterionRow({ criterion, finding, earlier, editable, busy, onResolve, 
               </span>
             </div>
             {defect.note && <p className="sm2">{defect.note}</p>}
+            <FindingPhotos inspectionId={inspectionId} photoIds={defect.photoIds ?? []}
+              label={t('inspections.photo.label', { criterion: criterion.title })} editable={editable} busy={busy}
+              canAdd={(defect.photoIds ?? []).length < MAX_PHOTOS}
+              onAdd={(file) => onAddPhoto(defect, file)} onRemove={(photoId) => onRemovePhoto(defect, photoId)} />
             {editable && (
               <div className="acts">
                 <button className="btn gh sm" disabled={busy || defect.rating === 'RESOLVED_ON_SITE'} onClick={() => onResolve(defect)}>{t('inspections.resolveOnSite')}</button>

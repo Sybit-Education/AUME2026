@@ -6,6 +6,10 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
+import de.seezeit.aume.attachment.AttachmentRepository;
 import de.seezeit.aume.auth.AppUserService;
 import de.seezeit.aume.planning.InspectionPeriodEntity;
 import de.seezeit.aume.residence.StaffAccessService;
@@ -32,6 +37,13 @@ import de.seezeit.aume.user.UserEntity;
 @Service
 @Transactional
 public class InspectionService {
+    /** Höchstzahl der Fotos je Mangel (US-35). */
+    static final int MAX_PHOTOS = 5;
+    /**
+     * Erlaubte Fotoformate: nur Rasterbilder. SVG kann Skripte enthalten und ist deshalb ausgeschlossen,
+     * denn Fotos sehen alle, die für die Anlage zuständig sind.
+     */
+    static final Set<String> PHOTO_TYPES = Set.of("image/jpeg", "image/png", "image/webp", "image/heic", "image/heif");
     private static final ZoneId BERLIN = ZoneId.of("Europe/Berlin");
 
     private final InspectionRepository inspections;
@@ -39,14 +51,19 @@ public class InspectionService {
     private final ChecklistService checklists;
     private final AppUserService users;
     private final StaffAccessService staffAccess;
+    private final FindingPhotoRepository photos;
+    private final AttachmentRepository attachments;
 
     public InspectionService(InspectionRepository inspections, FindingRepository findings,
-            ChecklistService checklists, AppUserService users, StaffAccessService staffAccess) {
+            ChecklistService checklists, AppUserService users, StaffAccessService staffAccess,
+            FindingPhotoRepository photos, AttachmentRepository attachments) {
         this.inspections = inspections;
         this.findings = findings;
         this.checklists = checklists;
         this.users = users;
         this.staffAccess = staffAccess;
+        this.photos = photos;
+        this.attachments = attachments;
     }
 
     @Transactional(readOnly = true)
@@ -120,13 +137,20 @@ public class InspectionService {
         // Ein Verdacht auf bauliche Ursache gehört nur zu einem Mangel, nicht zu einer OK-Bewertung.
         finding.setBuildingCauseSuspected(request.rating() != Rating.OK
             && Boolean.TRUE.equals(request.buildingCauseSuspected()));
+        if (request.rating() == Rating.OK && finding.getId() != null) {
+            // Fotos belegen einen Mangel; ohne Mangel gehören sie nicht mehr zur Bewertung (US-35).
+            photos.deleteAll(photos.findByFinding_Id(finding.getId()));
+        }
         findings.save(finding);
         return toView(inspection);
     }
 
     public InspectionView clear(String userKey, Long id, Long criterionId) {
         var inspection = requireDraft(users.requireUser(userKey), id);
-        findings.findByInspectionIdAndCriterionId(inspection.getId(), criterionId).ifPresent(findings::delete);
+        findings.findByInspectionIdAndCriterionId(inspection.getId(), criterionId).ifPresent(finding -> {
+            photos.deleteAll(photos.findByFinding_Id(finding.getId()));
+            findings.delete(finding);
+        });
         return toView(inspection);
     }
 
@@ -165,6 +189,60 @@ public class InspectionService {
         inspection.setPublishedBy(user);
         inspection.setPublishedAt(Instant.now());
         return toView(inspection);
+    }
+
+    /**
+     * Verknüpft ein zuvor über {@code POST /api/attachments} hochgeladenes Bild mit dem Mangel eines Kriteriums
+     * (US-35). Nur eigene Uploads, nur Bilder, nur zu einem Mangel und höchstens {@value #MAX_PHOTOS} je Mangel.
+     */
+    public InspectionView addPhoto(String userKey, Long id, Long criterionId, Long attachmentId) {
+        var user = users.requireUser(userKey);
+        var inspection = requireDraft(user, id);
+        var finding = findings.findByInspectionIdAndCriterionId(inspection.getId(), criterionId)
+            .filter(candidate -> candidate.getRating() != Rating.OK)
+            .orElseThrow(() -> new PhotoRejectedException("photo_needs_defect"));
+        var attachment = attachments.findById(attachmentId == null ? -1L : attachmentId)
+            .filter(candidate -> candidate.getUploadedBy().getId().equals(user.getId()))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "attachment_not_found"));
+        if (!isPhotoType(attachment.getContentType())) {
+            throw new PhotoRejectedException("not_an_image");
+        }
+        if (photos.existsByAttachment_Id(attachment.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "attachment_in_use");
+        }
+        if (photos.countByFinding_Id(finding.getId()) >= MAX_PHOTOS) {
+            throw new PhotoRejectedException("too_many_photos");
+        }
+        photos.save(new FindingPhotoEntity(finding, attachment));
+        return toView(inspection);
+    }
+
+    /** Rasterbild aus {@link #PHOTO_TYPES}; Parameter wie {@code ; charset=...} zählen nicht mit. */
+    static boolean isPhotoType(String contentType) {
+        if (contentType == null) return false;
+        return PHOTO_TYPES.contains(contentType.split(";", 2)[0].strip().toLowerCase(Locale.ROOT));
+    }
+
+    /** Entfernt die Verknüpfung eines Fotos mit dem Mangel; die Datei selbst bleibt in der Ablage. */
+    public InspectionView removePhoto(String userKey, Long id, Long criterionId, Long photoId) {
+        var inspection = requireDraft(users.requireUser(userKey), id);
+        var photo = photos.findByIdAndFinding_Inspection_Id(photoId, inspection.getId())
+            .filter(candidate -> candidate.getFinding().getCriterion().getId().equals(criterionId))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        photos.delete(photo);
+        return toView(inspection);
+    }
+
+    /**
+     * Anhang eines Fotos, wenn die Person für die Anlage der Kontrolle zuständig ist (Betreuung oder Vertretung);
+     * gilt in jedem Status, damit Fotos auch im Protokoll sichtbar bleiben. Sonst 404.
+     */
+    @Transactional(readOnly = true)
+    public Long photoAttachment(String userKey, Long id, Long photoId) {
+        var inspection = require(users.requireUser(userKey), id);
+        return photos.findByIdAndFinding_Inspection_Id(photoId, inspection.getId())
+            .map(photo -> photo.getAttachment().getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private InspectionEntity require(UserEntity user, Long id) {
@@ -213,9 +291,14 @@ public class InspectionService {
         var criteria = criteria(inspection).stream()
             .map(c -> new CriterionView(c.getId(), c.getArea(), c.getTitle(), c.getDescription(), c.getPosition()))
             .toList();
-        var rated = findings.findByInspectionId(inspection.getId()).stream()
+        var found = findings.findByInspectionId(inspection.getId());
+        var photoIds = found.isEmpty() ? Map.<Long, List<Long>>of()
+            : photos.findByFinding_IdInOrderByIdAsc(found.stream().map(FindingEntity::getId).toList()).stream()
+                .collect(Collectors.groupingBy(photo -> photo.getFinding().getId(),
+                    Collectors.mapping(FindingPhotoEntity::getId, Collectors.toList())));
+        var rated = found.stream()
             .map(f -> new FindingView(f.getCriterion().getId(), f.getRating(), f.getSeverity(), f.getNote(),
-                f.isBuildingCauseSuspected()))
+                f.isBuildingCauseSuspected(), photoIds.getOrDefault(f.getId(), List.of())))
             .sorted(Comparator.comparing(FindingView::criterionId))
             .toList();
         var inspector = inspection.getInspector();
@@ -226,6 +309,20 @@ public class InspectionService {
 
     /** Die Kontrolle gehört zu einem Zeitraum, der noch nicht begonnen hat. */
     public static class PeriodNotStartedException extends RuntimeException {}
+
+    /** Foto passt nicht zum Mangel (400); {@code code} zeigt die Oberfläche als eigene Meldung an. */
+    public static class PhotoRejectedException extends RuntimeException {
+        private final String code;
+
+        PhotoRejectedException(String code) {
+            super(code);
+            this.code = code;
+        }
+
+        public String code() {
+            return code;
+        }
+    }
 
     /**
      * Zeitraum und Uhrzeit des angekündigten Zeitraums; leer bei Kontrollen ohne Zeitraum. {@code periodKind}
@@ -241,8 +338,9 @@ public class InspectionService {
 
     public record CriterionView(Long id, String area, String title, String description, int position) {}
 
+    /** {@code photoIds}: Fotos zum Mangel in der Reihenfolge des Hochladens (US-35). */
     public record FindingView(Long criterionId, Rating rating, Severity severity, String note,
-        boolean buildingCauseSuspected) {}
+        boolean buildingCauseSuspected, List<Long> photoIds) {}
 
     /** {@code buildingCauseSuspected} ist optional; fehlt es, gilt {@code false}. */
     public record FindingRequest(Rating rating, Severity severity, String note, Boolean buildingCauseSuspected) {}

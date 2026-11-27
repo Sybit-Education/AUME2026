@@ -98,6 +98,12 @@
     "inspectionNotStarted": "Die Kontrolle kann erst ab Beginn des Zeitraums gestartet werden.",
     "selfCheck": "Der Selbstcheck konnte nicht geladen werden.",
     "selfCheckSave": "Der Selbstcheck konnte nicht gespeichert werden.",
+    "photoType": "Bitte wähle ein Foto aus (JPEG, PNG, WebP oder HEIC).",
+    "photoTooLarge": "Das Foto ist zu groß (höchstens 10 MB).",
+    "photoUpload": "Das Foto konnte nicht hochgeladen werden. Bitte erneut versuchen.",
+    "photoLoad": "Das Foto konnte nicht geladen werden.",
+    "photoTooMany": "Zu diesem Mangel gibt es schon 5 Fotos.",
+    "photoNeedsDefect": "Fotos gibt es nur zu einem Mangel.",
     "periodOccasionRequired": "Bitte wähle einen Anlass.",
     "periodFlatsRequired": "Bitte wähle mindestens eine WG.",
     "periodUnknownFlat": "Eine gewählte WG gehört nicht zu dieser Wohnanlage.",
@@ -586,7 +592,21 @@
     "tabCurrent": "Aktuell",
     "ready": "Startbereit",
     "defectLabel": "Mangel",
-    "defectOf": "Mangel bei {{criterion}}"
+    "defectOf": "Mangel bei {{criterion}}",
+    "photo": {
+      "label": "Foto zum Mangel {{criterion}}",
+      "alt": "{{label}}, Bild {{number}}",
+      "optional": "Foto (optional)",
+      "choose": "Foto aufnehmen oder wählen",
+      "add": "Foto hinzufügen",
+      "remove": "Foto entfernen",
+      "open": "{{alt}} vergrößern",
+      "unavailable": "Foto nicht verfügbar",
+      "selected": "Ausgewähltes Foto {{name}}",
+      "saved": "Foto gespeichert.",
+      "removed": "Foto entfernt.",
+      "savedWithDefect": "Mangel und Foto gespeichert."
+    }
   },
   "wg": {
     "title": "Meine WG",

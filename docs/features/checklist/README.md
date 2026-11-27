@@ -90,3 +90,32 @@ Welche Anlagen eine Objektbetreuung sieht, liefert `StaffAccessService.residence
 
 Zum Ausprobieren: `caretaker2` (Login „Objektbetreuung (Vertretung)“) betreut Petershausen und vertritt Sonne und sieht die Kontrollen beider Anlagen, `caretaker` nur die von Sonne. Dafür legt `InspectionSampleData` in Petershausen eine sofort startbare Kontrolle für WG 3.09 an.
 
+## Fotos zum Mangel (US-35)
+
+Die Objektbetreuung kann einem Mangel Fotos zuordnen, damit der Zustand belegt ist (laut Story Map R2, mit PO und Lead vorgezogen).
+
+- **Im Mangel-Dialog** gibt es wie im Wireframe das Feld **Foto (optional)** mit „Foto aufnehmen oder wählen“; auf dem Handy öffnet sich die Kamera. Gespeichert wird erst der Mangel, dann das Foto. Scheitert der Upload, bleibt der Mangel erhalten.
+- **Beim Mangel** stehen die Vorschaubilder; ein Klick vergrößert. Im Entwurf gibt es zum Hinzufügen eine Plus-Kachel neben den Bildern und zum Entfernen einen kleinen Mülleimer oben rechts im Bild, höchstens fünf Fotos je Mangel.
+- **Im Protokoll** einer abgeschlossenen Kontrolle stehen die Fotos nur lesend.
+
+Ablauf: Die Oberfläche lädt die Datei über die Entwicklungsablage `POST /api/attachments` (#79, Integrationsteam) hoch und verknüpft den Anhang anschließend mit dem Mangel (`finding_photos`).
+
+| Methode und Pfad | Zweck |
+| --- | --- |
+| `POST /api/inspections/{id}/findings/{criterionId}/photos` | `{attachmentId}` verknüpfen; nur eigene Uploads, nur Rasterbilder (JPEG, PNG, WebP, HEIC/HEIF; kein SVG, weil es Skripte enthalten kann), nur zu einem Mangel (nicht zu `OK`), höchstens fünf; nur im Status `DRAFT` |
+| `DELETE /api/inspections/{id}/findings/{criterionId}/photos/{photoId}` | Verknüpfung entfernen; nur im Status `DRAFT` |
+| `GET /api/inspections/{id}/photos/{photoId}` | Datei anzeigen; für alle, die für die Anlage zuständig sind (Betreuung und Vertretung), auch nach dem Abschluss; nur im Profil `dev`. Ausgeliefert mit `Content-Security-Policy: sandbox` und `nosniff`, andere Typen als Download |
+
+`findings[].photoIds` in der Antwort einer Kontrolle listet die Fotos je Mangel. Wird ein Mangel gelöscht oder auf `OK` gesetzt, werden seine Foto-Verknüpfungen entfernt.
+
+Fehler: 400 mit `{code}` `photo_needs_defect`, `not_an_image` oder `too_many_photos` (die Oberfläche zeigt je Code eine eigene Meldung); 404 für fremde Uploads und fremde Kontrollen; 409 `attachment_in_use` oder wenn die Kontrolle nicht mehr bearbeitbar ist.
+
+Am Handy testen: Frontend mit `npm run build` und `npm run preview -- --host` starten und die angezeigte Netzwerkadresse (Port 4173) öffnen. Mit `npm run dev` lädt Vite die Seite neu, wenn der Browser beim Öffnen der Kamera in den Hintergrund geht; dann ist der offene Mangel-Dialog weg. Das betrifft nur den Entwicklungsserver. Geprüft auf einem echten Handy: Die Kamera öffnet sich, das Foto wird gespeichert.
+
+Offen:
+
+- Upload und Anzeige gibt es nur im Profil `dev`, solange die Ablage aus #79 nur dort existiert. Für den Betrieb braucht es die Ablage aus ADR-0005 (Integrationsteam).
+- Entfernte Fotos bleiben als Datei und Zeile in `attachments` liegen; ein Aufräumen fehlt.
+- Ob die WG die Fotos in ihrem Ergebnis sieht, ist nicht entschieden; `InspectionResultService` liefert keine Fotos.
+- Das PDF-Protokoll enthält keine Fotos.
+

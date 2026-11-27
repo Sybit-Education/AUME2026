@@ -262,3 +262,104 @@
 .ins-defect {
   margin:8px 0 4px;
 }
+
+/* Fotos zum Mangel (US-35) */
+.ins-photos {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  margin:8px 0 2px;
+}
+.ins-photo {
+  position:relative;
+  margin:0;
+  display:grid;
+  gap:4px;
+  justify-items:start;
+}
+/* Mülleimer oben rechts im Bild; beim Darüberfahren rot */
+.ins-photo-remove {
+  position:absolute;
+  top:5px;
+  right:5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:rgba(255,255,255,.92);
+  color:#4d6268;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+  cursor:pointer;
+}
+.ins-photo-remove svg {
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.ins-photo-remove:hover:not(:disabled),
+.ins-photo-remove:focus-visible {
+  background:var(--bad);
+  color:#fff;
+}
+.ins-photo-remove:disabled {
+  opacity:.5;
+  cursor:default;
+}
+.ins-photo-open {
+  border:0;
+  padding:0;
+  background:none;
+  cursor:zoom-in;
+}
+.ins-photo-open:disabled {
+  cursor:default;
+}
+.ins-photo-empty {
+  display:grid;
+  place-items:center;
+  font-size:11px;
+  color:var(--mut);
+  background:#f3f7f7;
+  text-align:center;
+  padding:4px;
+}
+.ins-photo-preview {
+  justify-self:start;
+  margin-top:6px;
+}
+.mdl .fld > .ins-photo-add {
+  justify-self:start;
+}
+/* „Foto hinzufügen“ als Plus-Kachel in Größe eines Vorschaubilds */
+.ins-photo-add {
+  display:grid;
+  place-items:center;
+  width:110px;
+  height:80px;
+  border:1.5px dashed var(--t);
+  border-radius:8px;
+  background:#f0fafa;
+  color:var(--td);
+  cursor:pointer;
+}
+.ins-photo-add svg {
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.2;
+  stroke-linecap:round;
+}
+.ins-photo-add:hover:not(.disabled),
+.ins-photo-add:focus-within {
+  background:#e0f2f2;
+}
+.ins-photo-add.disabled {
+  opacity:.5;
+  cursor:default;
+}

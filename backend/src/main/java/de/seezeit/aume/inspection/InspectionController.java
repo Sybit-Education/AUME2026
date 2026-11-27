@@ -50,6 +50,19 @@ public class InspectionController {
         return inspections.clear(principal.getName(), id, criterionId);
     }
 
+    /** Foto zum Mangel (US-35): {@code attachmentId} aus {@code POST /api/attachments}. */
+    @PostMapping("/{id}/findings/{criterionId}/photos")
+    public InspectionView addPhoto(Principal principal, @PathVariable Long id, @PathVariable Long criterionId,
+            @RequestBody PhotoRequest request) {
+        return inspections.addPhoto(principal.getName(), id, criterionId, request == null ? null : request.attachmentId());
+    }
+
+    @DeleteMapping("/{id}/findings/{criterionId}/photos/{photoId}")
+    public InspectionView removePhoto(Principal principal, @PathVariable Long id, @PathVariable Long criterionId,
+            @PathVariable Long photoId) {
+        return inspections.removePhoto(principal.getName(), id, criterionId, photoId);
+    }
+
     /** "Bereich in Ordnung" mit {@code area}, "Alles in Ordnung" ohne. */
     @PostMapping("/{id}/mark-ok")
     public InspectionView markOk(Principal principal, @PathVariable Long id,
@@ -65,12 +78,19 @@ public class InspectionController {
 
     public record MarkOkRequest(String area) {}
 
+    public record PhotoRequest(Long attachmentId) {}
+
     public record FinalizeRequest(Result overallResult) {}
 
     /** 409 mit Code, damit das Frontend „erst ab Beginn des Zeitraums“ statt eines allgemeinen Konflikts zeigt. */
     @ExceptionHandler(InspectionService.PeriodNotStartedException.class)
     public ResponseEntity<ErrorView> periodNotStarted() {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorView("period_not_started"));
+    }
+
+    @ExceptionHandler(InspectionService.PhotoRejectedException.class)
+    public ResponseEntity<ErrorView> photoRejected(InspectionService.PhotoRejectedException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorView(e.code()));
     }
 
     public record ErrorView(String code) {}
