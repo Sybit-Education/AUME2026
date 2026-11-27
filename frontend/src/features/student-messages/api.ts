@@ -15,6 +15,9 @@ export type StudentMessage = {
   windowStart: string | null
   windowEnd: string | null
   hasChecklistPdf: boolean
+  announcementKind: 'ANNOUNCEMENT' | 'RESCHEDULE' | null
+  announcementMessage: string | null
+  attachment: { fileName: string } | null
 }
 
 export type StudentMessages = {
@@ -52,11 +55,22 @@ export async function downloadMessageChecklist(id: number, language: string | un
   const response = await api(`${path}/${id}/checklist.pdf`, { signal })
   signal.throwIfAborted()
   requireOk(response, 'errors.studentMessageDownload')
-  const blob = await response.blob()
-  signal.throwIfAborted()
   const headerName = /filename="?([^";]+)"?/i.exec(response.headers.get('Content-Disposition') ?? '')?.[1]
   const fileName = headerName === germanFileName || headerName === englishFileName
     ? headerName : checklistFileName(language)
+  await saveDownload(response, fileName, signal)
+}
+
+export async function downloadMessageAttachment(id: number, fileName: string, signal: AbortSignal) {
+  const response = await api(`${path}/${id}/attachment`, { signal })
+  signal.throwIfAborted()
+  requireOk(response, 'errors.studentAttachmentDownload')
+  await saveDownload(response, fileName, signal)
+}
+
+async function saveDownload(response: Response, fileName: string, signal: AbortSignal) {
+  const blob = await response.blob()
+  signal.throwIfAborted()
   const url = URL.createObjectURL(blob)
   const revokeUrl = URL.revokeObjectURL.bind(URL)
   const link = document.createElement('a')

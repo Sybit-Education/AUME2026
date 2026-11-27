@@ -1,6 +1,6 @@
 # Kontrolle ankündigen (US-18)
 
-Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontrolle für alle WGs der Wohnanlage an. Sie kann einen angekündigten Termin auch nachträglich ändern. Die Studierenden-API liefert für neue Zustellungen den Originaltext, die Kennzeichnung der Terminrevision und bei vorhandener Datei den nachrichtenbezogenen Download. Die Einbindung in die Nachrichtenkarten folgt separat.
+Die Sachbearbeitung kündigt unter `/inspection-planning` eine abgestimmte Kontrolle für alle WGs der Wohnanlage an. Sie kann einen angekündigten Termin auch nachträglich ändern. Für neue Zustellungen zeigt das Studierenden-Postfach den Originaltext einer eindeutig zugeordneten Ankündigung, kennzeichnet Terminänderungen und bietet bei einem verfügbaren individuellen Anhang den nachrichtenbezogenen Download an.
 
 ## Wie es funktioniert
 
@@ -35,7 +35,7 @@ Diese Seiten wurden nicht geändert. Sie reagieren schon auf `announcedAt` und `
 
 | Bereich | Verhalten nach dem Ankündigen | Offen |
 | --- | --- | --- |
-| Postfach der Studierenden (Notification-Modul) | Neue Zustellungen referenzieren den eindeutig zugeordneten Versandeintrag. Studierende können dessen Anhang über ihre sichtbare persönliche Zustellung herunterladen. Eine Terminänderung erzeugt eine neue Nachricht mit `announcementKind: RESCHEDULE` und übernimmt keinen Anhang der früheren Revision. | Originaltext, Änderungstyp und individuelle Download-Aktion in der Nachrichtenkarte anzeigen. |
+| Postfach der Studierenden (Notification-Modul) | Neue Zustellungen referenzieren den eindeutig zugeordneten Versandeintrag. Die Nachricht zeigt dessen Originaltext und bietet den individuellen Anhang bei verfügbarem Speicher an. Terminänderungen sind in der Karte gekennzeichnet und übernehmen keinen früheren Anhang. | Privater Speicheradapter für individuelle Anhänge außerhalb von `dev`. |
 | Terminkarte der Studierenden (US-15) | Zeigt den Zeitraum, sobald `announcedAt` gesetzt ist, und Änderungen über `rescheduledAt`. | – |
 | Objektbetreuung (Kontroll-Anfragen, Kontrollen) | Angekündigte Zeiträume verschwinden aus den Anfragen. Kontrollen lassen sich ab Beginn des Zeitraums starten. | Eine Terminänderung muss sie nicht bestätigen. Sie sieht den neuen Termin bei ihren Kontrollen. |
 | Kontrollübersicht der Sachbearbeitung | „Ankündigen“ führt jetzt zu `/inspection-planning?announce=<id>`. | – |

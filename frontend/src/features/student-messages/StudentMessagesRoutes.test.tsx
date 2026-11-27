@@ -27,7 +27,10 @@ const announcement: StudentMessage = {
   id: 11, type: 'ANNOUNCEMENT', createdAt: '2026-11-28T00:01:00Z', occurredAt: '2026-11-27T23:30:00Z',
   readAt: null, flatLabel: 'S-01', startsOn: '2026-12-07', endsOn: '2026-12-11',
   windowStart: '09:00', windowEnd: '16:00', hasChecklistPdf: true,
+  announcementKind: null, announcementMessage: null, attachment: null,
 }
+const fileName = 'Hinweise für die Küche.pdf'
+const originalText = 'Liebe WG,\n\nbitte räumt die Spüle frei.\n<img src="x" onerror="alert(1)">'
 const week: StudentMessage = { ...announcement, id: 12, type: 'REMINDER_7_DAYS', hasChecklistPdf: false }
 const tomorrow: StudentMessage = { ...week, id: 13, type: 'REMINDER_1_DAY' }
 const readCalls = () => vi.mocked(api).mock.calls.filter(([path, options]) =>
@@ -37,6 +40,7 @@ let account: LoggedInUser | null
 let pages: StudentMessage[][]
 let readResponse: () => Response | Promise<Response>
 let pdfResponse: () => Response
+let attachmentResponse: () => Response | Promise<Response>
 let listStatus: number
 let routers: ReturnType<typeof createMemoryRouter>[]
 
@@ -55,6 +59,7 @@ beforeEach(async () => {
   pages = [[announcement, week, tomorrow]]
   readResponse = () => new Response(null, { status: 204 })
   pdfResponse = () => new Response('PDF', { headers: { 'Content-Type': 'application/pdf' } })
+  attachmentResponse = () => new Response('Originaldatei')
   listStatus = 200
   routers = []
   vi.mocked(login).mockImplementation(async () => { account = student })
@@ -81,6 +86,7 @@ beforeEach(async () => {
       return response
     }
     if (path.endsWith('/checklist.pdf')) return pdfResponse()
+    if (path.endsWith('/attachment')) return attachmentResponse()
     throw new Error(`Unexpected API call: ${path}`)
   })
 })
@@ -198,7 +204,10 @@ it('does not apply a pending read to a message on another page', async () => {
 })
 
 it('shows actionable checklist links on reminders and never a PDF', async () => {
-  pages = [[{ ...week, hasChecklistPdf: true }, tomorrow]]
+  pages = [[{
+    ...week, hasChecklistPdf: true, attachment: { fileName }, announcementMessage: originalText,
+    announcementKind: 'RESCHEDULE',
+  }, tomorrow]]
   mount()
   for (const title of [/Kontrollzeitraum beginnt in 7 Tagen/, /Kontrollzeitraum beginnt morgen/]) {
     const head = await screen.findByRole('button', { name: title })
@@ -206,7 +215,89 @@ it('shows actionable checklist links on reminders and never a PDF', async () => 
     const card = within(head.closest('article')!)
     expect(card.getByRole('link', { name: 'Zur Checkliste' }).getAttribute('href')).toBe('/student/inspection/checklist')
     expect(card.queryByRole('button', { name: /herunterladen/ })).toBeNull()
+    expect(card.queryByText('Termin geändert')).toBeNull()
+    expect(card.queryByText(/bitte räumt/)).toBeNull()
+    expect(card.getByText(/Euer Kontrollzeitraum/)).toBeTruthy()
   }
+})
+
+it.each([
+  ['de', 'Ankündigung', 'Termin geändert', /Sauberkeitskontrolle/, 'WG S-01', /herunterladen/],
+  ['en', 'Announcement', 'Inspection date changed', /Cleanliness inspection/, 'Flat S-01', /Download/],
+] as const)('renders the original message as plain text and labels revisions in %s', async (
+  language, initialLabel, revisedLabel, title, flat, download,
+) => {
+  await i18n.changeLanguage(language)
+  const readAt = '2026-11-28T08:00:00Z'
+  account = { ...student, privileges: [] }
+  pages = [[{
+    ...announcement, readAt, announcementKind: 'ANNOUNCEMENT', announcementMessage: originalText,
+    hasChecklistPdf: false, attachment: { fileName },
+  }, {
+    ...announcement, id: 21, readAt, startsOn: '2026-12-09', hasChecklistPdf: false,
+    announcementKind: 'RESCHEDULE',
+  }]]
+  mount()
+  const head = await screen.findByRole('button', { name: new RegExp(initialLabel + '.*' + title.source) })
+  expect(screen.queryByRole('button', { name: download })).toBeNull()
+  fireEvent.click(head)
+
+  const card = within(head.closest('article')!)
+  const body = card.getByText(/Liebe WG/)
+  expect(body.textContent).toBe(originalText)
+  expect(body.childElementCount).toBe(0)
+  expect(body.classList.contains('student-message-original')).toBe(true)
+  expect(card.getByText(flat)).toBeTruthy()
+  expect(card.queryByText(/Die Sauberkeitskontrolle für|will take place during/)).toBeNull()
+  expect(card.getByRole('button', { name: download }).textContent).toBe(fileName)
+  const revised = screen.getByRole('button', { name: new RegExp(revisedLabel + '.*' + title.source) })
+  fireEvent.click(revised)
+  const revisedCard = within(revised.closest('article')!)
+  expect(revisedCard.getByText(/Die Sauberkeitskontrolle für|will take place during/)).toBeTruthy()
+  expect(revisedCard.queryByRole('button', { name: download })).toBeNull()
+  expect(readCalls()).toHaveLength(0)
+})
+
+it('downloads both files independently and allows retry after an individual attachment fails', async () => {
+  pages = [[{ ...announcement, readAt: '2026-11-28T08:00:00Z', attachment: { fileName } }]]
+  let finishAttachment!: (response: Response) => void
+  attachmentResponse = () => new Promise((resolve) => { finishAttachment = resolve })
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:message')
+    static revokeObjectURL = vi.fn()
+  })
+  const saved: string[] = []
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+    saved.push(this.download)
+  })
+  mount()
+  fireEvent.click(await screen.findByRole('button', { name: /Sauberkeitskontrolle/ }))
+  const attachment = screen.getByRole('button', { name: fileName + ' herunterladen' }) as HTMLButtonElement
+  const checklist = screen.getByRole('button', { name: 'Checkliste_Sauberkeit.pdf herunterladen' }) as HTMLButtonElement
+
+  fireEvent.click(attachment)
+  expect(attachment.disabled).toBe(true)
+  expect(attachment.getAttribute('aria-busy')).toBe('true')
+  expect(checklist.disabled).toBe(false)
+  fireEvent.click(checklist)
+  await waitFor(() => {
+    expect(saved).toEqual(['Checkliste_Sauberkeit.pdf'])
+    expect(checklist.disabled).toBe(false)
+  })
+  expect(attachment.disabled).toBe(true)
+  await act(async () => { finishAttachment(new Response(null, { status: 404 })) })
+  await screen.findByText('Der Anhang konnte nicht heruntergeladen werden.')
+  expect(screen.queryByText('Die Checkliste konnte nicht heruntergeladen werden.')).toBeNull()
+  expect(attachment.disabled).toBe(false)
+  expect(checklist.disabled).toBe(false)
+
+  attachmentResponse = () => new Response('Originaldatei')
+  fireEvent.click(attachment)
+  await waitFor(() => expect(saved).toEqual(['Checkliste_Sauberkeit.pdf', fileName]))
+  expect(screen.queryByText('Der Anhang konnte nicht heruntergeladen werden.')).toBeNull()
+  expect(vi.mocked(api).mock.calls.filter(([path]) => path === endpoint + '/11/attachment')).toHaveLength(2)
+  expect(vi.mocked(api).mock.calls.filter(([path]) => path === endpoint + '/11/checklist.pdf')).toHaveLength(1)
+  expect(readCalls()).toHaveLength(0)
 })
 
 it('omits the attachment, incomplete time window and the checklist link when unavailable', async () => {

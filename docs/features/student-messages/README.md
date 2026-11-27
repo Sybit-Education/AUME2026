@@ -77,7 +77,7 @@ Im geschlossenen Kartenkopf stehen Nachrichtentyp, Datum, Titel und bei ungelese
 
 Ankündigungen zeigen die WG, den Zeitraum und ein vollständiges Zeitfenster. Ist `hasChecklistPdf` gesetzt, bietet die Karte den PDF-Download in der gewählten App-Sprache an. Erinnerungen verlinken mit `CHECKLIST_READ` die interaktive Checkliste.
 
-Originaltext, Revisionskennzeichnung, Anhangmetadaten und individueller Download stehen in der API zur Verfügung. Die Nachrichtenkarten verwenden weiterhin die bisherigen Texte, Labels und Aktionen. Die Einbindung der neuen Angaben und des Downloads in die Karte folgt in Schritt 3.
+Bei einer Terminänderung zeigt der Kartenkopf „Termin geändert“ beziehungsweise „Inspection date changed“. Im aufgeklappten Zustand erscheint der Originaltext in der eingereichten Sprache mit seinen Zeilenumbrüchen als Klartext. Fehlt er, greift der bisherige lokalisierte Standardtext. Die Karte zeigt den individuellen Anhang unter seinem bereinigten Dateinamen. Sind individuelle Datei und Checklisten-PDF verfügbar, lassen sie sich unabhängig voneinander herunterladen. Lade- und Fehlerzustände beziehen sich auf die jeweilige Datei.
 
 ## Glocke und Ungelesen-Zähler
 
@@ -101,6 +101,6 @@ Ausschließlich Ankündigungen bieten einen PDF-Download. Beide Erinnerungen fü
 
 `StudentNotificationAttachmentTests` prüft mit eigenen Daten und temporärem Dateispeicher Originalbytes, Dateinamen, Header, getrennte PDF-Berechtigung, historische Anhänge, WG-Sichtbarkeit und unveränderten Lesestatus. Ein separater Kontext ohne `dev` prüft den Betrieb ohne Speicheradapter.
 
-`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN-Download und Lesestatus über den App-Router.
+`StudentMessagesRoutes.test.tsx` prüft Einstieg, Rollen, Nachrichtenkarten, Seitennavigation, DE/EN und Lesestatus über den App-Router. Für die Integration prüft der Test mehrzeiligen Originaltext als Klartext, Revisionslabel, Standardtext als Fallback sowie unabhängige Downloads und Wiederholung nach einem Fehler.
 
 `NotificationBell.test.tsx` prüft Header, Rollen, Navigation, zugängliche Zählertexte, Polling, Fehlerbehandlung und Sitzungswechsel. Der Nachrichten-Routingtest prüft zusätzlich den neuen Zählerabruf nach bewusstem Lesen.
