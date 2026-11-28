@@ -58,7 +58,7 @@ class InspectionPlanningTests {
     void freeSonne() {
         entities.createQuery("""
                 update InspectionEntity i set i.status = :published
-                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Wohnanlage Sonne')
+                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Sonnenbühl West I')
                 """)
             .setParameter("published", InspectionEntity.Status.PUBLISHED)
             .executeUpdate();
@@ -68,7 +68,7 @@ class InspectionPlanningTests {
     void optionsShowOwnResidencesWithFlatCountAndDefaultCaretaker() throws Exception {
         mvc.perform(get(PATH + "/options").with(login("clerk")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.residences[*].name").value(contains("Egg", "Wohnanlage Sonne")))
+            .andExpect(jsonPath("$.residences[*].name").value(contains("Egg", "Sonnenbühl West I")))
             .andExpect(jsonPath("$.residences[1].flatCount").value(2))
             .andExpect(jsonPath("$.residences[1].caretakerId").value(userId("caretaker").intValue()))
             .andExpect(jsonPath("$.residences[1].flatsWithOpenInspection").isEmpty())
@@ -87,7 +87,7 @@ class InspectionPlanningTests {
         mvc.perform(get(PATH + "/assigned").with(login("caretaker")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value((int) id))
-            .andExpect(jsonPath("$.content[0].residenceName").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.content[0].residenceName").value("Sonnenbühl West I"));
     }
 
     @ParameterizedTest
@@ -533,7 +533,7 @@ class InspectionPlanningTests {
     }
 
     private Long sonne() {
-        return residences.findFirstByName("Wohnanlage Sonne").orElseThrow().getId();
+        return residences.findFirstByName("Sonnenbühl West I").orElseThrow().getId();
     }
 
     private Long userId(String key) {

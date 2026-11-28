@@ -57,7 +57,7 @@ class MembershipTests {
         mvc.perform(get("/api/memberships/me").session(session)).andExpect(status().isNoContent());
         join(session, " join-1 ").andExpect(status().isCreated())
             .andExpect(jsonPath("$.flat").value("S-01"))
-            .andExpect(jsonPath("$.residence").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.residence").value("Sonnenbühl West I"));
         mvc.perform(get("/api/memberships/me").session(session))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.members.length()").value(2))
@@ -115,7 +115,7 @@ class MembershipTests {
 
     @Test
     void fullFlatRejectsJoinAndKeepsTheCode() throws Exception {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var full = flats.save(new FlatEntity(residence, "FULL", 1));
         memberships.save(new MembershipEntity(full, student("resident", "Bewohnt"), LocalDate.now().minusDays(1)));
         var invitation = invite("FULL-1", "FULL");
@@ -153,12 +153,12 @@ class MembershipTests {
     }
 
     private FlatEntity flat(String label) {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         return flats.findByResidenceIdAndLabel(residence.getId(), label).orElseThrow();
     }
 
     private UserEntity student(String key, String name) {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         return users.save(new StudentEntity(key, name, Set.of(roles.findByName("STUDENT").orElseThrow()), residence));
     }
 

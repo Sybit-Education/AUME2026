@@ -45,7 +45,7 @@ Nach grünem Publish auf `develop`:
 git clone https://github.com/Sybit-Education/AUME2026.git
 cd AUME2026
 git switch develop
-docker compose -f infrastructure/compose.develop-vm.yaml up -d
+docker compose -f infrastructure/compose.develop.yaml up -d
 ```
 
 Ohne `infrastructure/develop-vm.env` setzt Watchtower keine Notification-URL und ruft GitHub nicht auf. Image-Updates laufen trotzdem. Die Vorlage und das Benachrichtigungs-Template liegen schon im Repository.
@@ -54,25 +54,31 @@ Erst wenn das Dispatch-Token freigegeben ist, die Vorlage kopieren, `TOKEN` erse
 
 ```bash
 cp infrastructure/develop-vm.env.example infrastructure/develop-vm.env
-docker compose -f infrastructure/compose.develop-vm.yaml up -d
+docker compose -f infrastructure/compose.develop.yaml up -d
 ```
 
 Das Token gilt nur für dieses Repository, Berechtigung Contents: Read and write. Die Datei bleibt auf der VM. Danach sendet Watchtower `repository_dispatch` mit `develop-deployed`, sobald ein beobachteter Container ein neues Image läuft. Ein abgelehnter Aufruf stoppt das Update nicht. Es gibt keinen Abruf der Seiten-URL. [`.github/workflows/watchtower.yml`](../.github/workflows/watchtower.yml) nimmt den Aufruf an und muss dafür auf `main` liegen. Der Job `confirm` in `publish.yml` ist auskommentiert, bis das Token freigegeben ist. Ein Lauf ohne Image-Wechsel sendet keinen Aufruf.
 
-[`infrastructure/compose.develop-vm.yaml`](../infrastructure/compose.develop-vm.yaml) startet Frontend, Backend und `nickfedor/watchtower:1.24.2`. Das Backend läuft mit `SPRING_PROFILES_ACTIVE=dev`. Die Sample-Daten kommen aus diesem Profil. Die H2-Datenbank liegt im Speicher und ist nach einem Neustart wieder der Seed des aktuellen Images.
+[`infrastructure/compose.develop.yaml`](../infrastructure/compose.develop.yaml) startet Frontend, Backend und `nickfedor/watchtower:1.24.2`. Das Backend läuft mit `SPRING_PROFILES_ACTIVE=dev`. Die Sample-Daten kommen aus diesem Profil. Die H2-Datei liegt auf der VM unter `devdata/db`. Der Backend-Container löscht sie bei jedem Start, damit ein neu gezogenes Image seine Sample-Daten neu anlegt. Der lokale Dev-Server mit `./mvnw` lässt die eigene Datei stehen. Keycloak und PostgreSQL laufen hier nicht. Die Anmeldung ist der Dev-Login.
 
-Prüfung: `http://<vm>/` und `http://<vm>/api/auth/config`. Die Config-Antwort ist `{"mode":"dev"}`. Anmeldung als `student`, `caretaker` oder `clerk`.
+Prüfung: `http://<vm>/` und `http://<vm>/api/auth/config`. Die Config-Antwort ist `{"mode":"dev"}`. Anmeldung über das Dropdown als `student`, `caretaker`, `caretaker2` oder `clerk`.
 
 Watchtower ersetzt nur Container mit dem Label `com.centurylinklabs.watchtower.enable=true`, etwa alle fünf Minuten nach einem neuen `develop`-Digest. Eine Änderung an der Compose-Datei braucht auf der VM `git pull` und dasselbe `up -d`. Sofort ziehen:
 
 ```bash
-docker compose -f infrastructure/compose.develop-vm.yaml run --rm watchtower --run-once
+docker compose -f infrastructure/compose.develop.yaml run --rm watchtower --run-once
 ```
 
 Öffentliche Packages brauchen kein Login. Schlägt der Pull fehl, auf der VM `docker login ghcr.io` mit einem Token `read:packages` ausführen und `~/.docker/config.json` in Watchtower nach `/config.json` mounten. Das Token bleibt außerhalb von Git.
 
 ## Staging und Produktion
 
-Diese VMs werden noch nicht aufgesetzt. Staging nutzt später den Tag `staging` und denselben Stack wie Produktion: Datenbank, Upload-Volume, Keycloak, kein `dev`-Profil und keine Sample-Daten.
+Diese VMs werden noch nicht aufgesetzt. Beide nutzen [`infrastructure/compose.prod.yaml`](../infrastructure/compose.prod.yaml):
 
-Die Produktion pinnt den Release-Tag, zum Beispiel `v1.2.0`. Watchtower übernimmt einen neuen Digest dieses Tags nach dem wöchentlichen Rebuild. Der Wechsel auf `v1.3.0` ist eine Änderung der Compose-Datei auf der VM. Danach baut der Zeitplan nur noch `v1.3.0` neu.
+```bash
+SEEZEIT_TAG=staging docker compose -f infrastructure/compose.prod.yaml up -d
+```
+
+Der Stack ist PostgreSQL, ein privates Upload-Volume, Keycloak und Watchtower. Es gibt keine Sample-Daten und keinen Dev-Login. Angelegt werden die vier Testnutzer `student`, `clerk`, `caretaker` und `caretaker2`. Keycloak-Anmeldenamen sind `student`, `sachbearbeiter`, `objektbetreuer` und `objektbetreuer2`. Die Datenbank veröffentlicht keinen Port. Keycloak ist unter Port 8081 erreichbar, weil der Browser den Token-Endpunkt braucht. Die Admin-Oberfläche liegt in diesem Startmodus auf demselben Port.
+
+Die Produktion setzt `SEEZEIT_TAG` auf den Release-Tag, zum Beispiel `v1.2.0`, und nicht auf `latest`. Watchtower übernimmt einen neuen Digest dieses Tags nach dem wöchentlichen Rebuild. Der Wechsel auf `v1.3.0` ist die Änderung von `SEEZEIT_TAG` auf der VM. Danach baut der Zeitplan nur noch `v1.3.0` neu.

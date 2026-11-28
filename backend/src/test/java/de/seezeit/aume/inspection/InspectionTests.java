@@ -113,7 +113,7 @@ class InspectionTests {
 
     @Test
     void openListShowsOnlyAnnouncedPeriodsAndInspectionsWithoutPeriod() throws Exception {
-        var sonne = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var sonne = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var clerk = users.findByUserKey("clerk").orElseThrow();
         var proposed = periods.save(new InspectionPeriodEntity(sonne, LocalDate.of(2027, 1, 10), LocalDate.of(2027, 1, 12), clerk));
         var announced = new InspectionPeriodEntity(sonne, LocalDate.of(2027, 1, 3), LocalDate.of(2027, 1, 5), clerk);
@@ -126,12 +126,12 @@ class InspectionTests {
 
         var session = login("caretaker");
         // S-01 und S-02 haben keinen Zeitraum und bleiben sichtbar, S-03 wartet noch auf die Ankündigung.
-        mvc.perform(get("/api/inspections").session(session))
+        mvc.perform(get("/api/inspections").with(session))
             .andExpect(jsonPath("$.page.totalElements").value(3))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-03')]").isEmpty())
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].startsOn").value("2027-01-03"))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].endsOn").value("2027-01-05"))
-            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].residenceName").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].residenceName").value("Sonnenbühl West I"))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].windowStart").value("09:00:00"))
             // Ohne Zeitraum ganz unten
             .andExpect(jsonPath("$.content[2].flatLabel").value("S-02"))
@@ -139,14 +139,14 @@ class InspectionTests {
 
         // Vor Beginn des Zeitraums lässt sich die angekündigte Kontrolle noch nicht starten.
         var future = inspections.findAll().stream().filter(i -> i.getFlat().getLabel().equals("S-04")).findFirst().orElseThrow();
-        mvc.perform(post("/api/inspections/" + future.getId() + "/start").session(session).with(csrf()))
+        mvc.perform(post("/api/inspections/" + future.getId() + "/start").with(session).with(csrf()))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("period_not_started"));
 
         // Eine schon begonnene Kontrolle bleibt sichtbar, auch wenn ihr Zeitraum nicht angekündigt ist.
         waiting.setStatus(InspectionEntity.Status.DRAFT);
         inspections.saveAndFlush(waiting);
-        mvc.perform(get("/api/inspections").session(session))
+        mvc.perform(get("/api/inspections").with(session))
             .andExpect(jsonPath("$.page.totalElements").value(4))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-03')].status").value("DRAFT"));
     }

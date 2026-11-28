@@ -38,7 +38,7 @@ Die vorhandene Spalte gehört zu `inspection_periods`. Hibernate erzeugt sie im 
 
 ## Entwicklungsdaten
 
-`StudentSampleData.java` ergänzt im Profil `dev` für das Konto `student` die Mitgliedschaft in `S-01` und den angekündigten Kontrollzeitraum 07.12.–11.12.2026 in „Wohnanlage Sonne“. Nach dem 11.12.2026 liefert dieser feste Beispieltermin den Leerzustand. Für den Termin- und Exportfall stehen automatisierte Tests mit eigenen Testdaten zur Verfügung.
+`StudentSampleData.java` ergänzt im Profil `dev` für das Konto `student` die Mitgliedschaft in `S-01` und den angekündigten Kontrollzeitraum 07.12.–11.12.2026 in „Sonnenbühl West I“. Nach dem 11.12.2026 liefert dieser feste Beispieltermin den Leerzustand. Für den Termin- und Exportfall stehen automatisierte Tests mit eigenen Testdaten zur Verfügung.
 
 1. Das Backend mit dem Spring-Profil `dev` und das Frontend mit Vite starten. Die Befehle für beide Terminals stehen im [Projekt-README](../../../README.md#lokaler-start).
 2. Unter `http://localhost:5173/` über „Studierende“ als Dev-Konto `student` anmelden.
@@ -137,7 +137,7 @@ Die WG ergibt sich wie beim Termin aus der aktiven Mitgliedschaft der angemeldet
 
 ### Entwicklungsdaten
 
-`StudentSampleData` legt für die WG S-01 der Mock-Person `student` eine veröffentlichte Erstkontrolle nach dem Einzug an (nicht bestanden, Mängel bei „Herd & Backofen“ und bei „Dusche & WC“ mit vermuteter Gebäudeursache), sofern das Mock-Konto genau eine aktive Mitgliedschaft in `S-01` der Wohnanlage Sonne hat und seit dem Einzug noch kein veröffentlichtes Ergebnis vorliegt. Die Kontrollen aus `InspectionSampleData` liegen vor dem Einzug und bleiben für Studierende unsichtbar. Weil die Objektbetreuung diese Kontrolle in ihrem Verlauf sieht, sind die erwarteten Zahlen in `InspectionHistoryTests` und `InspectionTests.sampleDataIsIdempotent` angepasst (mit Team 3 abgestimmt).
+`StudentSampleData` legt für die WG S-01 der Mock-Person `student` eine veröffentlichte Erstkontrolle nach dem Einzug an (nicht bestanden, Mängel bei „Herd & Backofen“ und bei „Dusche & WC“ mit vermuteter Gebäudeursache), sofern das Mock-Konto genau eine aktive Mitgliedschaft in `S-01` in Sonnenbühl West I hat und seit dem Einzug noch kein veröffentlichtes Ergebnis vorliegt. Die Kontrollen aus `InspectionSampleData` liegen vor dem Einzug und bleiben für Studierende unsichtbar. Weil die Objektbetreuung diese Kontrolle in ihrem Verlauf sieht, sind die erwarteten Zahlen in `InspectionHistoryTests` und `InspectionTests.sampleDataIsIdempotent` angepasst (mit Team 3 abgestimmt).
 
 ## Offen
 

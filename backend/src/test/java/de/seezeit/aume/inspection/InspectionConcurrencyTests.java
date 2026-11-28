@@ -100,11 +100,11 @@ class InspectionConcurrencyTests {
         var session = login("caretaker");
         Long id = newInspection();
         start(session, id);
-        mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
+        mvc.perform(post("/api/inspections/" + id + "/mark-ok").with(session).with(csrf()))
             .andExpect(status().isOk());
 
         List<Integer> statuses = parallel(THREADS, i -> mvc.perform(post("/api/inspections/" + id + "/finalize")
-                .session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .with(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"overallResult\":\"PASSED\"}"))
             .andReturn().getResponse().getStatus());
 

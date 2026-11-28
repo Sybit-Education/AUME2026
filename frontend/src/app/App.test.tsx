@@ -7,12 +7,13 @@ import { createAppRoutes } from './router'
 import { invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
 import { UiError } from '@/lib/errors'
-import { api, login, logout, type LoggedInUser } from '@/lib/auth/client'
+import { api, devLogin, login, logout, type LoggedInUser } from '@/lib/auth/client'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
   api: vi.fn(),
   login: vi.fn(),
+  devLogin: vi.fn(),
   logout: vi.fn(),
 }))
 
@@ -36,6 +37,11 @@ async function signIn(username: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Mit Seezeit-Konto anmelden' }))
 }
 
+async function devSignIn(key: 'student' | 'caretaker' | 'clerk') {
+  fireEvent.change(await screen.findByLabelText('Testnutzer'), { target: { value: key } })
+  fireEvent.click(screen.getByRole('button', { name: 'Dev-Login' }))
+}
+
 function mount(path = '/') {
   const router = createMemoryRouter(createAppRoutes(), { initialEntries: [path] })
   routers.push(router)
@@ -50,6 +56,9 @@ beforeEach(async () => {
   await i18n.changeLanguage('de')
   vi.mocked(login).mockImplementation(async (username) => {
     signedIn = username === 'student' ? student : username === 'sachbearbeiter' ? clerk : null
+  })
+  vi.mocked(devLogin).mockImplementation(async (key) => {
+    signedIn = key === 'student' ? student : key === 'clerk' ? clerk : key === 'caretaker' ? caretaker : null
   })
   vi.mocked(logout).mockImplementation(async () => { signedIn = null })
   vi.mocked(api).mockImplementation(async (path) => {
@@ -100,25 +109,21 @@ function expectHtwgLegalLinks() {
   expect(screen.getByText('HTWG Konstanz')).toBeDefined()
 }
 
-it('shows HTWG legal links at the bottom of login and of every dashboard', async () => {
+it('shows HTWG legal links at the bottom of every view', async () => {
   const router = mount('/login')
-  await screen.findByRole('button', { name: 'Objektbetreuung' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expectHtwgLegalLinks()
 
-  fireEvent.click(screen.getByRole('button', { name: 'Sachbearbeitung' }))
+  await devSignIn('clerk')
   await screen.findByRole('heading', { name: 'Übersicht' })
   expectHtwgLegalLinks()
 
   fireEvent.click(screen.getByRole('link', { name: 'Wohnanlagen' }))
   await screen.findByText('Sonne')
-  expect(screen.queryByRole('link', { name: /Impressum/ })).toBeNull()
+  expectHtwgLegalLinks()
 
   fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
-  fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
-  await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
-  expect(router.state.location.pathname).toBe('/forbidden')
-  const tabs = await screen.findByRole('navigation', { name: 'Navigation der Studierenden' })
-  fireEvent.click(within(tabs).getByRole('link', { name: 'Start' }))
+  await devSignIn('student')
   await screen.findByRole('heading', { name: 'Hallo, Alex' })
   expect(router.state.location.pathname).toBe('/')
   expectHtwgLegalLinks()
@@ -226,7 +231,7 @@ it('switches UI language and reloads the greeting without signing in again', asy
 it('lets students switch the language under More, Settings, Language and keeps it after reloading', async () => {
   const router = mount()
   await signIn('student')
-  await screen.findByText('Hallo Alex, willkommen in Sonne.')
+  await screen.findByRole('heading', { name: 'Hallo, Alex' })
   expect(screen.queryByRole('combobox', { name: 'Sprache' })).toBeNull()
   fireEvent.click(screen.getByRole('link', { name: 'Mehr' }))
   fireEvent.click(await screen.findByRole('link', { name: /Einstellungen/ }))
@@ -349,13 +354,13 @@ it('redirects the student index to the dashboard and highlights Start', async ()
 
 it('returns to the student index after sign-in and opens the dashboard', async () => {
   const router = mount('/student')
-  const signIn = await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expect(router.state.location.pathname).toBe('/login')
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/student')
-  fireEvent.click(signIn)
+  await devSignIn('student')
 
   await screen.findByRole('heading', { name: 'Hallo, Alex' })
-  expect(login).toHaveBeenCalledWith('student', '/student')
+  expect(devLogin).toHaveBeenCalledWith('student')
   expect(router.state.location.pathname).toBe('/')
   const tabs = within(screen.getByRole('navigation', { name: 'Navigation der Studierenden' }))
   expect(tabs.getByRole('link', { name: 'Start' }).getAttribute('aria-current')).toBe('page')
@@ -404,9 +409,9 @@ it('keeps the control index as the login destination and redirects to the appoin
   const warning = vi.spyOn(console, 'warn')
   try {
     const router = mount('/student/inspection')
-    fireEvent.click(await screen.findByRole('button', { name: 'Studierende' }))
+    await devSignIn('student')
     await screen.findByRole('heading', { name: 'Kontrolle' })
-    expect(login).toHaveBeenCalledWith('student', '/student/inspection')
+    expect(devLogin).toHaveBeenCalledWith('student')
     expect(router.state.location.pathname).toBe('/student/inspection/appointment')
     expect(warning).not.toHaveBeenCalledWith(expect.stringContaining('Matched leaf route at location "/student/inspection"'))
   } finally {
@@ -446,6 +451,20 @@ it('shows an empty state when no checklist is published and hides it without the
   mount('/student/inspection/checklist')
   await screen.findByRole('heading', { name: 'Zugriff nicht erlaubt' })
   expect(vi.mocked(api).mock.calls.some(([path]) => path === '/api/checklist')).toBe(false)
+})
+
+it('starts at the home page after logout and a different dev login', async () => {
+  signedIn = clerk
+  const router = mount('/residences')
+  await screen.findByText('Sonne')
+  fireEvent.click(screen.getByRole('button', { name: 'Abmelden' }))
+  await screen.findByRole('button', { name: 'Dev-Login' })
+  expect(router.state.location.pathname).toBe('/login')
+  expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBeNull()
+
+  await devSignIn('student')
+  await screen.findByRole('heading', { name: 'Hallo, Alex' })
+  expect(router.state.location.pathname).toBe('/')
 })
 
 it('logs out on a protected page and requires login before showing its data again', async () => {

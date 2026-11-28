@@ -67,16 +67,16 @@ class ApplicationTests {
         var session = login("student");
         mvc.perform(get("/api/greeting").with(session).header("X-Dev-User", "clerk"))
             .andExpect(status().isOk())
-            .andExpect(content().string("Hallo Studierende, willkommen in Wohnanlage Sonne."));
+            .andExpect(content().string("Hallo Studierende, willkommen in Sonnenbühl West I."));
         mvc.perform(get("/api/residences").with(session)).andExpect(status().isForbidden());
     }
 
     @ParameterizedTest
     @CsvSource({
-        "en,en,'Hello Studierende, welcome to Wohnanlage Sonne.'",
-        "en-US,en,'Hello Studierende, welcome to Wohnanlage Sonne.'",
-        "de-CH,de,'Hallo Studierende, willkommen in Wohnanlage Sonne.'",
-        "fr,de,'Hallo Studierende, willkommen in Wohnanlage Sonne.'"
+        "en,en,'Hello Studierende, welcome to Sonnenbühl West I.'",
+        "en-US,en,'Hello Studierende, welcome to Sonnenbühl West I.'",
+        "de-CH,de,'Hallo Studierende, willkommen in Sonnenbühl West I.'",
+        "fr,de,'Hallo Studierende, willkommen in Sonnenbühl West I.'"
     })
     void greetingUsesTheRequestedSupportedLanguage(String requested, String resolved, String greeting) throws Exception {
         mvc.perform(get("/api/greeting").with(login("student")).header("Accept-Language", requested))
@@ -93,7 +93,7 @@ class ApplicationTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.size").value(2))
             .andExpect(jsonPath("$.page.totalElements").value(1))
-            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.content[0].name").value("Sonnenbühl West I"));
         mvc.perform(get("/api/greeting").with(session)).andExpect(status().isForbidden());
         mvc.perform(get("/api/residences").with(session).param("page", "1").param("size", "1"))
             .andExpect(jsonPath("$.content").isEmpty());
@@ -110,7 +110,7 @@ class ApplicationTests {
             .andExpect(jsonPath("$.content[0].flats").value(org.hamcrest.Matchers.contains("E-12", "E-14")))
             .andExpect(jsonPath("$.content[0].caretaker.name").value("Objektbetreuung Egg"))
             .andExpect(jsonPath("$.content[0].deputy").value(org.hamcrest.Matchers.nullValue()))
-            .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[1].name").value("Sonnenbühl West I"))
             .andExpect(jsonPath("$.content[1].flats").value(org.hamcrest.Matchers.contains("S-01", "S-02")))
             .andExpect(jsonPath("$.content[1].caretaker.name").value("Objektbetreuung"))
             .andExpect(jsonPath("$.content[1].deputy.name").value("Objektbetreuung Petershausen"))
@@ -119,7 +119,7 @@ class ApplicationTests {
         mvc.perform(get("/api/residences").with(session).param("page", "1").param("size", "1"))
             .andExpect(jsonPath("$.page.totalElements").value(2))
             .andExpect(jsonPath("$.content.length()").value(1))
-            .andExpect(jsonPath("$.content[0].name").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.content[0].name").value("Sonnenbühl West I"));
     }
 
     @Test

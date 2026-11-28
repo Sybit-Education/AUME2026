@@ -13,7 +13,8 @@ public class TestJwtDecoder {
     private static final Map<String, String> SUBJECTS = Map.of(
         "student", "00000000-0000-4000-8000-000000000001",
         "clerk", "00000000-0000-4000-8000-000000000002",
-        "caretaker", "00000000-0000-4000-8000-000000000003");
+        "caretaker", "00000000-0000-4000-8000-000000000003",
+        "caretaker2", "00000000-0000-4000-8000-000000000004");
 
     @Bean
     JwtDecoder jwtDecoder() {

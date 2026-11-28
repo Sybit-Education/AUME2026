@@ -1,9 +1,9 @@
-import { api, initializeAuth, login, logout, type LoggedInUser } from './client'
+import { api, devLogin, initializeAuth, login, logout, type LoggedInUser } from './client'
 import { UiError } from '@/lib/errors'
 
 export interface Session {
   ready: boolean
-  mode: 'keycloak' | null
+  mode: 'dev' | 'keycloak' | null
   user: LoggedInUser | null
 }
 
@@ -65,6 +65,14 @@ export function ensureSession(): Promise<Session> {
 
 export async function signIn(username: string, password: string) {
   await login(username, password)
+  revision++
+  pending = undefined
+  const session = await refreshSession()
+  if (!session.user) throw new UiError('errors.sessionExpired')
+}
+
+export async function signInDev(userKey: string) {
+  await devLogin(userKey)
   revision++
   pending = undefined
   const session = await refreshSession()

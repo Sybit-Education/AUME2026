@@ -13,6 +13,9 @@
     "username": "Username",
     "password": "Password",
     "accountLogin": "Sign in with Seezeit account",
+    "devUser": "Test user",
+    "devLogin": "Dev login",
+    "devLoginHint": "This dev login is only available in dev mode.",
     "login": "Sign in",
     "logout": "Sign out",
     "retry": "Try again"

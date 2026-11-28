@@ -59,7 +59,7 @@ class ProtocolPdfTests {
             .andReturn().getResponse();
 
         var text = text(response.getContentAsByteArray());
-        assertThat(text).contains("Kontrollprotokoll", "Wohnanlage Sonne", "S-01", "Erstkontrolle",
+        assertThat(text).contains("Kontrollprotokoll", "Sonnenbühl West I", "S-01", "Erstkontrolle",
             "25.10.2026", "Nachkontrolle erforderlich",
             "Herd & Backofen", "Schwer", "Eingebrannte Fettschicht",
             "Mülltrennung", "Vor Ort geklärt", "Abfluss vor Ort gereinigt.");

@@ -2,6 +2,7 @@ package de.seezeit.aume.auth;
 
 import java.util.List;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -17,6 +18,8 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -56,7 +59,6 @@ public class SecurityConfig {
             .securityContext(context -> context.securityContextRepository(contexts))
             .csrf(csrf -> csrf.csrfTokenRepository(tokens))
             .requestCache(cache -> cache.disable())
-            .exceptionHandling(errors -> errors.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/config", "/api/auth/csrf",
@@ -70,6 +72,13 @@ public class SecurityConfig {
         if (decoders.getIfAvailable() != null) {
             http.oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)));
         }
+        http.exceptionHandling(errors -> errors
+            .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            .accessDeniedHandler((request, response, exception) -> {
+                var authentication = SecurityContextHolder.getContext().getAuthentication();
+                var anonymous = authentication == null || authentication instanceof AnonymousAuthenticationToken;
+                response.sendError(anonymous ? HttpServletResponse.SC_UNAUTHORIZED : HttpServletResponse.SC_FORBIDDEN);
+            }));
         return http.build();
     }
 

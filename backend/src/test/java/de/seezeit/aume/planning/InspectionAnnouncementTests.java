@@ -55,7 +55,7 @@ class InspectionAnnouncementTests {
     void freeSonne() {
         entities.createQuery("""
                 update InspectionEntity i set i.status = :published
-                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Wohnanlage Sonne')
+                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Sonnenbühl West I')
                 """)
             .setParameter("published", InspectionEntity.Status.PUBLISHED)
             .executeUpdate();
@@ -66,7 +66,7 @@ class InspectionAnnouncementTests {
         long id = agreedPeriod();
         mvc.perform(get(PATH + "/" + id + "/announcement-draft").session(login("clerk")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.residenceName").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.residenceName").value("Sonnenbühl West I"))
             .andExpect(jsonPath("$.flatCount").value(2))
             .andExpect(jsonPath("$.channels[0]").value("IN_APP"))
             .andExpect(jsonPath("$.message", containsString("vom %s bis %s".formatted(german(day(10)), german(day(12))))))
@@ -81,7 +81,7 @@ class InspectionAnnouncementTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.kind").value("ANNOUNCEMENT"))
             .andExpect(jsonPath("$.sentBy.name").value(users.findByUserKey("clerk").orElseThrow().getName()))
-            .andExpect(jsonPath("$.residenceName").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.residenceName").value("Sonnenbühl West I"))
             .andExpect(jsonPath("$.flatCount").value(2))
             .andExpect(jsonPath("$.channels[0]").value("IN_APP"))
             .andExpect(jsonPath("$.message").value("Eigener Text"))
@@ -268,7 +268,7 @@ class InspectionAnnouncementTests {
 
     private long proposal() throws Exception {
         var content = "{\"residenceId\":%d,\"startsOn\":\"%s\",\"endsOn\":\"%s\",\"windowStart\":\"09:00\",\"windowEnd\":\"16:00\",\"caretakerId\":%d}"
-            .formatted(residences.findFirstByName("Wohnanlage Sonne").orElseThrow().getId(), day(10), day(12),
+            .formatted(residences.findFirstByName("Sonnenbühl West I").orElseThrow().getId(), day(10), day(12),
                 users.findByUserKey("caretaker").orElseThrow().getId());
         var result = write(post(PATH), "clerk", content).andExpect(status().isCreated());
         return ((Number) JsonPath.read(result.andReturn().getResponse().getContentAsString(), "$.id")).longValue();

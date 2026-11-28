@@ -1,4 +1,4 @@
-name: seezeit-develop
+name: ${SEEZEIT_PROJECT:-seezeit}
 
 services:
   frontend:
@@ -7,6 +7,9 @@ services:
     ports:
       - "80:80"
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
@@ -15,9 +18,21 @@ services:
     pull_policy: always
     ports:
       - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - ../devdata:/devdata
+    # Neues Image, neue Sample-Daten: der Container startet mit leerer H2-Datei.
+    # Der lokale Start mit mvnw lässt devdata/db stehen.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        rm -f /devdata/db/aume.mv.db /devdata/db/aume.trace.db /devdata/db/aume.lock.db
+        exec java -jar /app/app.jar
     environment:
       SPRING_PROFILES_ACTIVE: dev
-    restart: unless-stopped
+      SPRING_DATASOURCE_URL: jdbc:h2:file:/devdata/db/aume;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+      AUME_STORAGE_LOCATION: /devdata/uploads
     labels:
       - com.centurylinklabs.watchtower.enable=true
 

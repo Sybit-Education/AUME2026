@@ -104,7 +104,7 @@ it.each(['CLERK', 'CARETAKER'])('makes no count requests in the %s view', async 
 it('does not show or load the bell on the login page', async () => {
   account = null
   mount('/login')
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expect(document.querySelector('.student-notification-bell')).toBeNull()
   expect(requests()).toHaveLength(0)
 })

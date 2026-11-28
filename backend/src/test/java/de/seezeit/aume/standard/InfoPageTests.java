@@ -46,13 +46,13 @@ class InfoPageTests {
 
     @Test
     void englishVersionIsStoredSeparately() throws Exception {
-        mvc.perform(put("/api/info-pages").session(login("clerk")).with(csrf())
+        mvc.perform(put("/api/info-pages").with(login("clerk")).with(csrf())
                 .contentType(MediaType.APPLICATION_JSON).content(
                     "{\"process\":\"A\",\"consequences\":\"B\",\"standards\":\"C\","
                         + "\"processEn\":\"A en\",\"consequencesEn\":\"B en\",\"standardsEn\":\"C en\"}"))
             .andExpect(status().isOk());
 
-        mvc.perform(get("/api/info-pages").session(login("student")))
+        mvc.perform(get("/api/info-pages").with(login("student")))
             .andExpect(jsonPath("$.process").value("A"))
             .andExpect(jsonPath("$.processEn").value("A en"))
             .andExpect(jsonPath("$.consequencesEn").value("B en"))

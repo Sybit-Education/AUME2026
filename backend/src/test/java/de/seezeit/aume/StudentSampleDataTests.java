@@ -40,7 +40,7 @@ class StudentSampleDataTests {
         assertThat(memberships).hasSize(1);
         var flat = memberships.getFirst().getFlat();
         assertThat(flat.getLabel()).isEqualTo("S-01");
-        assertThat(flat.getResidence().getName()).isEqualTo("Wohnanlage Sonne");
+        assertThat(flat.getResidence().getName()).isEqualTo("Sonnenbühl West I");
 
         var inspections = entities.createQuery("""
             select i from InspectionEntity i join i.period p
@@ -76,7 +76,7 @@ class StudentSampleDataTests {
     private InspectionEntity sampleInspection() {
         return entities.createQuery("""
             select i from InspectionEntity i join i.period p
-            where i.flat.label = 'S-01' and i.flat.residence.name = 'Wohnanlage Sonne'
+            where i.flat.label = 'S-01' and i.flat.residence.name = 'Sonnenbühl West I'
               and i.round = 0 and p.startsOn = :startsOn and p.endsOn = :endsOn
             """, InspectionEntity.class)
             .setParameter("startsOn", LocalDate.of(2026, 12, 7))

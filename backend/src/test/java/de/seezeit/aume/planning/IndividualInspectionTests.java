@@ -52,7 +52,7 @@ class IndividualInspectionTests {
     void freeSonne() {
         entities.createQuery("""
                 update InspectionEntity i set i.status = :published
-                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Wohnanlage Sonne')
+                where i.flat.id in (select f.id from FlatEntity f where f.residence.name = 'Sonnenbühl West I')
                 """)
             .setParameter("published", InspectionEntity.Status.PUBLISHED)
             .executeUpdate();
@@ -135,7 +135,7 @@ class IndividualInspectionTests {
             .andExpect(jsonPath("$.kind").value("INDIVIDUAL"))
             .andExpect(jsonPath("$.flatCount").value(1))
             .andExpect(jsonPath("$.flatLabels").value(contains("S-02")))
-            .andExpect(jsonPath("$.message", containsString("für eure WG in der Wohnanlage Wohnanlage Sonne")))
+            .andExpect(jsonPath("$.message", containsString("für eure WG in der Wohnanlage Sonnenbühl West I")))
             .andExpect(jsonPath("$.message", not(containsString("reguläre"))))
             .andExpect(jsonPath("$.message", not(containsString("Beschwerde"))));
 
@@ -203,7 +203,7 @@ class IndividualInspectionTests {
     }
 
     private Long sonne() {
-        return residences.findFirstByName("Wohnanlage Sonne").orElseThrow().getId();
+        return residences.findFirstByName("Sonnenbühl West I").orElseThrow().getId();
     }
 
     private Long flat(String label) {

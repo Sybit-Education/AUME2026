@@ -38,7 +38,7 @@ public class StudentSampleData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var student = users.findByUserKey("student").orElseThrow();
         var clerk = users.findByUserKey("clerk").orElseThrow();
         seedInspection(residence, student, clerk);

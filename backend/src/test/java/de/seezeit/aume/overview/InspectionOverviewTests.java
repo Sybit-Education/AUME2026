@@ -260,7 +260,7 @@ class InspectionOverviewTests {
 
     @Test
     void historicalDevRoundCoexistsWithTheStudentDemosAndIsSeededOnlyOnce() throws Exception {
-        var demoSonne = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var demoSonne = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var demoInspections = inspections.findAll().stream()
             .filter(i -> i.getFlat().getResidence().getId().equals(demoSonne.getId())).toList();
         var planned = demoInspections.stream()

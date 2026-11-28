@@ -103,11 +103,11 @@ Repositories bleiben interne Persistenzschnittstellen. Spring Data REST ist im G
 
 ## 5. Rollen, Privilegien und Entwicklungsdaten erweitern
 
-Nutzer haben mehrere Rollen. Die Rollen `STUDENT`, `CARETAKER` und `CLERK` bündeln Berechtigungen. `AppUserService` bildet Rollen und Privilegien auf Spring-Security-Authorities ab (`ROLE_STUDENT` für Rollen, zum Beispiel `GREETING_READ` für Berechtigungen). Die drei Keycloak-Konten sind mit den Anwendungsnutzern `student`, `caretaker` und `clerk` verknüpft und verwenden dieselbe Rollenabbildung. Die Startdaten sind wiederholbar, vorhandene Rollenzuweisungen werden nicht überschrieben. Rollen und Berechtigungen werden ausschließlich serverseitig zugewiesen. Es gibt keine öffentliche Nutzerregistrierung oder Rollenverwaltung. Die Konten und ihre Startberechtigungen stehen in der [README](README.md#anmeldung-und-testdaten).
+Nutzer haben mehrere Rollen. Die Rollen `STUDENT`, `CARETAKER` und `CLERK` bündeln Berechtigungen. `AppUserService` bildet Rollen und Privilegien auf Spring-Security-Authorities ab (`ROLE_STUDENT` für Rollen, zum Beispiel `GREETING_READ` für Berechtigungen). Die vier Keycloak-Konten sind mit den Anwendungsnutzern `student`, `caretaker`, `caretaker2` und `clerk` verknüpft und verwenden dieselbe Rollenabbildung. Die Startdaten sind wiederholbar, vorhandene Rollenzuweisungen werden nicht überschrieben. Rollen und Berechtigungen werden ausschließlich serverseitig zugewiesen. Es gibt keine öffentliche Nutzerregistrierung oder Rollenverwaltung. Die Konten und ihre Startberechtigungen stehen in der [README](README.md#anmeldung-und-testdaten).
 
 `GET /api/me` liefert das angemeldete Nutzerprofil mit `roles` und `privileges`. Die bisherigen Nutzer- und Repository-Suchendpunkte sind entfernt. Wohnanlagen werden auf die Zuordnung des angemeldeten Nutzers begrenzt: Die Sachbearbeitung über `staff_assignments` (`kind = CLERK`, mehrere Anlagen möglich), die Objektbetreuung ebenfalls über `staff_assignments` (Betreuung und Vertretung, US-03), alle anderen Sichten noch über die eine Wohnanlage in `users.residence_id`. WG-Mitgliedschaft und zeitliche Zugriffsregeln folgen mit den betreffenden Domänenmodulen.
 
-Jeder geschützte Aufruf sendet ein Keycloak-Access-Token im Header `Authorization: Bearer`. Das Backend prüft Signatur, Aussteller, Audience und Gültigkeit und sucht den Nutzer über `(identity_issuer, identity_subject)`. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Änderungen an Berechtigungen werden nach erneuter Anmeldung wirksam.
+Außerhalb von `dev` sendet jeder geschützte Aufruf ein Keycloak-Access-Token im Header `Authorization: Bearer`. Das Backend prüft Signatur, Aussteller, Audience und Gültigkeit und sucht den Nutzer über `(identity_issuer, identity_subject)`. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Änderungen an Berechtigungen werden nach erneuter Anmeldung wirksam. Im Profil `dev` ersetzt der Mock-Login das Token durch eine Sitzung. Keycloak ist dafür nicht nötig.
 
 Für die beispielhafte Kontrollübersicht:
 
@@ -118,15 +118,15 @@ Für die beispielhafte Kontrollübersicht:
 5. In [SampleData.java](backend/src/main/java/de/seezeit/aume/SampleData.java) oder einem eigenen, ebenfalls auf `dev` begrenzten Seeder synthetische Fachdaten ergänzen. Benötigte Rollen und Nutzer müssen zuvor angelegt sein; die Reihenfolge der vorhandenen Seeder berücksichtigen.
 6. Backend neu starten und die betroffenen Keycloak-Konten erneut anmelden. Erlaubte und verbotene Fälle prüfen.
 
-**Besonderheit der Seeder:** `SecurityData.role(...)` erstellt nur fehlende Rollen. Bei bereits vorhandenen Rollen werden geänderte Privilegien-Sets nicht übernommen. In der derzeitigen H2-Datenbank mit `ddl-auto: create-drop` wirkt die geänderte Startzuordnung nach einem Backend-Neustart, weil die Datenbank neu aufgebaut wird. Für eine dauerhaft gespeicherte Datenbank braucht eine solche Änderung einen gezielten Datenänderungs- oder Migrationsschritt. Die Zuordnungen nicht bei jedem Start pauschal überschreiben.
+**Besonderheit der Seeder:** `SecurityData.role(...)` erstellt nur fehlende Rollen. Bei bereits vorhandenen Rollen werden geänderte Privilegien-Sets nicht übernommen. Die Dev-Datenbank ist eine H2-Datei und bleibt über einen Neustart erhalten. Eine geänderte Startzuordnung gilt dort erst nach einem gezielten Datenänderungsschritt oder nach dem Löschen der Datei unter `devdata/db`. Die Zuordnungen nicht bei jedem Start pauschal überschreiben.
 
-Die drei Anwendungsnutzer `student`, `caretaker` und `clerk` bleiben die gemeinsame Entwicklungsbasis. Keycloak-Anmeldenamen sind `student`, `sachbearbeiter` und `objektbetreuer`. Ein zusätzlich gespeicherter Nutzer erhält dadurch noch kein Keycloak-Konto. `caretaker2`, `caretaker3` und `clerk2` bleiben Stammdaten ohne Konto. Weitere Zugriffskonstellationen lassen sich gezielt in Tests aufbauen. Keine echten Personen- oder Zugangsdaten als Beispieldaten einchecken.
+Die vier Anwendungsnutzer `student`, `caretaker`, `caretaker2` und `clerk` bleiben die gemeinsame Entwicklungsbasis. Keycloak-Anmeldenamen sind `student`, `sachbearbeiter`, `objektbetreuer` und `objektbetreuer2`. Ein zusätzlich gespeicherter Nutzer erhält dadurch noch kein Keycloak-Konto. `caretaker3` und `clerk2` bleiben Stammdaten ohne Konto. Weitere Zugriffskonstellationen lassen sich gezielt in Tests aufbauen. Keine echten Personen- oder Zugangsdaten als Beispieldaten einchecken.
 
-Für ein Feature keine eigene Anmeldung oder Token-Verarbeitung einführen. Die Identität wird über Keycloak verifiziert; Anwendungsrollen bleiben in der Datenbank. Änderungen an diesem Zusammenspiel betreffen die gemeinsame Architektur.
+Für ein Feature keine eigene Anmeldung oder Token-Verarbeitung einführen. Außerhalb von `dev` wird die Identität über Keycloak verifiziert; Anwendungsrollen bleiben in der Datenbank. Änderungen an diesem Zusammenspiel betreffen die gemeinsame Architektur.
 
 ### Keycloak
 
-Die Anmeldung gilt in jedem Profil. Das Profil `dev` schaltet nur die Fachdaten ein. Das Frontend sendet Anmeldename und Passwort an den Token-Endpunkt von Keycloak. `GET /api/auth/config` liefert die öffentlichen Anmeldeeinstellungen. Folgende Umgebungsvariablen sind erforderlich:
+Keycloak gilt außerhalb von `dev`. Das Profil `dev` schaltet die Fachdaten und den Mock-Login ein und braucht kein Keycloak. In den anderen Profilen sendet das Frontend Anmeldename und Passwort an den Token-Endpunkt von Keycloak. `GET /api/auth/config` liefert die öffentlichen Anmeldeeinstellungen. Folgende Umgebungsvariablen sind dort erforderlich:
 
 | Variable | Beispiel |
 | --- | --- |
@@ -139,9 +139,9 @@ Die Anmeldung gilt in jedem Profil. Das Profil `dev` schaltet nur die Fachdaten 
 
 Der Keycloak-Client muss öffentlich sein und Direct Access Grants erlauben. Ein Audience-Mapper muss `seezeit-api` in die Access-Token aufnehmen. Der Issuer samt Discovery- und JWKS-Endpunkten muss vom Backend erreichbar sein. Signatur, Issuer, Audience und Gültigkeitszeit werden geprüft. Weitere Details zur Rückkehr auf die angeforderte Seite stehen in der [Routing-Anleitung](frontend/ROUTING.md#anmeldung-und-rückkehr-zur-angeforderten-seite).
 
-Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem bereits angelegten Anwendungsnutzer zugeordnet. Diese Zuordnung und die Rollen müssen durch einen vertrauenswürdigen Provisionierungsprozess gesetzt werden; unbekannte Identitäten erhalten keinen Zugriff. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Im Profil `dev` verknüpft `SampleData` die drei Konten. Die bestehende H2-/`create-drop`-Konfiguration bleibt für das Template erhalten; dauerhafte Speicherung und Migrationen müssen vor einem echten Betrieb eingerichtet werden. ADR-0006 bleibt ein Vorschlag.
+Ein verifiziertes Token wird über `(identity_issuer, identity_subject)` einem bereits angelegten Anwendungsnutzer zugeordnet. Diese Zuordnung und die Rollen müssen durch einen vertrauenswürdigen Provisionierungsprozess gesetzt werden; unbekannte Identitäten erhalten keinen Zugriff. Token-Rollen werden nicht als Anwendungsberechtigungen übernommen. Im Profil `dev` verknüpft `SampleData` die vier Mock-Nutzer. Im Profil `prod` legt `ProdTestUsers` nur diese vier Nutzer an. ADR-0006 bleibt ein Vorschlag.
 
-Der Docker-Start mit Fachdaten steht in der [README](README.md#start-mit-docker). Ohne `compose.dev.yaml` läuft Keycloak, die Anwendungsnutzer fehlen aber.
+Der lokale Start ohne Zusatzsetup steht in der [README](README.md#anmeldung-und-testdaten). Die Deployments stehen in [docs/deployment.md](docs/deployment.md).
 
 ## 6. Frontend anbinden
 
@@ -294,15 +294,17 @@ Bei neuen Texten die Schlüssel in beiden Sprachen sowie Platzhalter und Pluralf
 
 Der Ordner `infrastructure/` bündelt den späteren Betrieb des Gesamtsystems. Dort liegt kein Quellcode von Frontend oder Backend.
 
-- `compose.yaml` startet Frontend und Backend über die Dockerfiles in `frontend/` und `backend/`. Weitere Dienste kommen später dazu.
+Architekturänderungen, die keine Feature-Slices sind, sollen nach Möglichkeit einen Weg für die Entwicklung lassen, der ohne Zusatzsetup auskommt. Der Mock-Login ohne Keycloak ist dafür ein Beispiel, ebenso der Ordner `devdata` für Datei-Uploads und die H2-Datei.
+
+- [`infrastructure/compose.develop.yaml`](infrastructure/compose.develop.yaml) ist das Develop-Deployment ohne Keycloak und ohne PostgreSQL. [`infrastructure/compose.prod.yaml`](infrastructure/compose.prod.yaml) ist der Stack für Staging und Produktion.
 - `.env.example` ist die Vorlage für lokale Umgebungsvariablen. Echte Werte kommen in eine `.env`, die nicht eingecheckt wird.
-- Die Dockerfiles liegen in `frontend/` und `backend/`. Jedes Image wird aus seinem eigenen Projekt gebaut. Compose verweist darauf.
+- Die Dockerfiles liegen in `frontend/` und `backend/`. Jedes Image wird aus seinem eigenen Projekt gebaut.
 
-Der lokale Docker-Start mit dem `dev`-Profil steht in der [README](README.md#start-mit-docker). Änderungen an den Compose-Stacks oder am Deployment in [docs/deployment.md](docs/deployment.md) nachziehen.
+Der lokale Start ohne Zusatzsetup ist der Dev-Server mit dem Profil `dev`, beschrieben in der [README](README.md#anmeldung-und-testdaten). Änderungen an den Compose-Stacks oder am Deployment in [docs/deployment.md](docs/deployment.md) nachziehen.
 
-Aktuell verwendet das Backend eine H2-Datenbank im Speicher. `ddl-auto: create-drop` baut das Schema beim Start auf; Entwicklungsdaten gehen beim Neustart verloren. Das ist keine Migrationsstrategie für einen dauerhaften Betrieb. PostgreSQL und weitere Architekturbausteine sind in den ADRs beschrieben; deren Status und tatsächlichen Implementierungsstand vor einer Erweiterung prüfen.
+Im Profil `dev` schreibt das Backend in eine H2-Datei unter `devdata/db`. `ddl-auto: update` lässt diese Datei und die Sample-Daten einen Neustart des lokalen Dev-Servers überstehen. Auf der Develop-VM löscht der Backend-Container die Datei bei jedem Start, damit neue Sample-Daten aus dem Image geladen werden. Das ist keine Migrationsstrategie für den dauerhaften Betrieb. Profil `prod` verwendet PostgreSQL. Weitere Architekturbausteine sind in den ADRs beschrieben; deren Status und tatsächlichen Implementierungsstand vor einer Erweiterung prüfen.
 
-Im Profil `dev` nimmt das Backend Dateien unter `devdata/uploads` an, wenn das Arbeitsverzeichnis `backend/` ist. Im Repository liegt `devdata/.gitkeep`; die Dateien selbst sind ignoriert. `POST /api/attachments` speichert eine Datei (Multipart-Feld `file`, höchstens 10 MB) als Zeile in `attachments`. `GET /api/attachments/{id}` gibt sie nur an die hochladende Person aus.
+Im Profil `dev` nimmt das Backend Dateien unter `devdata/uploads` an, wenn das Arbeitsverzeichnis `backend/` ist. Im Repository liegen `devdata/.gitkeep` und `devdata/db/.gitkeep`; die Dateien selbst sind ignoriert. `POST /api/attachments` speichert eine Datei (Multipart-Feld `file`, höchstens 10 MB) als Zeile in `attachments`. `GET /api/attachments/{id}` gibt sie nur an die hochladende Person aus.
 
 Neue Konfiguration mit nachvollziehbaren Namen dokumentieren. Falls Umgebungsvariablen oder Dienste hinzukommen, auch `infrastructure/.env.example`, die betroffene Compose-Konfiguration und diese Anleitung ergänzen. Compose-Stacks und Deployment stehen in [docs/deployment.md](docs/deployment.md); diese Datei ist bei solchen Änderungen zu bearbeiten. Variablen, die den Start der Entwicklungsumgebung ändern, zusätzlich in der README nennen. Eine `.env` wird beim direkten Maven-Start nicht automatisch als Spring-Konfiguration geladen; erforderliche Werte müssen im Prozess beziehungsweise in der IDE gesetzt werden. Zugangsdaten und lokale Pfade gehören nicht in versionierte Konfigurationen.
 
@@ -326,7 +328,7 @@ Mindestens die für das Feature relevanten Fälle absichern:
 
 Für MockMvc-Tests das Profil `dev` aktivieren, wenn die Fachdaten gebraucht werden, und den Aufruf mit `Authorization: Bearer` ausstatten. `TestJwtDecoder` ersetzt den echten Decoder, damit die Tests keinen laufenden Keycloak brauchen. Fachtests benötigen eigene, reproduzierbare Testdaten; sich nicht auf feste Datenbank-IDs oder die Ausführungsreihenfolge anderer Tests verlassen.
 
-Frontend-Tests mit `npm test` ausführen. Vitest ist eingerichtet; `src/lib/i18n.test.ts` zeigt Tests für Sprachwahl und Ressourcen, `src/app/App.test.tsx` prüft Interaktionen mit React Testing Library und jsdom. Feature-Tests für relevante Zustände ergänzen. Zusätzlich Lint, Build und die betroffenen Abläufe im Browser mit den drei Keycloak-Konten prüfen. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten.
+Frontend-Tests mit `npm test` ausführen. Vitest ist eingerichtet; `src/lib/i18n.test.ts` zeigt Tests für Sprachwahl und Ressourcen, `src/app/App.test.tsx` prüft Interaktionen mit React Testing Library und jsdom. Feature-Tests für relevante Zustände ergänzen. Zusätzlich Lint, Build und die betroffenen Abläufe im Browser prüfen. Im Profil `dev` geht das über den Dev-Login, sonst über die Keycloak-Konten. Ergebnisse für die vereinbarten Geräte und Browser im Pull Request festhalten.
 
 ### Prüfkommandos
 

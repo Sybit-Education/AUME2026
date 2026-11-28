@@ -124,7 +124,7 @@ cd backend
 
 Das Backend läuft unter http://localhost:8080. Spring Boot DevTools startet die Anwendung neu, sobald die IDE die Klassen neu baut. Maven selbst beobachtet die Quellen nicht. Bei einem Start direkt aus der IDE die Hauptklasse `de.seezeit.aume.Application`, JDK 21 und das Spring-Profil `dev` verwenden, zum Beispiel mit dem Programmargument `--spring.profiles.active=dev`. Keycloak muss unter http://localhost:8081 laufen, sonst kann das Backend die Realm-Daten beim Start nicht laden. Das Profil `dev` lädt die Fachdaten. Ohne dieses Profil gibt es keine verknüpften Nutzer.
 
-Für Vorführungen gibt es zusätzlich das Profil `demo` (`"-Dspring-boot.run.profiles=dev,demo"`). Es legt für die Objektbetreuung `caretaker` in „Wohnanlage Sonne“ drei weitere WGs an: S-03 mit einer offenen Anfrage, S-04 angekündigt ab nächster Woche, S-05 angekündigt und bereits laufend. Die Tests nutzen nur `dev` und bleiben davon unberührt.
+Für Vorführungen gibt es zusätzlich das Profil `demo` (`"-Dspring-boot.run.profiles=dev,demo"`). Es legt für die Objektbetreuung `caretaker` in „Sonnenbühl West I“ drei weitere WGs an: S-03 mit einer offenen Anfrage, S-04 angekündigt ab nächster Woche, S-05 angekündigt und bereits laufend. Die Tests nutzen nur `dev` und bleiben davon unberührt.
 
 ### Terminal 2: Frontend
 
@@ -148,7 +148,7 @@ Anschließend http://localhost:5173 öffnen. `npm ci` ist nach einem frischen Ch
 
 ### Anmeldung und Testdaten
 
-Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei Wohnanlagen mit WGs und Zuständigkeiten sowie vier Mock-Nutzer an:
+Im expliziten `dev`-Profil legt das Backend eine H2-Datei unter `devdata/db` an, dazu drei Wohnanlagen mit WGs und Zuständigkeiten sowie vier Mock-Nutzer. Die Datei bleibt über einen Neustart erhalten und wird nicht eingecheckt:
 
 | Nutzer | Rolle | Berechtigung |
 | --- | --- | --- |
@@ -157,14 +157,14 @@ Im expliziten `dev`-Profil legt das Backend eine H2-Datenbank im Speicher, drei 
 | `caretaker2` | `CARETAKER` | wie `caretaker` |
 | `clerk` | `CLERK` | `RESIDENCE_READ`, `RESIDENCE_ASSIGN_STAFF`, `INSPECTION_PLAN`, `INFO_PAGE_READ`, `INFO_PAGE_EDIT`, `STANDARDS_VIEW`, `CLERK_INSPECTION_OVERVIEW_READ` |
 
-`clerk` ist Sonne und Egg zugeordnet, nicht Petershausen. `caretaker` betreut Sonne; `caretaker2` betreut Petershausen und vertritt Sonne. Damit lässt sich prüfen, dass die Objektbetreuung nur Kontrollen ihrer betreuten und vertretenen Anlagen sieht (US-03). Weitere Nutzer in `SampleData` (`caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
+`clerk` ist Sonnenbühl West I und Egg zugeordnet, nicht Petershausen. `caretaker` betreut Sonnenbühl West I; `caretaker2` betreut Petershausen und vertritt Sonnenbühl West I. Damit lässt sich prüfen, dass die Objektbetreuung nur Kontrollen ihrer betreuten und vertretenen Anlagen sieht (US-03). Weitere Nutzer in `SampleData` (`caretaker3`, `clerk2`) sind nur Stammdaten ohne Mock-Anmeldung.
 
 
-Das Frontend unter http://localhost:5173 meldet im Profil `dev` die vier Mock-Nutzer ohne Keycloak an. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
+Das Frontend unter http://localhost:5173 zeigt im Profil `dev` unter dem Anmeldeformular den Dev-Login: eine Linie, ein Dropdown der vier Mock-Nutzer und den Button. Darunter steht, dass dieser Login nur im Dev-Modus verfügbar ist. Die Auswahl erstellt eine serverseitige Sitzung. Neuladen erhält die Anmeldung; „Abmelden“ beendet die Sitzung. Keycloak ist dafür nicht nötig. Der Vite-Dev-Server leitet `/api` an Port 8080 weiter.
 
-Außerhalb von `dev` erfolgt die Anmeldung mit Anmeldename und Passwort über Keycloak. `student` öffnet die Studierenden-Ansicht. `sachbearbeiter` ist der Anwendungsnutzer `clerk` und sieht die Sachbearbeitung. `objektbetreuer` ist der Anwendungsnutzer `caretaker` und sieht die Objektbetreuung.
+Außerhalb von `dev` erfolgt die Anmeldung mit Anmeldename und Passwort über Keycloak. `student` öffnet die Studierenden-Ansicht. `sachbearbeiter` ist der Anwendungsnutzer `clerk`. `objektbetreuer` ist `caretaker`. `objektbetreuer2` ist `caretaker2`.
 
-Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `file` (höchstens 10 MB, derselbe CSRF-Schutz wie andere schreibende Aufrufe). Die Datei liegt unter `devdata/uploads` im Repository-Root, wenn das Backend aus `backend/` startet. Im Repository liegt nur `devdata/.gitkeep`. `GET /api/attachments/{id}` liefert die Datei nur an die Person zurück, die sie hochgeladen hat. Der gespeicherte Name ist ein zufälliger Schlüssel, nicht der ursprüngliche Dateiname.
+Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `file` (höchstens 10 MB, derselbe CSRF-Schutz wie andere schreibende Aufrufe). Die Datei liegt unter `devdata/uploads` im Repository-Root, wenn das Backend aus `backend/` startet. Eingecheckt sind nur `devdata/.gitkeep` und `devdata/db/.gitkeep`. `GET /api/attachments/{id}` liefert die Datei nur an die Person zurück, die sie hochgeladen hat. Der gespeicherte Name ist ein zufälliger Schlüssel, nicht der ursprüngliche Dateiname.
 
 ## Fehlerbehebung
 
@@ -176,27 +176,17 @@ Datei-Upload im Profil `dev`: `POST /api/attachments` mit dem Multipart-Feld `fi
 | PowerShell übergibt das Spring-Profil nicht korrekt | Das Maven-Argument vollständig in Anführungszeichen setzen: `"-Dspring-boot.run.profiles=dev"`. |
 | `Permission denied` bei `./mvnw` | Unter macOS/Linux im Verzeichnis `backend` einmal `chmod +x mvnw` ausführen. |
 | `bad interpreter` oder `sh\r` bei `mvnw` | Die Datei `backend/mvnw` mit LF-Zeilenenden auschecken bzw. im Editor als LF speichern. Unter Windows `mvnw.cmd` verwenden. |
-| Backend startet nicht, weil Keycloak fehlt | Keycloak unter http://localhost:8081 starten. Die Standardwerte für `KEYCLOAK_*` stehen in `backend/src/main/resources/application.yml` und in `infrastructure/compose.yaml`. |
+| Backend startet im Profil `dev` nicht | Das Profil `dev` braucht kein Keycloak. `devdata/db` muss existieren; im Repository liegt dafür `devdata/db/.gitkeep`. |
 | Port bereits belegt | Vorherigen Backend-/Vite-Prozess beenden. Vite kann auf einen anderen Port ausweichen; dann die URL aus dem Terminal verwenden. |
-| Frontend erreicht das Backend nicht oder die Anmeldung fehlt | Backend auf Port 8080 und Keycloak auf Port 8081 starten. Im Browser http://localhost:8080/api/auth/config und http://localhost:5173/api/auth/config öffnen; beide müssen `"mode":"keycloak"` liefern. |
+| Frontend erreicht das Backend nicht oder die Anmeldung fehlt | Backend mit Profil `dev` auf Port 8080 starten. Im Browser http://localhost:8080/api/auth/config und http://localhost:5173/api/auth/config öffnen; beide müssen `"mode":"dev"` liefern. |
 | Maven- oder npm-Downloads schlagen fehl | Internetzugang und gegebenenfalls die Proxy-Konfiguration der eigenen Entwicklungsumgebung prüfen. |
 
 ## Start mit Docker
 
-Docker Engine mit Compose v2 unter Linux beziehungsweise Docker Desktop unter Windows/macOS installieren und starten. Dieser Weg baut Java und Node im Container; lokale JDK-/Node-Installationen sind dafür nicht erforderlich.
-
-Die folgenden Befehle funktionieren in PowerShell, Bash und zsh. Aus dem Repository-Root bauen und starten:
+Der Alltag ohne Zusatzsetup ist der Dev-Server oben, nicht Compose. Compose bildet die Deployments ab. Die Befehle stehen in [docs/deployment.md](docs/deployment.md).
 
 ```bash
-docker compose -f infrastructure/compose.yaml -f infrastructure/compose.dev.yaml up --build
+docker compose -f infrastructure/compose.develop.yaml up -d
 ```
 
-`--build` baut die Images neu, bevor die Container starten. Das Frontend ist danach unter http://localhost erreichbar, das Backend unter http://localhost:8080. Die Keycloak-Admin-Oberfläche ist unter http://localhost:8081 erreichbar, Benutzer `admin`. Das Admin-Passwort steht lokal in `infrastructure/compose.yaml` und wird nicht in der README genannt. Beim Start legt Keycloak den Realm `seezeit` mit den Konten `student`, `sachbearbeiter` und `objektbetreuer` an. Die Anmeldung im Frontend verwendet diese Konten. `student` sieht die Studierenden-Ansicht, `sachbearbeiter` die Sachbearbeitung und `objektbetreuer` die Objektbetreuung. Das Profil `dev` lädt weiterhin die Fachdaten. Änderungen an der Realm-Datei gelten erst nach `down` und einem neuen `up`.
-
-Stoppen mit Strg+C. Container aufräumen:
-
-```bash
-docker compose -f infrastructure/compose.yaml -f infrastructure/compose.dev.yaml down
-```
-
-Der Entwicklungs-Override aktiviert `dev` ausdrücklich und lädt damit die Fachdaten. Die Anmeldung ist auch in diesem Profil Keycloak. Nginx leitet `/api` an den Backend-Container weiter. Das Backend wartet, bis Keycloak gesund ist.
+`compose.develop.yaml` zieht die Images mit dem Tag `develop`, startet das Profil `dev` und braucht kein Keycloak und kein PostgreSQL. Der Backend-Container löscht dabei die H2-Datei unter `devdata/db`, damit neue Sample-Daten geladen werden. Der lokale Dev-Server oben behält diese Datei über einen Neustart. `compose.prod.yaml` ist der Stack für Staging und Produktion: PostgreSQL, Keycloak und die vier Testnutzer. Der Image-Tag kommt über `SEEZEIT_TAG`.

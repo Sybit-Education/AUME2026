@@ -13,6 +13,9 @@
     "username": "Anmeldename",
     "password": "Passwort",
     "accountLogin": "Mit Seezeit-Konto anmelden",
+    "devUser": "Testnutzer",
+    "devLogin": "Dev-Login",
+    "devLoginHint": "Dieser Dev-Login ist nur im Dev-Modus verfügbar.",
     "login": "Anmelden",
     "logout": "Abmelden",
     "retry": "Erneut versuchen"

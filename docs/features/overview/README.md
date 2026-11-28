@@ -28,7 +28,7 @@ Frontend: Startseite `/` (Reiter „Übersicht“) für alle mit `INSPECTION_OVE
 
 ## Entwicklungsdaten
 
-`OverviewSampleData` (Profil `dev`, Order 3) legt in der Wohnanlage Sonne die WGs 4.12, 3.08 und 3.10 mit einer angekündigten Erstkontrolle, einer Nachkontrolle und einem Vorschlag an, der auf die Antwort von `caretaker` wartet. Er läuft nur, solange es keine Kontrollen gibt; Startdaten anderer Features haben Vorrang. Anmeldung als `caretaker`.
+`OverviewSampleData` (Profil `dev`, Order 3) legt in Sonnenbühl West I die WGs 4.12, 3.08 und 3.10 mit einer angekündigten Erstkontrolle, einer Nachkontrolle und einem Vorschlag an, der auf die Antwort von `caretaker` wartet. Er läuft nur, solange es keine Kontrollen gibt; Startdaten anderer Features haben Vorrang. Anmeldung als `caretaker`.
 
 ## Noch nicht enthalten
 

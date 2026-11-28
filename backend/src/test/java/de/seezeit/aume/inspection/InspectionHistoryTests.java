@@ -184,7 +184,7 @@ class InspectionHistoryTests {
     void historyShowsTheResidenceAndFiltersByItAndByDefects() throws Exception {
         var session = login("caretaker");
         mvc.perform(get(HISTORY).session(session))
-            .andExpect(jsonPath("$.content[0].residenceName").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.content[0].residenceName").value("Sonnenbühl West I"));
         long all = total(session, "");
         assertThat(total(session, "?residence=sonne")).isEqualTo(all);
         expectTotal(session, "?residence=Egg", 0);

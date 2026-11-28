@@ -5,6 +5,7 @@ export interface AuthState extends Session {
   busy: boolean
   getRequestedPath: () => string
   signIn: (username: string, password: string) => Promise<void>
+  signInDev: (userKey: string) => Promise<void>
   signOut: () => Promise<void>
 }
 

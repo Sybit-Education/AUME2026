@@ -1,0 +1,91 @@
+name: ${SEEZEIT_PROJECT:-seezeit}
+
+services:
+  frontend:
+    image: ghcr.io/sybit-education/seezeit-portal-frontend:${SEEZEIT_TAG:-staging}
+    pull_policy: always
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  backend:
+    image: ghcr.io/sybit-education/seezeit-portal-backend:${SEEZEIT_TAG:-staging}
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/seezeit
+      SPRING_DATASOURCE_USERNAME: seezeit
+      SPRING_DATASOURCE_PASSWORD: seezeit
+      AUME_STORAGE_LOCATION: /var/lib/seezeit/uploads
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://localhost:8081/realms/seezeit}
+      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-http://keycloak:8080/realms/seezeit/protocol/openid-connect/certs}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-seezeit-api}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8081}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-seezeit}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-seezeit-frontend}
+    volumes:
+      - uploads:/var/lib/seezeit/uploads
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: seezeit
+      POSTGRES_USER: seezeit
+      POSTGRES_PASSWORD: seezeit
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seezeit -d seezeit"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: ["start-dev", "--import-realm"]
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    volumes:
+      - ./keycloak/seezeit-realm.json:/opt/keycloak/data/import/seezeit-realm.json:ro
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KC_BOOTSTRAP_ADMIN_PASSWORD:-vLeie&9!02}"
+      KC_HOSTNAME: ${KEYCLOAK_URL:-http://localhost:8081}
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; echo -e 'GET /health/ready HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3; cat <&3 | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  watchtower:
+    image: nickfedor/watchtower:1.24.2
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_ROLLING_RESTART: "true"
+
+volumes:
+  postgres-data:
+  uploads:

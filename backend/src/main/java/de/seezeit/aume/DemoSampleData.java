@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Zusätzliche Daten zum Vorführen der Objektbetreuung (#44, Reiter Anfragen und Anstehend). Nur mit dem Profil
  * {@code demo}, damit die Tests (Profil {@code dev}) unverändert bleiben. Start: {@code -Dspring-boot.run.profiles=dev,demo}.
  *
- * <p>Für die Objektbetreuung {@code caretaker} in „Wohnanlage Sonne“ entstehen drei weitere WGs mit je einem Zeitraum:
+ * <p>Für die Objektbetreuung {@code caretaker} in „Sonnenbühl West I“ entstehen drei weitere WGs mit je einem Zeitraum:
  * <ul>
  *   <li>S-03: Vorschlag in zwei Wochen, wartet auf Antwort → Reiter <b>Anfragen</b></li>
  *   <li>S-04: abgestimmt und angekündigt, beginnt in einer Woche → <b>Anstehend</b> mit „ab TT.MM.“</li>
@@ -54,7 +54,7 @@ public class DemoSampleData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        var sonne = residences.findFirstByName("Wohnanlage Sonne").orElse(null);
+        var sonne = residences.findFirstByName("Sonnenbühl West I").orElse(null);
         var caretaker = users.findByUserKey("caretaker").orElse(null);
         var clerk = users.findByUserKey("clerk").orElse(null);
         if (sonne == null || caretaker == null || clerk == null) return;

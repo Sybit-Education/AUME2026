@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Hängt nur bereits abgeschlossene Erstkontrollen der Wohnanlage Sonne an einen vergangenen
+ * Hängt nur bereits abgeschlossene Erstkontrollen in Sonnenbühl West I an einen vergangenen
  * Zeitraum, damit die Übersicht eine letzte abgeschlossene Runde zeigen kann. Status und sonstige
  * Testdaten anderer Features bleiben unverändert. Egg behält den Gegenvorschlag aus
  * {@link InspectionPlanningSampleData}.
@@ -42,7 +42,7 @@ public class InspectionOverviewSampleData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        var sonne = residences.findFirstByName("Wohnanlage Sonne").orElse(null);
+        var sonne = residences.findFirstByName("Sonnenbühl West I").orElse(null);
         var clerk = users.findByUserKey("clerk").orElse(null);
         if (sonne == null || clerk == null) return;
 

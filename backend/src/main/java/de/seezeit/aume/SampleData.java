@@ -29,7 +29,8 @@ public class SampleData implements CommandLineRunner {
     private static final Map<String, String> KEYCLOAK_SUBJECTS = Map.of(
         "student", "00000000-0000-4000-8000-000000000001",
         "clerk", "00000000-0000-4000-8000-000000000002",
-        "caretaker", "00000000-0000-4000-8000-000000000003");
+        "caretaker", "00000000-0000-4000-8000-000000000003",
+        "caretaker2", "00000000-0000-4000-8000-000000000004");
 
     private final ResidenceRepository residences;
     private final FlatRepository flats;
@@ -52,7 +53,7 @@ public class SampleData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        var sonne = residence("Wohnanlage Sonne");
+        var sonne = residence("Sonnenbühl West I");
         var petershausen = residence("Petershausen");
         var egg = residence("Egg");
 
@@ -81,7 +82,7 @@ public class SampleData implements CommandLineRunner {
         // Egg hat bewusst keine Vertretung: Die Vertretung darf leer sein.
         assign(egg, StaffKind.CARETAKER, caretaker3);
 
-        // Die Mock-Sachbearbeitung sieht Sonne und Egg, aber nicht Petershausen.
+        // Die Mock-Sachbearbeitung sieht Sonnenbühl West I und Egg, aber nicht Petershausen.
         assign(sonne, StaffKind.CLERK, clerk);
         assign(egg, StaffKind.CLERK, clerk);
         assign(petershausen, StaffKind.CLERK, clerk2);

@@ -42,7 +42,7 @@ Das Frontend zeigt bei 409 eine eigene Meldung und lädt die Kontrolle neu. Bei 
 
 ## Entwicklungsdaten
 
-Im Profil `dev` legt `InspectionSampleData` eine veröffentlichte Checkliste (Fassung 1, zehn Kriterien aus dem Wireframe), für die WGs S-01 und S-02 der Wohnanlage Sonne (aus `SampleData`) je eine geplante Kontrolle an. Anmeldung als `caretaker`.
+Im Profil `dev` legt `InspectionSampleData` eine veröffentlichte Checkliste (Fassung 1, zehn Kriterien aus dem Wireframe), für die WGs S-01 und S-02 in Sonnenbühl West I (aus `SampleData`) je eine geplante Kontrolle an. Anmeldung als `caretaker`.
 
 ## Prüfung
 
@@ -88,7 +88,7 @@ Offen für die Bewohnenden-Ansicht: Übergabe-Kontrollen (`handover = true`) sin
 
 Welche Anlagen eine Objektbetreuung sieht, liefert `StaffAccessService.residencesInCare(userId)` (Paket `residence`): alle Anlagen, für die sie in `staff_assignments` als Betreuung oder Vertretung eingetragen ist. Die Vertretung ist fest und hat bei Kontrollen dieselben Rechte wie die Betreuung; Terminvorschläge beantwortet nur die im Vorschlag eingetragene Betreuung (siehe [Kontroll-Anfragen](../kontroll-anfragen/README.md)). Das alte Feld `users.residence_id` gibt keinen Zugriff mehr. Es gilt für die Liste, das Öffnen und Bearbeiten einer Kontrolle, die Historie, die früheren Mängel und die Anlagenliste (`GET /api/residences`); die [Übersicht](../overview/README.md) arbeitet schon so. Ausnahme: Eine begonnene Kontrolle (`DRAFT`) darf die Person, die sie durchführt, auch nach einem Wechsel der Zuständigkeit noch öffnen, bearbeiten und abschließen.
 
-Zum Ausprobieren: `caretaker2` (Login „Objektbetreuung (Vertretung)“) betreut Petershausen und vertritt Sonne und sieht die Kontrollen beider Anlagen, `caretaker` nur die von Sonne. Dafür legt `InspectionSampleData` in Petershausen eine sofort startbare Kontrolle für WG 3.09 an.
+Zum Ausprobieren: `caretaker2` (Login „Objektbetreuung (Vertretung)“) betreut Petershausen und vertritt Sonnenbühl West I und sieht die Kontrollen beider Anlagen, `caretaker` nur die von Sonnenbühl West I. Dafür legt `InspectionSampleData` in Petershausen eine sofort startbare Kontrolle für WG 3.09 an.
 
 ## Fotos zum Mangel (US-35)
 
