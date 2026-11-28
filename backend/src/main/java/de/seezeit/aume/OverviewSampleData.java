@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Entwicklungsdaten für die Übersicht der Objektbetreuung nach dem Mockup in #41: eine angekündigte
  * Erstkontrolle, eine Nachkontrolle und ein Vorschlag, der auf die Antwort von {@code caretaker} wartet,
- * in der Wohnanlage Sonne. Läuft nur, solange es keine Kontrollen gibt, damit Startdaten anderer Features
+ * in Sonnenbühl West I. Läuft nur, solange es keine Kontrollen gibt, damit Startdaten anderer Features
  * (InspectionSampleData, Order 2) Vorrang haben; die Tests der Übersicht legen die Daten deshalb selbst
  * über {@link #seed()} an.
  */
@@ -47,7 +47,7 @@ public class OverviewSampleData implements CommandLineRunner {
 
     @Transactional
     public void seed() {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var clerk = users.findByUserKey("clerk").orElseThrow();
         var caretaker = users.findByUserKey("caretaker").orElseThrow();
         var today = LocalDate.now();

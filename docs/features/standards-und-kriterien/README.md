@@ -49,5 +49,5 @@ Solange noch nichts gespeichert wurde, sind die Texte leer und `updatedAt` ist `
 - Die Anzeige für Bewohnende kommt mit US-23, der Link in der Ankündigung mit US-18.
 - Die verbindlichen Texte muss Seezeit liefern.
 - Die englische Fassung ist im Frontend fest hinterlegt und nicht bearbeitbar (pflegbar mit US-60).
-- Mit der H2-Datenbank im Speicher gehen gespeicherte Texte bei einem Backend-Neustart verloren.
+- Die H2-Datei unter `devdata/db` behält gespeicherte Texte über einen Backend-Neustart.
 - Speichern zwei Personen gleichzeitig, gilt die zuletzt gespeicherte Fassung.

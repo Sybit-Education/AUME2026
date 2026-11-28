@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useLoaderData } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
-import LegalFooter from '@/components/LegalFooter'
 import LoadingPage from '@/components/LoadingPage'
 import type { loadProfile } from './api'
 
@@ -15,7 +14,7 @@ export default function ProfilePage() {
   const initial = user?.name.trim().charAt(0).toUpperCase() ?? ''
 
   return (
-    <div className="page-stack profile-page">
+    <div className="profile-page">
       <div className="pt"><h1>{t('navigation.profile')}</h1></div>
 
       <section className="card profile-caretaker profile-overview">
@@ -66,7 +65,6 @@ export default function ProfilePage() {
           </div>
         ) : <p className="mut">{t('profile.noAssignments')}</p>}
       </section>
-      <LegalFooter />
     </div>
   )
 }

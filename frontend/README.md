@@ -18,7 +18,7 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Das Backend muss parallel auf Port 8080 mit dem Profil `dev` laufen. Das Frontend ist unter http://localhost:5173 erreichbar und leitet `/api` an das Backend weiter. Für die Entwicklung stehen drei Mock-Nutzer zur Verfügung: Studierende, Objektbetreuung und Sachbearbeitung. Keycloak ist im `dev`-Profil nicht erforderlich.
+Das Backend muss parallel auf Port 8080 mit dem Profil `dev` laufen, Keycloak unter http://localhost:8081. Das Frontend ist unter http://localhost:5173 erreichbar und leitet `/api` an das Backend weiter. Die Anmeldung verwendet die Keycloak-Konten `student`, `sachbearbeiter` und `objektbetreuer`.
 
 Prüfungen im Verzeichnis `frontend` (unter PowerShell entsprechend `npm.cmd` verwenden):
 

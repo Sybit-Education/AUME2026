@@ -1,6 +1,6 @@
 # Datenmodell
 
-Die JPA-Entities im Backend sind das Schema. Hibernate legt die Tabellen im Profil `dev` per `ddl-auto: create-drop` in einer H2-Datenbank an. Es gibt noch keine Migrationen und keine PostgreSQL-Instanz.
+Die JPA-Entities im Backend sind das Schema. Hibernate legt die Tabellen im Profil `dev` per `ddl-auto: update` in einer H2-Datei unter `devdata/db` an. Profil `prod` verwendet PostgreSQL. Es gibt noch keine Migrationen.
 
 Jedes Modul schreibt nur in die eigenen Tabellen ([ADR-0003](adr/0003-structure-the-backend-as-a-modular-monolith.md)). Fremdschlüssel über Modulgrenzen sind die gemeinsamen Verträge. Dateien selbst liegen im privaten Dateispeicher, in der Datenbank steht nur `attachments` ([ADR-0005](adr/0005-use-postgresql-and-private-attachment-storage.md)).
 

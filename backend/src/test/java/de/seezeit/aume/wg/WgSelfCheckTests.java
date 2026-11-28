@@ -162,13 +162,13 @@ class WgSelfCheckTests {
     }
 
     private FlatEntity flat(String label) {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         return flats.findByResidenceIdAndLabel(residence.getId(), label)
             .orElseGet(() -> flats.save(new FlatEntity(residence, label, 3)));
     }
 
     private UserEntity student(String key, String name) {
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         return users.save(new StudentEntity(key, name, Set.of(roles.findByName("STUDENT").orElseThrow()), residence));
     }
 

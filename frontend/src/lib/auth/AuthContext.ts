@@ -4,7 +4,8 @@ import type { Session } from './session'
 export interface AuthState extends Session {
   busy: boolean
   getRequestedPath: () => string
-  signIn: (key: string | undefined, returnTo: string) => Promise<void>
+  signIn: (username: string, password: string) => Promise<void>
+  signInDev: (userKey: string) => Promise<void>
   signOut: () => Promise<void>
 }
 

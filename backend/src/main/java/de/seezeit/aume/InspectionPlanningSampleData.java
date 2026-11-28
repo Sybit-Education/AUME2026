@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-/** Beispiel für einen offenen Gegenvorschlag in Egg. Sonne bleibt zum Planen im Browser frei. */
+/** Beispiel für einen offenen Gegenvorschlag in Egg. Sonnenbühl West I bleibt zum Planen im Browser frei. */
 @Component
 @Profile("dev")
 @Order(4)

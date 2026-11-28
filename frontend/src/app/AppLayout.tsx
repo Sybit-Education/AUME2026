@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, matchPath, NavLink, Outlet, useLocation, useMatches, useNavigation, useRevalidator } from 'react-router'
+import { Link, matchPath, NavLink, Outlet, useLocation, useMatches, useNavigate, useNavigation, useRevalidator } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
+import LegalFooter from '@/components/LegalFooter'
 import NavIcon from '@/components/NavIcon'
 import NotificationBell from '@/features/student-messages/NotificationBell'
 import { errorKey, type ErrorKey } from '@/lib/errors'
@@ -10,11 +11,25 @@ import type { PageHandle } from '@/lib/pageHandle'
 import { profileNavigation } from '@/features/profile/routes'
 import { navigation, studentTabs, usesStudentView } from './navigation'
 
+/** Seiteninhalt und Impressum/Datenschutz, unten in jeder Ansicht. */
+function ViewFrame({ busy, error, children }: PropsWithChildren<{ busy: boolean; error: ErrorKey | null }>) {
+  const { t } = useTranslation()
+  return (
+    <div className="view-frame">
+      {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
+      {error && <p className="err" role="alert">{t(error)}</p>}
+      <main>{children ?? <Outlet />}</main>
+      <LegalFooter />
+    </div>
+  )
+}
+
 export default function AppLayout({ children }: PropsWithChildren) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'de'
   const previousLanguage = useRef(language)
   const auth = useAuth()
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   const transition = useNavigation()
   const revalidator = useRevalidator()
@@ -46,7 +61,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
   async function signOut() {
     setError(null)
-    try { await auth.signOut() } catch (cause) { setError(errorKey(cause, 'errors.logout')) }
+    try {
+      await auth.signOut()
+      // Die letzte Seite gehört dem vorherigen Konto. Der nächste Login startet auf /.
+      navigate('/login', { replace: true })
+    } catch (cause) {
+      setError(errorKey(cause, 'errors.logout'))
+    }
   }
 
   return (
@@ -111,9 +132,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
             </div>
           </header>
           <div className="st-body">
-            {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
-            {error && <p className="err" role="alert">{t(error)}</p>}
-            <main>{children ?? <Outlet />}</main>
+            <ViewFrame busy={busy} error={error}>{children}</ViewFrame>
           </div>
           <nav className="tabbar" aria-label={t('navigation.studentTabs')}>
             {studentTabs.filter((item) => allowed(item.privilege)).map((item) => {
@@ -136,9 +155,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         </div>
       ) : (
         <div className="mn">
-          {busy && <p role="status"><span className="loader" aria-hidden="true" /> {t('app.loading')}</p>}
-          {error && <p className="err" role="alert">{t(error)}</p>}
-          <main>{children ?? <Outlet />}</main>
+          <ViewFrame busy={busy} error={error}>{children}</ViewFrame>
         </div>
       )}
     </div>

@@ -51,7 +51,7 @@ class InspectionScopeTests {
 
     @Test
     void deputyAlsoSeesTheResidenceSheDeputizesFor() throws Exception {
-        Long sonne = plannedIn("Wohnanlage Sonne");
+        Long sonne = plannedIn("Sonnenbühl West I");
         Long petershausen = plannedIn("Petershausen");
 
         var deputy = login("caretaker2");
@@ -60,7 +60,7 @@ class InspectionScopeTests {
         assertThat(listed).contains(sonne.intValue(), petershausen.intValue());
         mvc.perform(get("/api/inspections/" + sonne).session(deputy))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.residenceName").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.residenceName").value("Sonnenbühl West I"));
         mvc.perform(post("/api/inspections/" + sonne + "/start").session(deputy).with(csrf()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("DRAFT"));
@@ -99,10 +99,10 @@ class InspectionScopeTests {
     @Test
     void theOldResidenceFieldAloneNoLongerGrantsAccess() {
         // Nutzer mit Wohnanlage im alten Feld users.residence_id, aber ohne Eintrag in staff_assignments.
-        var sonne = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var sonne = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         users.save(new CaretakerEntity("caretaker-unassigned", "Ohne Zuständigkeit",
             Set.of(roles.findByName("CARETAKER").orElseThrow()), sonne));
-        plannedIn("Wohnanlage Sonne");
+        plannedIn("Sonnenbühl West I");
 
         assertThat(inspectionService.listOpen("caretaker-unassigned", Pageable.ofSize(100))).isEmpty();
         assertThat(history.history("caretaker-unassigned", new InspectionHistoryService.HistoryFilter(
@@ -112,8 +112,8 @@ class InspectionScopeTests {
 
     @Test
     void inspectorCanFinishHerDraftAfterLosingTheAssignment() throws Exception {
-        Long draft = plannedIn("Wohnanlage Sonne");
-        Long other = plannedIn("Wohnanlage Sonne");
+        Long draft = plannedIn("Sonnenbühl West I");
+        Long other = plannedIn("Sonnenbühl West I");
         var caretaker = login("caretaker");
         mvc.perform(post("/api/inspections/" + draft + "/start").session(caretaker).with(csrf()))
             .andExpect(status().isOk());
@@ -136,7 +136,7 @@ class InspectionScopeTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.totalElements").value(2))
             .andExpect(jsonPath("$.content[0].name").value("Petershausen"))
-            .andExpect(jsonPath("$.content[1].name").value("Wohnanlage Sonne"));
+            .andExpect(jsonPath("$.content[1].name").value("Sonnenbühl West I"));
     }
 
     @Test

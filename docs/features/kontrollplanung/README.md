@@ -58,7 +58,7 @@ Ein Zeitraum in der Antwort:
 {
   "id": 3,
   "residenceId": 1,
-  "residenceName": "Wohnanlage Sonne",
+  "residenceName": "Sonnenbühl West I",
   "kind": "REGULAR",
   "status": "COUNTER_PROPOSED",
   "announcedAt": null,
@@ -84,7 +84,7 @@ Fachliche Fehler kommen als `400` oder `409` mit `{"code": …}`: `dates_require
 
 ## Entwicklungsdaten
 
-Im Profil `dev` legt `InspectionPlanningSampleData` für die Anlage Egg einen offenen Gegenvorschlag an. Wohnanlage Sonne bleibt frei, damit dort ein neuer Vorschlag geplant werden kann. Von den Objektbetreuenden hat nur `caretaker` (Sonne) einen Mock-Login.
+Im Profil `dev` legt `InspectionPlanningSampleData` für die Anlage Egg einen offenen Gegenvorschlag an. Sonnenbühl West I bleibt frei, damit dort ein neuer Vorschlag geplant werden kann. Von den Objektbetreuenden hat nur `caretaker` (Sonnenbühl West I) ein Keycloak-Konto, Anmeldename `objektbetreuer`.
 
 ## Offen
 

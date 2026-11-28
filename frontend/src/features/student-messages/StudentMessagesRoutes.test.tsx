@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import App from '@/app/App'
 // eslint-disable-next-line no-restricted-imports -- Use the production route tree in this test suite.
 import { createAppRoutes } from '@/app/router'
-import { api, login, type LoggedInUser } from '@/lib/auth/client'
+import { api, devLogin, login, type LoggedInUser } from '@/lib/auth/client'
 import { invalidateSession } from '@/lib/auth/session'
 import i18n from '@/lib/i18n'
 import { downloadMessageChecklist, type StudentMessage } from './api'
@@ -15,6 +15,7 @@ vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
   api: vi.fn(),
   login: vi.fn(),
+  devLogin: vi.fn(),
   logout: vi.fn(),
 }))
 
@@ -63,6 +64,7 @@ beforeEach(async () => {
   listStatus = 200
   routers = []
   vi.mocked(login).mockImplementation(async () => { account = student })
+  vi.mocked(devLogin).mockImplementation(async () => { account = student })
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return account ? Response.json(account) : new Response(null, { status: 401 })
     if (path === `${endpoint}/unread-count`) {
@@ -118,9 +120,9 @@ it('links to messages above My Flat, keeps More active and provides a back link'
 it('returns to the requested page after login without making a request while signed out', async () => {
   account = null
   const router = mount(`${route}?page=1`)
-  const signIn = await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expect(vi.mocked(api).mock.calls.every(([path]) => path === '/api/me')).toBe(true)
-  fireEvent.click(signIn)
+  fireEvent.click(screen.getByRole('button', { name: 'Dev-Login' }))
   await screen.findByRole('heading', { name: 'Nachrichten', level: 1 })
   expect(router.state.location.search).toBe('?page=1')
 })

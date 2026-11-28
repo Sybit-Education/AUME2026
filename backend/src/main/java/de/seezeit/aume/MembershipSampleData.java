@@ -43,7 +43,7 @@ public class MembershipSampleData implements CommandLineRunner {
     private void invite(String code, String label) {
         var hash = MembershipService.hash(code);
         if (invitations.existsByTokenHash(hash)) return;
-        var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var flat = flats.findByResidenceIdAndLabel(residence.getId(), label).orElseThrow();
         var clerk = users.findByUserKey("clerk").orElseThrow();
         invitations.save(new InvitationEntity(flat, hash, Instant.now().plus(Duration.ofDays(30)), clerk));

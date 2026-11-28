@@ -22,10 +22,12 @@ import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import de.seezeit.aume.auth.TestJwtDecoder;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
@@ -34,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-inspection-tests;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
+@Import(TestJwtDecoder.class)
 @Transactional
 class InspectionTests {
     @Autowired private MockMvc mvc;
@@ -49,9 +52,9 @@ class InspectionTests {
     void onlyCaretakersMayPerformInspections() throws Exception {
         mvc.perform(get("/api/inspections")).andExpect(status().isUnauthorized());
         for (String key : new String[]{"student", "clerk"}) {
-            mvc.perform(get("/api/inspections").session(login(key))).andExpect(status().isForbidden());
+            mvc.perform(get("/api/inspections").with(login(key))).andExpect(status().isForbidden());
         }
-        mvc.perform(get("/api/inspections").session(login("caretaker")))
+        mvc.perform(get("/api/inspections").with(login("caretaker")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.totalElements").value(2))
             .andExpect(jsonPath("$.content[0].flatLabel").value("S-01"))
@@ -62,55 +65,55 @@ class InspectionTests {
     void caretakerWorksThroughTheChecklistAndFinalizes() throws Exception {
         var session = login("caretaker");
         Long id = firstInspection();
-        mvc.perform(get("/api/inspections/" + id).session(session))
+        mvc.perform(get("/api/inspections/" + id).with(session))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("PLANNED"))
             .andExpect(jsonPath("$.capacity").value(4))
             .andExpect(jsonPath("$.criteria.length()").value(10))
             .andExpect(jsonPath("$.criteria[0].area").value("Küche"));
-        mvc.perform(put("/api/inspections/" + id + "/findings/1").session(session).with(csrf())
+        mvc.perform(put("/api/inspections/" + id + "/findings/1").with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":\"OK\"}"))
             .andExpect(status().isConflict());
 
-        String started = mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
+        String started = mvc.perform(post("/api/inspections/" + id + "/start").with(session).with(csrf()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("DRAFT"))
             .andReturn().getResponse().getContentAsString();
         List<Integer> criteria = JsonPath.read(started, "$.criteria[*].id");
         Integer stove = criteria.get(1);
 
-        mvc.perform(put("/api/inspections/" + id + "/findings/" + stove).session(session).with(csrf())
+        mvc.perform(put("/api/inspections/" + id + "/findings/" + stove).with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":\"DEFICIENT\"}"))
             .andExpect(status().isBadRequest());
-        mvc.perform(put("/api/inspections/" + id + "/findings/" + stove).session(session).with(csrf())
+        mvc.perform(put("/api/inspections/" + id + "/findings/" + stove).with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"rating\":\"DEFICIENT\",\"severity\":\"SEVERE\",\"note\":\"Fettschicht\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.findings.length()").value(1))
             .andExpect(jsonPath("$.findings[0].severity").value("SEVERE"));
 
-        mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf())
+        mvc.perform(post("/api/inspections/" + id + "/mark-ok").with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"area\":\"Küche\"}"))
             .andExpect(jsonPath("$.findings.length()").value(4));
-        mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
+        mvc.perform(post("/api/inspections/" + id + "/finalize").with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"overallResult\":\"FAILED\"}"))
             .andExpect(status().isConflict());
 
-        mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
+        mvc.perform(post("/api/inspections/" + id + "/mark-ok").with(session).with(csrf()))
             .andExpect(jsonPath("$.findings.length()").value(10))
             .andExpect(jsonPath("$.findings[1].rating").value("DEFICIENT"));
-        mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
+        mvc.perform(post("/api/inspections/" + id + "/finalize").with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"overallResult\":\"FAILED\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("PUBLISHED"))
             .andExpect(jsonPath("$.overallResult").value("FAILED"));
-        mvc.perform(delete("/api/inspections/" + id + "/findings/" + stove).session(session).with(csrf()))
+        mvc.perform(delete("/api/inspections/" + id + "/findings/" + stove).with(session).with(csrf()))
             .andExpect(status().isConflict());
     }
 
     @Test
     void openListShowsOnlyAnnouncedPeriodsAndInspectionsWithoutPeriod() throws Exception {
-        var sonne = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+        var sonne = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
         var clerk = users.findByUserKey("clerk").orElseThrow();
         var proposed = periods.save(new InspectionPeriodEntity(sonne, LocalDate.of(2027, 1, 10), LocalDate.of(2027, 1, 12), clerk));
         var announced = new InspectionPeriodEntity(sonne, LocalDate.of(2027, 1, 3), LocalDate.of(2027, 1, 5), clerk);
@@ -123,12 +126,12 @@ class InspectionTests {
 
         var session = login("caretaker");
         // S-01 und S-02 haben keinen Zeitraum und bleiben sichtbar, S-03 wartet noch auf die Ankündigung.
-        mvc.perform(get("/api/inspections").session(session))
+        mvc.perform(get("/api/inspections").with(session))
             .andExpect(jsonPath("$.page.totalElements").value(3))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-03')]").isEmpty())
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].startsOn").value("2027-01-03"))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].endsOn").value("2027-01-05"))
-            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].residenceName").value("Wohnanlage Sonne"))
+            .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].residenceName").value("Sonnenbühl West I"))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-04')].windowStart").value("09:00:00"))
             // Ohne Zeitraum ganz unten
             .andExpect(jsonPath("$.content[2].flatLabel").value("S-02"))
@@ -136,14 +139,14 @@ class InspectionTests {
 
         // Vor Beginn des Zeitraums lässt sich die angekündigte Kontrolle noch nicht starten.
         var future = inspections.findAll().stream().filter(i -> i.getFlat().getLabel().equals("S-04")).findFirst().orElseThrow();
-        mvc.perform(post("/api/inspections/" + future.getId() + "/start").session(session).with(csrf()))
+        mvc.perform(post("/api/inspections/" + future.getId() + "/start").with(session).with(csrf()))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("period_not_started"));
 
         // Eine schon begonnene Kontrolle bleibt sichtbar, auch wenn ihr Zeitraum nicht angekündigt ist.
         waiting.setStatus(InspectionEntity.Status.DRAFT);
         inspections.saveAndFlush(waiting);
-        mvc.perform(get("/api/inspections").session(session))
+        mvc.perform(get("/api/inspections").with(session))
             .andExpect(jsonPath("$.page.totalElements").value(4))
             .andExpect(jsonPath("$.content[?(@.flatLabel == 'S-03')].status").value("DRAFT"));
     }
@@ -153,10 +156,10 @@ class InspectionTests {
         var other = residences.save(new ResidenceEntity("Andere Wohnanlage"));
         var foreign = inspections.save(new InspectionEntity(flats.save(new FlatEntity(other, "1.01", 2)), null));
         var session = login("caretaker");
-        mvc.perform(get("/api/inspections/" + foreign.getId()).session(session)).andExpect(status().isNotFound());
-        mvc.perform(post("/api/inspections/" + foreign.getId() + "/start").session(session).with(csrf()))
+        mvc.perform(get("/api/inspections/" + foreign.getId()).with(session)).andExpect(status().isNotFound());
+        mvc.perform(post("/api/inspections/" + foreign.getId() + "/start").with(session).with(csrf()))
             .andExpect(status().isNotFound());
-        mvc.perform(get("/api/inspections").session(session)).andExpect(jsonPath("$.page.totalElements").value(2));
+        mvc.perform(get("/api/inspections").with(session)).andExpect(jsonPath("$.page.totalElements").value(2));
     }
 
     @Test
@@ -198,7 +201,7 @@ class InspectionTests {
         empty.setStatus(ChecklistVersionEntity.Status.PUBLISHED);
         versions.save(empty);
 
-        mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
+        mvc.perform(post("/api/inspections/" + id + "/start").with(session).with(csrf()))
             .andExpect(status().isConflict());
 
         // Auch eine bereits an eine leere Fassung gebundene Kontrolle darf nicht ohne Bewertung abschließen.
@@ -206,7 +209,7 @@ class InspectionTests {
         inspection.setChecklistVersion(empty);
         inspection.setStatus(InspectionEntity.Status.DRAFT);
         inspections.flush();
-        mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
+        mvc.perform(post("/api/inspections/" + id + "/finalize").with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content("{\"overallResult\":\"PASSED\"}"))
             .andExpect(status().isConflict());
     }
@@ -220,15 +223,15 @@ class InspectionTests {
         assertThat(inspections.count()).isEqualTo(9);
     }
 
-    private Integer startAndFirstCriterion(MockHttpSession session, Long id) throws Exception {
-        String started = mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
+    private Integer startAndFirstCriterion(RequestPostProcessor session, Long id) throws Exception {
+        String started = mvc.perform(post("/api/inspections/" + id + "/start").with(session).with(csrf()))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         List<Integer> criteria = JsonPath.read(started, "$.criteria[*].id");
         return criteria.get(0);
     }
 
-    private RequestBuilder rate(MockHttpSession session, Long id, Integer criterion, String body) {
-        return put("/api/inspections/" + id + "/findings/" + criterion).session(session).with(csrf())
+    private RequestBuilder rate(RequestPostProcessor session, Long id, Integer criterion, String body) {
+        return put("/api/inspections/" + id + "/findings/" + criterion).with(session).with(csrf())
             .contentType(MediaType.APPLICATION_JSON).content(body);
     }
 
@@ -248,9 +251,10 @@ class InspectionTests {
         return inspection.getId();
     }
 
-    private MockHttpSession login(String key) throws Exception {
-        return (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
-            .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"" + key + "\"}"))
-            .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+    private RequestPostProcessor login(String key) {
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + key);
+            return request;
+        };
     }
 }

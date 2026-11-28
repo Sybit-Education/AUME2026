@@ -9,13 +9,14 @@ import { createAppRoutes } from '@/app/router'
 import { invalidateSession } from '@/lib/auth/session'
 import { UiError } from '@/lib/errors'
 import i18n from '@/lib/i18n'
-import { api, login, type LoggedInUser } from '@/lib/auth/client'
+import { api, devLogin, login, type LoggedInUser } from '@/lib/auth/client'
 import type { AppointmentDetails, UpcomingAppointment } from './api'
 
 vi.mock('@/lib/auth/client', () => ({
   initializeAuth: vi.fn(async () => ({ mode: 'dev' })),
   api: vi.fn(),
   login: vi.fn(),
+  devLogin: vi.fn(),
   logout: vi.fn(),
 }))
 
@@ -62,6 +63,7 @@ beforeEach(async () => {
   studentInspectionResponse = undefined
   await i18n.changeLanguage('de')
   vi.mocked(login).mockImplementation(async (key) => { signedIn = key === 'student' ? student : clerk })
+  vi.mocked(devLogin).mockImplementation(async (key) => { signedIn = key === 'student' ? student : clerk })
   vi.mocked(api).mockImplementation(async (path) => {
     if (path === '/api/me') return signedIn ? Response.json(signedIn) : new Response(null, { status: 401 })
     if (path === '/api/greeting') {
@@ -294,7 +296,7 @@ it('returns to login when the student inspection dashboard request reports an ex
   studentInspectionFailure = 401
   const router = mount()
 
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expect(router.state.location.pathname).toBe('/login')
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/')
   expect(screen.queryByRole('region', { name: 'Nächste Kontrolle' })).toBeNull()
@@ -305,7 +307,7 @@ it('returns to login when token renewal fails during the student inspection dash
   studentInspectionFailure = new UiError('errors.sessionExpired')
   const router = mount()
 
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expect(router.state.location.pathname).toBe('/login')
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/')
   expect(screen.queryByRole('alert')).toBeNull()
@@ -340,13 +342,13 @@ it('shows the English inspection heading on direct access as a student', async (
 
 it('returns to the control details after signing in and shows the empty state', async () => {
   const router = mount('/student/inspection/appointment')
-  const loginButton = await screen.findByRole('button', { name: 'Studierende' })
+  const loginButton = await screen.findByRole('button', { name: 'Dev-Login' })
   expect(vi.mocked(api).mock.calls.every(([path]) => path === '/api/me')).toBe(true)
   fireEvent.click(loginButton)
 
   await screen.findByRole('heading', { name: 'Kontrolle' })
   expect(await screen.findByText('Keine Kontrolle angekündigt.')).toBeTruthy()
-  expect(login).toHaveBeenCalledWith('student', '/student/inspection/appointment')
+  expect(devLogin).toHaveBeenCalledWith('student')
   expect(router.state.location.pathname).toBe('/student/inspection/appointment')
 })
 
@@ -373,7 +375,7 @@ it('returns to login when the detail request reports an expired session', async 
   studentInspectionFailure = 401
   const router = mount('/student/inspection/appointment')
 
-  await screen.findByRole('button', { name: 'Studierende' })
+  await screen.findByRole('button', { name: 'Dev-Login' })
   expect(router.state.location.pathname).toBe('/login')
   expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/student/inspection/appointment')
 })

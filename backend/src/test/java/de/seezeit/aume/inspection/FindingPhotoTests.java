@@ -47,7 +47,7 @@ class FindingPhotoTests {
     @Test
     void caretakerAttachesAPhotoAndTheDeputySeesIt() throws Exception {
         var caretaker = login("caretaker");
-        var draft = draftWithDefect(caretaker, "Wohnanlage Sonne");
+        var draft = draftWithDefect(caretaker, "Sonnenbühl West I");
         String added = addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertThat(photoCount(added, draft.criterion())).isEqualTo(1);
@@ -79,7 +79,7 @@ class FindingPhotoTests {
     @Test
     void onlyOwnImagesCanBeAttachedOnceToADefect() throws Exception {
         var caretaker = login("caretaker");
-        var draft = draftWithDefect(caretaker, "Wohnanlage Sonne");
+        var draft = draftWithDefect(caretaker, "Sonnenbühl West I");
 
         addPhoto(caretaker, draft, upload(login("caretaker2"), "image/jpeg", JPEG)).andExpect(status().isNotFound());
         addPhoto(caretaker, draft, upload(caretaker, "application/pdf", JPEG)).andExpect(status().isBadRequest());
@@ -105,7 +105,7 @@ class FindingPhotoTests {
     @Test
     void atMostFivePhotosPerDefect() throws Exception {
         var caretaker = login("caretaker");
-        var draft = draftWithDefect(caretaker, "Wohnanlage Sonne");
+        var draft = draftWithDefect(caretaker, "Sonnenbühl West I");
         for (int i = 0; i < InspectionService.MAX_PHOTOS; i++) {
             addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG)).andExpect(status().isOk());
         }
@@ -116,7 +116,7 @@ class FindingPhotoTests {
     @Test
     void removingAPhotoOrTheDefectCleansUp() throws Exception {
         var caretaker = login("caretaker");
-        var draft = draftWithDefect(caretaker, "Wohnanlage Sonne");
+        var draft = draftWithDefect(caretaker, "Sonnenbühl West I");
         long first = photoIdOf(addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG))
             .andReturn().getResponse().getContentAsString(), draft.criterion());
         String removed = mvc.perform(delete(findingPath(draft.id(), draft.criterion()) + "/photos/" + first)
@@ -144,7 +144,7 @@ class FindingPhotoTests {
     @Test
     void photosStayVisibleButLockedAfterFinishing() throws Exception {
         var caretaker = login("caretaker");
-        var draft = draftWithDefect(caretaker, "Wohnanlage Sonne");
+        var draft = draftWithDefect(caretaker, "Sonnenbühl West I");
         long photoId = photoIdOf(addPhoto(caretaker, draft, upload(caretaker, "image/jpeg", JPEG))
             .andReturn().getResponse().getContentAsString(), draft.criterion());
         mvc.perform(post("/api/inspections/" + draft.id() + "/mark-ok").session(caretaker).with(csrf()))

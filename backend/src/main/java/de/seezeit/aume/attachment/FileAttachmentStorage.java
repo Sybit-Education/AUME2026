@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /** Schreibt Entwicklungsdateien nach devdata/uploads. Der Dateiname ist ein zufälliger Schlüssel. */
 @Component
-@Profile("dev")
+@Profile({"dev", "prod"})
 public class FileAttachmentStorage {
     private final Path root;
 

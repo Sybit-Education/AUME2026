@@ -14,10 +14,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import de.seezeit.aume.auth.TestJwtDecoder;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -29,6 +31,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:aume-inspection-concurrency-tests;DB_CLOSE_DELAY=-1")
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
+@Import(TestJwtDecoder.class)
 class InspectionConcurrencyTests {
     private static final int THREADS = 8;
 
@@ -44,7 +47,7 @@ class InspectionConcurrencyTests {
         Integer criterion = start(session, id).get(0);
 
         List<Integer> statuses = parallel(THREADS, i -> mvc.perform(
-                put("/api/inspections/" + id + "/findings/" + criterion).session(session).with(csrf())
+                put("/api/inspections/" + id + "/findings/" + criterion).with(session).with(csrf())
                     .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":\"OK\"}"))
             .andReturn().getResponse().getStatus());
 
@@ -59,8 +62,8 @@ class InspectionConcurrencyTests {
         Integer criterion = start(session, id).get(0);
 
         List<Integer> statuses = parallel(THREADS, i -> (i % 2 == 0
-                ? mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
-                : mvc.perform(put("/api/inspections/" + id + "/findings/" + criterion).session(session).with(csrf())
+                ? mvc.perform(post("/api/inspections/" + id + "/mark-ok").with(session).with(csrf()))
+                : mvc.perform(put("/api/inspections/" + id + "/findings/" + criterion).with(session).with(csrf())
                     .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":\"OK\"}")))
             .andReturn().getResponse().getStatus());
 
@@ -74,13 +77,13 @@ class InspectionConcurrencyTests {
         for (int round = 0; round < 5; round++) {
             Long id = newInspection();
             Integer criterion = start(session, id).get(0);
-            mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
+            mvc.perform(post("/api/inspections/" + id + "/mark-ok").with(session).with(csrf()))
                 .andExpect(jsonPath("$.findings.length()").value(10));
 
             parallel(2, i -> (i == 0
                     ? mvc.perform(delete("/api/inspections/" + id + "/findings/" + criterion)
-                        .session(session).with(csrf()))
-                    : mvc.perform(post("/api/inspections/" + id + "/finalize").session(session).with(csrf())
+                        .with(session).with(csrf()))
+                    : mvc.perform(post("/api/inspections/" + id + "/finalize").with(session).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON).content("{\"overallResult\":\"PASSED\"}")))
                 .andReturn().getResponse().getStatus());
 
@@ -97,11 +100,11 @@ class InspectionConcurrencyTests {
         var session = login("caretaker");
         Long id = newInspection();
         start(session, id);
-        mvc.perform(post("/api/inspections/" + id + "/mark-ok").session(session).with(csrf()))
+        mvc.perform(post("/api/inspections/" + id + "/mark-ok").with(session).with(csrf()))
             .andExpect(status().isOk());
 
         List<Integer> statuses = parallel(THREADS, i -> mvc.perform(post("/api/inspections/" + id + "/finalize")
-                .session(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                .with(session).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"overallResult\":\"PASSED\"}"))
             .andReturn().getResponse().getStatus());
 
@@ -155,15 +158,16 @@ class InspectionConcurrencyTests {
         });
     }
 
-    private List<Integer> start(MockHttpSession session, Long id) throws Exception {
-        String started = mvc.perform(post("/api/inspections/" + id + "/start").session(session).with(csrf()))
+    private List<Integer> start(RequestPostProcessor session, Long id) throws Exception {
+        String started = mvc.perform(post("/api/inspections/" + id + "/start").with(session).with(csrf()))
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return JsonPath.read(started, "$.criteria[*].id");
     }
 
-    private MockHttpSession login(String key) throws Exception {
-        return (MockHttpSession) mvc.perform(post("/api/auth/dev-login").with(csrf())
-            .contentType(MediaType.APPLICATION_JSON).content("{\"userKey\":\"" + key + "\"}"))
-            .andExpect(status().isOk()).andReturn().getRequest().getSession(false);
+    private RequestPostProcessor login(String key) {
+        return request -> {
+            request.addHeader("Authorization", "Bearer " + key);
+            return request;
+        };
     }
 }

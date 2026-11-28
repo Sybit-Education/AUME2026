@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/seezeit}
+    username: ${SPRING_DATASOURCE_USERNAME:seezeit}
+    password: ${SPRING_DATASOURCE_PASSWORD:seezeit}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+aume:
+  storage:
+    location: ${AUME_STORAGE_LOCATION:/var/lib/seezeit/uploads}

@@ -1,0 +1,31 @@
+.login-card {
+  max-width: 28rem;
+  margin: 24px auto;
+}
+
+.login-account .btn,
+.login-dev .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.login-dev .btn svg {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-dev-hint {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--wrb);
+  color: var(--mut);
+  font-size: 13px;
+}

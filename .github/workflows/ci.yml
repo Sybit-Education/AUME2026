@@ -43,8 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose -f infrastructure/compose.yaml config
-      - run: docker compose -f infrastructure/compose.develop-vm.yaml config
+      - run: docker compose -f infrastructure/compose.develop.yaml config
+      - run: docker compose -f infrastructure/compose.prod.yaml config
       - run: docker build frontend
       - run: docker build backend
 

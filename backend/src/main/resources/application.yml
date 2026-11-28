@@ -1,6 +1,13 @@
 server:
   port: 8080
 
+KEYCLOAK_URL: http://localhost:8081
+KEYCLOAK_REALM: seezeit
+KEYCLOAK_CLIENT_ID: seezeit-frontend
+KEYCLOAK_ISSUER_URI: http://localhost:8081/realms/seezeit
+KEYCLOAK_JWK_SET_URI: http://localhost:8081/realms/seezeit/protocol/openid-connect/certs
+KEYCLOAK_AUDIENCE: seezeit-api
+
 spring:
   messages:
     basename: messages

@@ -2,6 +2,8 @@ package de.seezeit.aume.auth;
 
 import java.util.List;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +18,8 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -49,12 +53,12 @@ public class SecurityConfig {
     @Bean
     @Profile("dev")
     SecurityFilterChain developmentSecurity(HttpSecurity http, HttpSessionSecurityContextRepository contexts,
-            HttpSessionCsrfTokenRepository tokens) throws Exception {
-        return http
+            HttpSessionCsrfTokenRepository tokens, ObjectProvider<JwtDecoder> decoders,
+            ApplicationJwtConverter converter) throws Exception {
+        http
             .securityContext(context -> context.securityContextRepository(contexts))
             .csrf(csrf -> csrf.csrfTokenRepository(tokens))
             .requestCache(cache -> cache.disable())
-            .exceptionHandling(errors -> errors.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/auth/config", "/api/auth/csrf",
@@ -63,15 +67,25 @@ public class SecurityConfig {
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().denyAll())
             .logout(logout -> logout.logoutUrl("/api/auth/logout").deleteCookies("JSESSIONID")
-                .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)))
-            .build();
+                .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)));
+        // Tests supply a JwtDecoder. A local dev server does not, and does not need Keycloak.
+        if (decoders.getIfAvailable() != null) {
+            http.oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(converter)));
+        }
+        http.exceptionHandling(errors -> errors
+            .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            .accessDeniedHandler((request, response, exception) -> {
+                var authentication = SecurityContextHolder.getContext().getAuthentication();
+                var anonymous = authentication == null || authentication instanceof AnonymousAuthenticationToken;
+                response.sendError(anonymous ? HttpServletResponse.SC_UNAUTHORIZED : HttpServletResponse.SC_FORBIDDEN);
+            }));
+        return http.build();
     }
 
     @Bean
     @Profile("!dev")
     SecurityFilterChain productionSecurity(HttpSecurity http, ApplicationJwtConverter converter) throws Exception {
         return http
-            // Production authenticates only explicit bearer tokens, never session cookies.
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .requestCache(cache -> cache.disable())
@@ -89,9 +103,10 @@ public class SecurityConfig {
     @Bean
     @Profile("!dev")
     @ConditionalOnMissingBean(JwtDecoder.class)
-    JwtDecoder jwtDecoder(@Value("${KEYCLOAK_ISSUER_URI}") String issuer,
+    JwtDecoder jwtDecoder(@Value("${KEYCLOAK_JWK_SET_URI}") String jwkSetUri,
+            @Value("${KEYCLOAK_ISSUER_URI}") String issuer,
             @Value("${KEYCLOAK_AUDIENCE}") String audience) {
-        var decoder = NimbusJwtDecoder.withIssuerLocation(issuer).build();
+        var decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
         decoder.setJwtValidator(tokenValidator(issuer, audience));
         return decoder;
     }

@@ -2,7 +2,6 @@ import type { PropsWithChildren, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLoaderData } from 'react-router'
 import { useAuth } from '@/lib/auth/AuthContext'
-import LegalFooter from '@/components/LegalFooter'
 import LoadingPage from '@/components/LoadingPage'
 import type { loadDashboard } from './api'
 import './dashboard.css'
@@ -16,24 +15,21 @@ export default function DashboardPage({ header, children }: PropsWithChildren<{ 
   const { user } = useAuth()
   const data = useLoaderData<Awaited<ReturnType<typeof loadDashboard>> | null>()
 
+  if (!data) return <LoadingPage />
+
   return (
-    <div className="page-stack">
-      {!data ? <LoadingPage /> : (
-        <>
-          {header ? (
-            <div className="dashboard-header">{header}</div>
-          ) : (
-            <section className="card">
-              <h2>{t('navigation.dashboard')}</h2>
-              <p>{t('pages.welcome', { name: user?.name })}</p>
-              {data.greeting && <p>{data.greeting}</p>}
-              {user?.privileges.includes('RESIDENCE_READ') && <p className="acts"><Link className="btn sec" to="/residences">{t('pages.openResidences')}</Link></p>}
-            </section>
-          )}
-          {children}
-        </>
+    <>
+      {header ? (
+        <div className="dashboard-header">{header}</div>
+      ) : (
+        <section className="card">
+          <h2>{t('navigation.dashboard')}</h2>
+          <p>{t('pages.welcome', { name: user?.name })}</p>
+          {data.greeting && <p>{data.greeting}</p>}
+          {user?.privileges.includes('RESIDENCE_READ') && <p className="acts"><Link className="btn sec" to="/residences">{t('pages.openResidences')}</Link></p>}
+        </section>
       )}
-      <LegalFooter />
-    </div>
+      {children}
+    </>
   )
 }

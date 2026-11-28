@@ -18,7 +18,7 @@ vi.mock('@/lib/auth/client', () => ({
 
 const student: LoggedInUser = { userKey: 'student', name: 'Alex', roles: ['STUDENT'], privileges: ['WG_MEMBERSHIP'] }
 const clerk: LoggedInUser = { userKey: 'clerk', name: 'Sam', roles: ['CLERK'], privileges: ['RESIDENCE_READ'] }
-const joined = { flat: 'S-01', residence: 'Wohnanlage Sonne', validFrom: '2026-11-22', members: ['Alex', 'Bea'] }
+const joined = { flat: 'S-01', residence: 'Sonnenbühl West I', validFrom: '2026-11-22', members: ['Alex', 'Bea'] }
 let signedIn: LoggedInUser
 let membership: typeof joined | null
 let routers: ReturnType<typeof createMemoryRouter>[] = []
@@ -80,7 +80,7 @@ it('joins with a valid code and shows the flat with its members', async () => {
   mount()
   await submitCode('GUT')
   expect(await screen.findByText('S-01')).toBeTruthy()
-  expect(screen.getByText('Wohnanlage Sonne')).toBeTruthy()
+  expect(screen.getByText('Sonnenbühl West I')).toBeTruthy()
   expect(screen.getByText('Bea')).toBeTruthy()
 })
 

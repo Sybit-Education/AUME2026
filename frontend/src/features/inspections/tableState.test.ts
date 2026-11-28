@@ -13,8 +13,8 @@ describe('table sorting', () => {
 
 describe('table filters', () => {
   it('finds text regardless of case and surrounding spaces', () => {
-    expect(contains('Wohnanlage Sonne', { text: ' sonne ' })).toBe(true)
-    expect(contains('Egg', { text: 'sonne' })).toBe(false)
+    expect(contains('Sonnenbühl West I', { text: ' west ' })).toBe(true)
+    expect(contains('Egg', { text: 'west' })).toBe(false)
     expect(contains('Egg', undefined)).toBe(true)
   })
 

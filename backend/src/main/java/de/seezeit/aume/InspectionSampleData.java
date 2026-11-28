@@ -25,7 +25,7 @@ import de.seezeit.aume.user.UserRepository;
 
 /**
  * Entwicklungsdaten für die Kontrolle: eine veröffentlichte Checkliste nach dem Wireframe,
- * je eine geplante Kontrolle für die WGs S-01 und S-02 der Wohnanlage Sonne und drei abgeschlossene
+ * je eine geplante Kontrolle für die WGs S-01 und S-02 in Sonnenbühl West I und drei abgeschlossene
  * Kontrollen für die Kontroll-Historie, dazu eine geplante Kontrolle in Petershausen für die Vertretung (US-03).
  * Läuft nach {@link SampleData}, das die Wohnanlagen und die WGs anlegt.
  */
@@ -82,7 +82,7 @@ public class InspectionSampleData implements CommandLineRunner {
     public void run(String... args) {
         if (versions.count() == 0) seedChecklist();
         if (inspections.count() == 0) {
-            var residence = residences.findFirstByName("Wohnanlage Sonne").orElseThrow();
+            var residence = residences.findFirstByName("Sonnenbühl West I").orElseThrow();
             inspections.save(new InspectionEntity(flat(residence, "S-01", 4), null));
             inspections.save(new InspectionEntity(flat(residence, "S-02", 3), null));
             seedHistory(residence);
@@ -92,7 +92,7 @@ public class InspectionSampleData implements CommandLineRunner {
 
     /**
      * US-03: eine sofort startbare Kontrolle in Petershausen (WG 3.09, ohne Zeitraum). So sieht caretaker2, der
-     * Petershausen betreut und Sonne vertritt, im Browser Kontrollen beider Anlagen, caretaker nur die von Sonne.
+     * Petershausen betreut und Sonnenbühl West I vertritt, im Browser Kontrollen beider Anlagen, caretaker nur die von Sonnenbühl West I.
      */
     private void seedDeputyExample() {
         residences.findFirstByName("Petershausen").ifPresent(petershausen -> {
